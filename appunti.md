@@ -68,3 +68,11 @@ Poi usiamo un ciclo infinito per monitorare tutti i nostri fd. Dentro questo noi
 Il terzo parametro di `poll()` sarebbe il timeout o una cosa simile, impostato a `-1` gli dici di controllare quando succede qualcosa, sennò `0` finisce subito e numeri positivi lo usa come timeout.
 
 Poi gli diciamo di controllare tutti gli fd e vedere se succede `POLLIN`, nel caso lui vede se si tratta di una nuova connessione allora fa `accept` e aggiunge fd al vector, altrimenti `recv` e scrive il messaggio ricevuto.
+
+# Aggiornamento 25/07 18:05
+
+**syqe iki**
+
+Nuove informazioni:
+
+Adesso abbiamo tutto non bloccante con `fcntl()`. Da quanto ho capito si potrebbe fare meglio, per adesso andiamo praticamente a sovrascrivere i permessi mettendoli non bloccanti, si potrebbe fare un check dei permessi e poi mettere in piu quello non bloccante. Il subject dice che si deve fare cosi su MacOS, ho tenuto quello come buono anche se lavoriamo su linux. Per adesso funziona, poi ne parliamo magari bene di persona.

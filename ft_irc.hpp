@@ -6,5 +6,6 @@
 #include <unistd.h>
 #include <vector>
 #include <poll.h>
+#include <fcntl.h>
 
 void makePoll(int serverSocket);

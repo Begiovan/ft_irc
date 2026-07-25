@@ -1,4 +1,4 @@
-#include "ft_irc.hpp"
+#include "../ft_irc.hpp"
 
 pollfd makePollFd(int fd)
 {
@@ -18,6 +18,14 @@ int newClient(std::vector<pollfd> &fds, int serverSocket)
     if (acc == -1)
     {
         std::cout << "errore di accept" << std::endl;
+        //perror("accept");
+        return (-1);
+    }
+    if (fcntl(acc, F_SETFL, O_NONBLOCK) == -1)
+    {
+        std::cout << "errore di fcntl" << std::endl;
+        //perror("fcntl");
+        close(acc);
         return (-1);
     }
     fds.push_back(makePollFd(acc));
@@ -28,15 +36,16 @@ int incomingMsg(std::vector<pollfd> &fds, int i)
 {
     char buffer[1024];
     ssize_t bytes = recv(fds[i].fd, buffer, sizeof(buffer) - 1, 0);
-    if  (bytes <= 0)
+    if (bytes <= 0)
     {
         close(fds[i].fd);
         fds.erase(fds.begin() + i);
-        std::cout<<"client: " << i << " disconnesso"<< std::endl;
-        return(-1);
+        std::cout << "client: " << i << " disconnesso" << std::endl;
+        return (-1);
     }
     buffer[bytes] = '\0';
 
+    std::cout << "client[" << i << "] >> ";
     for (int s = 0; s < bytes; s++)
         std::cout << buffer[s];
     return (0);
@@ -59,7 +68,8 @@ void makePoll(int serverSocket)
                 if (fds[i].fd == serverSocket)
                 {
                     if (newClient(fds, serverSocket) == -1)
-                        break ;
+                        continue;
+                    std::cout << "Client connesso" << std::endl;
                 }
                 else
                 {
