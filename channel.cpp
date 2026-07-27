@@ -13,22 +13,26 @@ Channel::Channel(std::string name){
 
 Channel::Channel ( const Channel &other){
 	if ( this != &other )
-{		_name = other._name;
+	{
+		_name = other._name;
 		_topic = other._topic;
-		_key = other._topic;
+		_key = other._key;
 		_inviteOnly = other._inviteOnly;
 		_topicRestricted = other._topicRestricted;
-		_userLimit = other._userLimit;}
+		_userLimit = other._userLimit;
+	}
 }
 
 Channel & Channel::operator=(const Channel &other){
-		if ( this != &other )
-{		_name = other._name;
+	if ( this != &other )
+	{
+		_name = other._name;
 		_topic = other._topic;
-		_key = other._topic;
+		_key = other._key;
 		_inviteOnly = other._inviteOnly;
 		_topicRestricted = other._topicRestricted;
-		_userLimit = other._userLimit;}
+		_userLimit = other._userLimit;
+	}
 	return (*this);
 }
 
@@ -62,42 +66,47 @@ bool Channel::isInvited(const Client &client) const{
 
 // controlla pointer e se è un primo membro lo rende automaticamente OP
 void Channel::addMember(Client* client){
-	bool first;
+	bool first = false;
 
 	if (client == NULL)
 		return;
-	if (hasMember() == 0)
+	if (_members.empty())
 		first = true;
 	_members.insert(client);
 	if (first)
-		_operators.insert(client);
+		_operators.insert(client->getFd());
 }
 
 void Channel::removeMember(const Client &client){
-	_members.erase(client);
-	_operators.erase(client);
-	_invited.erase(client);
+	_members.erase(&client);
+	_operators.erase(client.getFd());
+	_invited.erase(client.getFd());
 }
 
 void Channel::addOperator(const Client &client){
-	_operators.insert(client);
+	_operators.insert(client.getFd());
 }
 
 void Channel::removeOperator(const Client &client){
-	_operators.erase(client);
+	_operators.erase(client.getFd());
 }
 
 void Channel::inviteUser(const Client &client){
-	_invited.insert(client);
+	_invited.insert(client.getFd());
 }
 
 void Channel::removeInvite(const Client &client){
-	_invited.erase(client);
+	_invited.erase(client.getFd());
 }
 
 bool Channel::canJoin(const Client &other, const std::string &key) const{
-ì // controlla invite, key e userlimit
-
+	if (_inviteOnly && _invited.find(other.getFd()) == _invited.end())
+		return false;
+	if (!_key.empty() && key != _key)
+		return false;
+	if (_userLimit >= 0 && static_cast<int>(_members.size()) >= _userLimit)
+		return false;
+	return true;
 }
 
 bool Channel::canChangeTopic(const Client &client) const{
@@ -131,6 +140,5 @@ bool Channel::canChangeTopic(const Client &client) const{
 	}
 
 	bool Channel::empty() const{
-		for (size_t i = 0; i < _members.size(); i++ )
-			
+		return _members.empty();
 	}
