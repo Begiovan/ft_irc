@@ -5,7 +5,8 @@ NAME = ft_irc
 
 SRCS = src/main.cpp \
 		src/socket.cpp \
-		src/channel.cpp
+		src/channel.cpp \
+		src/client.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

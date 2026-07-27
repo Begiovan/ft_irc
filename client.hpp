@@ -3,15 +3,24 @@
 
 #include <string>
 #include <set>
-#include "channel.hpp"
+
 
 class Channel;
-
-// TODO buffer di output/input
 
 class Client {
 
 	private:
+
+
+		int _fd;
+		int _registrationStatus;
+		std::string _username;
+		std::string _nickname;
+		std::string _buffer;
+		std::set<const Channel*> _channels;
+
+
+	public:
 		enum RegistrationFlag
 		{
 			PASS_OK = 1,
@@ -19,26 +28,35 @@ class Client {
 			USER_OK = 4
 		};
 
-		int _fd;
-		std::string _username;
-		std::string _nickname;
-		std::set<Channel*> _channels;
-
-
-	public:
-
-		int _isOnline;
-
-		Client();
+		Client(int fd);
 		Client(int fd, std::string username, std::string nickname);
 		Client(const Client &other);
 		Client &operator=(const Client &other);
 		~Client();
 
-		int getFd();
-		void setFd();
-		std::string getUsername();
-		std::string getNickname();
+		int getFd() const;
+		void setFd(int fd);
+
+		std::string getUsername() const;
+		void setUsername(std::string username);
+
+		std::string getNickname() const;
+		void setNickname(std::string nickname);
+
+		void addChannel(const Channel *chan) ;
+		void removeChannel(const Channel *chan) ;
+		const std::set<const Channel*>& getChannels() const;
+
+		void setBuffer(std::string message);
+		std::string getBuffer() const;
+		void clearBuffer();
+
+		int getRegistrationStatus() const;
+		void setRegistrationStatus(RegistrationFlag flag);
+		bool isRegistered();
+
+		
+
 
 };
 

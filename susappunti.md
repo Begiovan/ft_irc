@@ -53,5 +53,10 @@ quando poi andremo a verificare lo stato completo di registrazione il risultato 
 
 111
 
-_isOnline si salverà lo stato del client
+_registrationFlag si salverà lo stato del client
 
+
+
+nb - da verificare insieme:
+
+al momento della creazione del client l'fd dovrebbe essere già assegnato mentre avevamo detto di crearlo vuoto ma in realtà  comunque viene creato dopo che la password del server è ok, quindi avrà sia registrationglag che fd 
