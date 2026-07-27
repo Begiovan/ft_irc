@@ -4,8 +4,8 @@
 #include <set>
 #include <string>
 
-
 class Client;
+
 class Server;
 
 class Channel {
@@ -14,8 +14,8 @@ private:
     std::string _topic;
     std::string _key;
 
-    std::set<Client*> _members; 
-    std::set<int> _operators; // mi salvo gli fd degli op
+    std::set<const Client*> _members;
+    std::set<int> _operators; // mi salvo gli fd degli operator
     std::set<int> _invited; // mi salvo gli fd degli invitati
 
     bool _inviteOnly;
