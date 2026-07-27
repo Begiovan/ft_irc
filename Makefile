@@ -4,7 +4,8 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 NAME = ft_irc
 
 SRCS = src/main.cpp \
-		src/socket.cpp
+		src/socket.cpp \
+		channel.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
