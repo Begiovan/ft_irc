@@ -4,7 +4,7 @@ CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 NAME = ft_irc
 
 SRCS = src/main.cpp \
-		src/socket.cpp \
+		src/server.cpp \
 		src/channel.cpp \
 		src/client.cpp
 

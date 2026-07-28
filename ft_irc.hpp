@@ -7,5 +7,5 @@
 #include <vector>
 #include <poll.h>
 #include <fcntl.h>
-
-void makePoll(int serverSocket);
+#include <errno.h>
+#include <stdio.h>
