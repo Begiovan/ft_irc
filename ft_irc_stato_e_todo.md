@@ -141,8 +141,8 @@ Client
 [OK]   conosce i Channel di cui fa parte
 [PARZ] API del buffer ancora minima
 [PARZ] registrazione priva di controlli e rimozione flag
-[FIX]  isRegistered() dovrebbe essere const
-[FIX]  setBuffer() in realtà fa append: nome poco intuitivo
+[OK]  isRegistered() dovrebbe essere const
+[OK]  setBuffer() in realtà fa append: nome poco intuitivo
 [FIX]  getter stringa restituiscono copie invece di const reference
 [FIX]  manca un metodo per estrarre solo un comando completo dal buffer
 ```
