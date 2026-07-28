@@ -1,7 +1,7 @@
 CXX = c++
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
-NAME = ft_irc
+NAME = ircserv
 
 SRCS = src/main.cpp \
 		src/server.cpp \
