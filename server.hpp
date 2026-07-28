@@ -18,7 +18,7 @@ private:
 
     pollfd makePollFd(int fd);
     void acceptClient();
-    int reciveClient(int i);
+    int receiveClient(int i);
     void disconnectClient(int fd);
 
 public:

@@ -92,7 +92,7 @@ void Server::acceptClient()
     this->_fds.push_back(makePollFd(acc));
 }
 
-int Server::reciveClient(int i)
+int Server::receiveClient(int i)
 {
     char buffer[1024];
     ssize_t bytes = recv(this->_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
@@ -141,7 +141,7 @@ void Server::run()
                 }
                 else
                 {
-                    if(Server::reciveClient(i) < 0)
+                    if(Server::receiveClient(i) < 0)
                         i--;
                 }
             }
