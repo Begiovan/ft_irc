@@ -2,12 +2,12 @@
 
 Client::Client(int fd){
 	_fd = fd;
-	_registrationStatus = 1;
+	_registrationStatus = 0;
 }
 
-Client::Client(int fd, std::string username, std::string nickname) : _fd(fd), _username(username), _nickname(nickname){
-	_registrationStatus = USER_OK;
-}
+// Client::Client(int fd, std::string username, std::string nickname) : _fd(fd), _username(username), _nickname(nickname){
+// 	_registrationStatus = USER_OK;
+// }
 
 Client::Client(const Client &other){
 	if (this != &other)

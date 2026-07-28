@@ -29,7 +29,7 @@ class Client {
 		};
 
 		Client(int fd);
-		Client(int fd, std::string username, std::string nickname);
+		//Client(int fd, std::string username, std::string nickname);
 		Client(const Client &other);
 		Client &operator=(const Client &other);
 		~Client();
