@@ -47,16 +47,13 @@ class Client {
 		void removeChannel(const Channel *chan) ;
 		const std::set<const Channel*>& getChannels() const;
 
-		void setBuffer(std::string message);
+		void appendBuffer(std::string message);
 		std::string getBuffer() const;
 		void clearBuffer();
 
 		int getRegistrationStatus() const;
 		void setRegistrationStatus(RegistrationFlag flag);
-		bool isRegistered();
-
-		
-
+		bool isRegistered() const;
 
 };
 

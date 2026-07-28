@@ -76,7 +76,7 @@ const std::set<const Channel*>& Client::getChannels() const{
 	return _channels;
 }
 
-void Client::setBuffer(std::string message){
+void Client::appendBuffer(std::string message){
 	_buffer += message;
 }
 
@@ -96,7 +96,7 @@ void Client::setRegistrationStatus(RegistrationFlag flag){
 	_registrationStatus |= flag;
 }
 
-bool Client::isRegistered(){
+bool Client::isRegistered() const {
 	    return (_registrationStatus
         & (PASS_OK | NICK_OK | USER_OK))
         == (PASS_OK | NICK_OK | USER_OK);
