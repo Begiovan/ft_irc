@@ -21,39 +21,32 @@
         +------------------------+------------------------+
         |                        |                        |
         v                        v                        v
-   main(7).cpp              socket(2).cpp          Modello del dominio
-        |                        |                        |
-        |                        |             +----------+----------+
-        |                        |             |                     |
-        v                        v             v                     v
-  crea il socket          funzioni libere   Client               Channel
-  del server              di networking       |                     |
-        |                        |              |                     |
-        |                        +--> makePollFd |                     |
-        |                        +--> newClient |                     |
-        |                        +--> incomingMsg                     |
-        |                        +--> makePoll                        |
-        |                                                           |
-        +---------------------------> makePoll(serverSocket) <-------+
-
-
-   Bozza separata:
-
-   funzioni_mode.cpp
+     main.cpp               Server                 Modello del dominio
+        |                      |                          |
+        |                      |               +----------+----------+
+        |                      |               |                     |
+        |                      |               v                     v
+        |                      |            Client               Channel
+        |                      |               ^                     ^
+        |                      |               |                     |
+        |                      +---------------+---------------------+
         |
-        +--> handleTopic()   [bozza, non compilante]
-        +--> handleKick()    [bozza, non compilante]
+        +--> Server(port, password)
+                    |
+                    +--> setupSocket()
+                    +--> run()
+                    +--> acceptClient()
+                    +--> reciveClient()
+                    +--> disconnectClient()
+
+
+Bozza separata:
+
+funzioni_mode.cpp
+    |
+    +--> handleTopic()   [bozza]
+    +--> handleKick()    [bozza]
 ```
-
-Al momento il progetto contiene:
-
-- uno scheletro di networking funzionante basato su `socket`, `bind`, `listen`, `accept`, `poll` e `recv`;
-- una classe `Client` che conserva fd, registrazione, nickname, username, buffer e canali;
-- una classe `Channel` che conserva membri, operatori, invitati, topic e modalità;
-- alcune prime idee per la gestione di `TOPIC` e `KICK`;
-- nessuna classe `Server` ancora implementata;
-- nessun parser IRC ancora implementato;
-- nessun sistema completo di risposte numeriche IRC.
 
 ---
 
@@ -62,35 +55,37 @@ Al momento il progetto contiene:
 ```text
 main()
   |
-  +--> socket()
-  |
-  +--> setsockopt(SO_REUSEADDR)
-  |
-  +--> fcntl(O_NONBLOCK)
-  |
-  +--> bind()
-  |
-  +--> listen()
-  |
-  +--> makePoll(serverSocket)
+  +--> crea Server(port, password)
           |
-          +--> crea vector<pollfd>
+          +--> setupSocket()
+          |      |
+          |      +--> socket()
+          |      +--> setsockopt()
+          |      +--> fcntl(O_NONBLOCK)
+          |      +--> bind()
+          |      +--> listen()
           |
-          +--> inserisce serverSocket
+          +--> inserisce il serverSocket nei pollfd
           |
-          +--> ciclo poll()
+          +--> run()
                   |
-                  +--> evento sul serverSocket
-                  |       |
-                  |       +--> accept()
-                  |       +--> rende il nuovo fd non bloccante
-                  |       +--> inserisce il fd nei pollfd
-                  |
-                  +--> evento su un client fd
+                  +--> poll()
                           |
-                          +--> recv()
-                          +--> stampa i byte ricevuti
-                          +--> chiude ed elimina il fd se disconnesso
+                          +--> evento sul serverSocket
+                          |       |
+                          |       +--> acceptClient()
+                          |               |
+                          |               +--> accept()
+                          |               +--> socket non bloccante
+                          |               +--> inserisce il nuovo fd nei pollfd
+                          |
+                          +--> evento su un client
+                                  |
+                                  +--> reciveClient()
+                                          |
+                                          +--> recv()
+                                          +--> stampa i byte ricevuti
+                                          +--> disconnectClient() se necessario
 ```
 
 ### Limite attuale
@@ -98,13 +93,22 @@ main()
 Il nuovo fd viene aggiunto a `poll`, ma non viene ancora creato e conservato un oggetto `Client` associato a quel fd.
 
 ```text
-pollfd fd=5
-    |
-    +--> esiste
+Il networking è ormai incapsulato nella classe Server.
 
-Client fd=5
-    |
-    +--> non viene ancora creato dal networking
+Il passo successivo è fare in modo che acceptClient() crei immediatamente
+un oggetto Client e lo inserisca nella mappa `_clients`.
+
+Attualmente il Server gestisce ancora solo i file descriptor.
+
+                Server
+                   |
+          +--------+--------+
+          |                 |
+      pollfd fd=5      Client(fd=5)
+          |                 |
+          |             ancora assente
+          |
+      socket connesso
 ```
 
 ---
@@ -206,12 +210,12 @@ Channel
 [OK]   primo membro promosso automaticamente operatore
 [OK]   controllo base per accesso con invite, key e limit
 [PARZ] funzioni restituiscono spesso bool/void, senza codici errore IRC
-[PARZ] relazione Client <-> Channel non viene ancora sincronizzata
-[FIX]  copy constructor e operator= non copiano membri/operatori/invitati
+[OK] relazione Client <-> Channel non viene ancora sincronizzata
+[OK]  copy constructor e operator= non copiano membri/operatori/invitati
 [FIX]  uso misto di Client* e fd rende la struttura poco uniforme
-[FIX]  include di client.hpp e forward declaration sono ridondanti
-[FIX]  addMember() aggiunge il membro al Channel ma non il Channel al Client
-[FIX]  removeMember() rimuove dal Channel ma non dal Client
+[OK]  include di client.hpp e forward declaration sono ridondanti
+[OK]  addMember() aggiunge il membro al Channel ma non il Channel al Client
+[OK]  removeMember() rimuove dal Channel ma non dal Client
 [FIX]  dopo la rimozione dell'ultimo operatore manca una politica di promozione
 ```
 
@@ -303,15 +307,15 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 ./ircserv <port> <password>
 ```
 
-- [ ] Verificare numero degli argomenti.
+- [OK] Verificare numero degli argomenti.
 - [ ] Validare la porta:
   - solo numerica;
   - nel range valido;
   - conversione sicura senza overflow.
 - [ ] Conservare la password del server.
-- [ ] Creare una sola istanza di `Server`.
-- [ ] Avviare il server tramite `server.run()`.
-- [ ] Gestire eccezioni/errori di inizializzazione e uscita pulita.
+- [OK] Creare una sola istanza di `Server`.
+- [OK] Avviare il server tramite `server.run()`.
+- [ ] Gestire esplicitamente il caso di argomenti errati.
 
 ---
 
@@ -319,14 +323,14 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 
 ### Attributi principali
 
-- [ ] Creare `Server.hpp` e `Server.cpp`.
+- [OK] Creare `Server.hpp` e `Server.cpp`.
 - [ ] Aggiungere almeno:
 
 ```cpp
 int _serverSocket;
-int _port;
-std::string _password;
-std::vector<pollfd> _pollfds;
+int _port;                // TODO (non ancora memorizzata)
+std::string _password;    // TODO (non ancora memorizzata)
+std::vector<pollfd> _fds; // implementato con nome diverso
 std::map<int, Client> _clients;
 std::map<std::string, Channel> _channels;
 ```
@@ -336,20 +340,20 @@ std::map<std::string, Channel> _channels;
 
 ### Inizializzazione
 
-- [ ] Spostare da `main.cpp` dentro `Server`:
+- [OK] Spostare da `main.cpp` dentro `Server`:
   - `socket()`;
   - `setsockopt()`;
   - `fcntl()`;
   - `bind()`;
   - `listen()`.
-- [ ] Inizializzare completamente `sockaddr_in` prima dell'uso.
-- [ ] Aggiungere il socket del server a `_pollfds`.
-- [ ] Controllare ogni valore di ritorno.
+- [FIX] Inizializzare completamente `sockaddr_in` prima dell'uso.
+- [OK] Aggiungere il socket del server a `_pollfds`.
+- [PARZ] Controllare ogni valore di ritorno ( manca poll() )
 - [ ] Chiudere correttamente il socket se una fase fallisce.
 
 ### Event loop
 
-- [ ] Trasformare `makePoll()` in `Server::run()`.
+- [OK] Trasformare `makePoll()` in `Server::run()`.
 - [ ] Controllare il valore restituito da `poll()`.
 - [ ] Gestire `EINTR` se necessario.
 - [ ] Controllare `revents` per:
@@ -357,22 +361,22 @@ std::map<std::string, Channel> _channels;
   - `POLLHUP`;
   - `POLLERR`;
   - `POLLNVAL`.
-- [ ] Evitare errori sugli indici quando un elemento viene eliminato dal vector.
+- [OK] Evitare errori sugli indici quando un elemento viene eliminato dal vector.
 - [ ] Garantire che ogni operazione I/O resti non bloccante.
 
 ### Accettazione client
 
-- [ ] Trasformare `newClient()` in `Server::acceptClient()`.
+- [OK] Trasformare `newClient()` in `Server::acceptClient()`.
 - [ ] Accettare tutte le connessioni in attesa finché `accept()` non restituisce `EAGAIN/EWOULDBLOCK`.
-- [ ] Rendere ogni nuovo socket non bloccante.
+- [OK] Rendere ogni nuovo socket non bloccante.
 - [ ] Creare subito `Client(newFd)`.
 - [ ] Inserire il client in `_clients` usando il fd come chiave.
-- [ ] Inserire il fd in `_pollfds`.
+- [OK] Inserire il fd in `_fds`.
 - [ ] Gestire il fallimento parziale senza lasciare fd aperti.
 
 ### Ricezione dati
 
-- [ ] Trasformare `incomingMsg()` in `Server::receiveFromClient()`.
+- [OK] Trasformare `incomingMsg()` in `Server::receiveFromClient()`.
 - [ ] Trovare il `Client` tramite il fd del `pollfd`.
 - [ ] Aggiungere i byte ricevuti al buffer di quel client.
 - [ ] Gestire correttamente:
@@ -409,11 +413,11 @@ void sendToClient(Client& client, const std::string& message);
 
 ### Disconnessione
 
-- [ ] Creare `Server::disconnectClient()`.
+- [PARZ] Creare `Server::disconnectClient()`.
 - [ ] Rimuovere il client da tutti i Channel.
 - [ ] Informare gli altri utenti con un messaggio `QUIT` quando necessario.
 - [ ] Rimuovere il client da `_clients`.
-- [ ] Rimuovere il fd da `_pollfds`.
+- [ ] Rimuovere il fd da `_fds`.
 - [ ] Chiudere il fd una sola volta.
 - [ ] Eliminare eventuali canali rimasti vuoti.
 
@@ -423,8 +427,8 @@ void sendToClient(Client& client, const std::string& message);
 
 ### Stato della connessione
 
-- [ ] Conservare il fd ricevuto da `accept()`.
-- [ ] Inizializzare `_registrationStatus` a `0`.
+- [OK] Conservare il fd ricevuto da `accept()`.
+- [OK] Inizializzare `_registrationStatus` a `0`.
 - [ ] Inizializzare esplicitamente stringhe e container, anche se lo fanno già di default.
 - [ ] Aggiungere eventuale stato di disconnessione solo se realmente utile.
 
@@ -434,7 +438,7 @@ void sendToClient(Client& client, const std::string& message);
   - `PASS_OK`;
   - `NICK_OK`;
   - `USER_OK`.
-- [ ] Rendere `isRegistered()` const.
+- [OK] Rendere `isRegistered()` const.
 - [ ] Aggiungere `hasRegistrationFlag()`.
 - [ ] Decidere come impedire comandi non consentiti prima della registrazione.
 - [ ] Impedire modifiche illegali a `USER` dopo la registrazione.
@@ -449,7 +453,7 @@ void sendToClient(Client& client, const std::string& message);
 
 ### Buffer
 
-- [ ] Rinominare `setBuffer()` in `appendBuffer()`.
+- [OK] Rinominare `setBuffer()` in `appendBuffer()`.
 - [ ] Restituire il buffer tramite `const std::string&`.
 - [ ] Aggiungere una funzione per rimuovere solo la parte già processata.
 - [ ] Non cancellare tutto il buffer se contiene anche un comando incompleto successivo.
@@ -474,7 +478,7 @@ void sendToClient(Client& client, const std::string& message);
   - membri `Client*` e lookup coerente per fd.
 - [ ] Aggiungere `isMember()`.
 - [ ] Impedire duplicati durante `JOIN`.
-- [ ] Aggiornare anche il `Client` durante add/remove.
+- [OK] Aggiornare anche il `Client` durante add/remove.
 - [ ] Rimuovere un utente da membri, operatori e invitati durante `PART/KICK/QUIT`.
 - [ ] Stabilire cosa succede se non restano operatori ma il canale è ancora popolato.
 - [ ] Eliminare il canale dal server quando diventa vuoto.
@@ -733,14 +737,14 @@ Command command
 
 ## 3.12 Build e organizzazione dei file
 
-- [ ] Creare un `Makefile` con:
+- [OK] Creare un `Makefile` con:
   - `NAME = ircserv`;
   - `all`;
   - `clean`;
   - `fclean`;
   - `re`.
-- [ ] Compilare con lo standard richiesto dal subject.
-- [ ] Aggiungere warning flags richieste.
+- [OK] Compilare con lo standard richiesto dal subject.
+- [OK] Aggiungere warning flags richieste.
 - [ ] Separare header e sorgenti in cartelle coerenti.
 - [ ] Rimuovere o integrare i prototipi temporanei quando `Server` sarà pronto.
 - [ ] Correggere `funzioni_mode.cpp` oppure sostituirlo con veri handler.
@@ -830,14 +834,13 @@ Il passo consigliato è:
 ```text
 [PROSSIMO STEP]
 
-Creare la classe Server
+Collegare il networking agli oggetti Client
         |
-        +--> trasferire setup socket da main
-        +--> trasferire makePoll() in Server::run()
-        +--> trasferire newClient() in Server::acceptClient()
-        +--> trasferire incomingMsg() in Server::receiveFromClient()
         +--> aggiungere map<int, Client> _clients
-        +--> creare Client(fd) subito dopo accept()
+        +--> creare Client(fd) dentro acceptClient()
+        +--> cercare il Client tramite fd
+        +--> appendBuffer() dopo recv()
+        +--> estrarre le righe terminate da \r\n
 ```
 
 Una volta completato questo passaggio, il prototipo di rete diventerà la base reale del progetto e sarà possibile collegare correttamente buffer, parser e comandi IRC.
