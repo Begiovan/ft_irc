@@ -147,7 +147,7 @@ Client
 [PARZ] registrazione priva di controlli e rimozione flag
 [OK]  isRegistered() dovrebbe essere const
 [OK]  setBuffer() in realtà fa append: nome poco intuitivo
-[FIX]  getter stringa restituiscono copie invece di const reference
+[OK]  getter stringa restituiscono copie invece di const reference
 [FIX]  manca un metodo per estrarre solo un comando completo dal buffer
 ```
 
@@ -330,7 +330,7 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 int _serverSocket;
 int _port;                // TODO (non ancora memorizzata)
 std::string _password;    // TODO (non ancora memorizzata)
-std::vector<pollfd> _fds; // implementato con nome diverso
+std::vector<pollfd> _fds; 
 std::map<int, Client> _clients;
 std::map<std::string, Channel> _channels;
 ```
@@ -476,11 +476,11 @@ void sendToClient(Client& client, const std::string& message);
 - [ ] Uniformare il tipo usato per membri, operatori e invitati:
   - tutti `Client*`, oppure
   - membri `Client*` e lookup coerente per fd.
-- [ ] Aggiungere `isMember()`.
+- [OK] Aggiungere `isMember()`.
 - [ ] Impedire duplicati durante `JOIN`.
 - [OK] Aggiornare anche il `Client` durante add/remove.
 - [ ] Rimuovere un utente da membri, operatori e invitati durante `PART/KICK/QUIT`.
-- [ ] Stabilire cosa succede se non restano operatori ma il canale è ancora popolato.
+- [OK] Stabilire cosa succede se non restano operatori ma il canale è ancora popolato.
 - [ ] Eliminare il canale dal server quando diventa vuoto.
 
 ### Copia e assegnazione
