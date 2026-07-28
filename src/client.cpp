@@ -46,7 +46,7 @@ void Client::setFd(int fd){
 	_fd = fd;
 }
 
-std::string Client::getUsername() const{
+const std::string &Client::getUsername() const{
 	return _username;
 }
 
@@ -54,7 +54,7 @@ void Client::setUsername(std::string username){
 	_username = username;
 }
 
-std::string Client::getNickname() const{
+std::string &Client::getNickname(){
 	return _nickname;
 }
 
@@ -80,7 +80,7 @@ void Client::appendBuffer(std::string message){
 	_buffer += message;
 }
 
-std::string Client::getBuffer() const{
+std::string &Client::getBuffer() const{
 	return _buffer;
 }
 
