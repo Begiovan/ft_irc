@@ -118,24 +118,36 @@ bool Channel::canChangeTopic(const Client &client) const{
 		return false;
 }
 
-    void Channel::setInviteOnly(){
+    void Channel::setInviteOnly(const Client &client){
+		if (!isOperator(client))
+			return;
 		_inviteOnly = !_inviteOnly;
 	}
-    void Channel::setTopicRestricted(){
+    void Channel::setTopicRestricted(const Client &client){
+		if (!isOperator(client))
+			return;
 		_topicRestricted = !_topicRestricted;
 	}
-    void Channel::setKey(const std::string& key){
+    void Channel::setKey(const Client &client, const std::string& key){
+		if (!isOperator(client))
+			return;
 		_key = key;
 	}
-	void Channel::clearKey(){
+	void Channel::clearKey(const Client &client){
+		if (!isOperator(client))
+			return;
 		_key = "";
 	}
 
-	void Channel::setUserLimit(int limit){
+	void Channel::setUserLimit(const Client &client, int limit){
+		if (!isOperator(client))
+			return;
 		_userLimit = limit;
 
 	}
-	void Channel::clearUserLimit(){
+	void Channel::clearUserLimit(const Client &client){
+		if (!isOperator(client))
+			return;
 		_userLimit = -1;
 	}
 

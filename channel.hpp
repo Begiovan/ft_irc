@@ -49,21 +49,17 @@ public:
 	bool canJoin(const Client &other, const std::string &key) const;
 	bool canChangeTopic(const Client& client) const;
 
-    void setInviteOnly();
-    void setTopicRestricted();
-    void setKey(const std::string& key);
-	void clearKey();
+    void setInviteOnly(const Client &client);
+    void setTopicRestricted(const Client &client);
+    void setKey(const Client &client, const std::string& key);
+	void clearKey(const Client &client);
 
-    void setUserLimit(int limit);
-	void clearUserLimit();
+    void setUserLimit(const Client &client, int limit);
+	void clearUserLimit(const Client &client);
 
 	bool empty() const;
 
 
 };
-
-
-// TO DO 
-// update nickname to _members list
 
 #endif
