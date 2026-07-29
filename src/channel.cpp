@@ -82,7 +82,7 @@ void Channel::addOperator(const Client& client) {
 void Channel::removeOperator(const Client& client) {
     _operators.erase(client.getFd());
 	if(_operators.empty() && !_members.empty() )
-		addOperator(*(_members.begin()));
+		addOperator(**(_members.begin()));
 }
 
 void Channel::inviteUser(const Client& client) {
