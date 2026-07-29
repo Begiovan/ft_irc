@@ -3,35 +3,6 @@
 Channel::Channel(const std::string& name)
     : _name(name), _topic(""), _key(""), _inviteOnly(false), _topicRestricted(false), _userLimit(-1) {}
 
-Channel::Channel(const Channel& other) {
-    if (this != &other) {
-        _name = other._name;
-        _topic = other._topic;
-        _key = other._key;
-        _inviteOnly = other._inviteOnly;
-        _topicRestricted = other._topicRestricted;
-        _userLimit = other._userLimit;
-        _members = other._members;
-        _operators = other._operators;
-        _invited = other._invited;
-    }
-}
-
-Channel& Channel::operator=(const Channel& other) {
-    if (this != &other) {
-        _name = other._name;
-        _topic = other._topic;
-        _key = other._key;
-        _inviteOnly = other._inviteOnly;
-        _topicRestricted = other._topicRestricted;
-        _userLimit = other._userLimit;
-        _members = other._members;
-        _operators = other._operators;
-        _invited = other._invited;
-    }
-    return *this;
-}
-
 Channel::~Channel() {}
 
 const std::string& Channel::getName() const {
@@ -76,7 +47,10 @@ void Channel::removeMember(Client& client) {
 }
 
 void Channel::addOperator(const Client& client) {
-    _operators.insert(client.getFd());
+	if (isMember(&client))
+    	_operators.insert(client.getFd());
+	else
+		std::cout << "client is not member of this channel" << std::endl;
 }
 
 void Channel::removeOperator(const Client& client) {
