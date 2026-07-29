@@ -3,6 +3,7 @@
 
 #include <string>
 #include <set>
+#include <iostream>
 
 
 class Channel;
@@ -48,7 +49,7 @@ class Client {
 		const std::set<const Channel*>& getChannels() const;
 
 		void appendBuffer(std::string message);
-		std::string &getBuffer() const;
+		std::string &getBuffer();
 		void clearBuffer();
 
 		int getRegistrationStatus() const;

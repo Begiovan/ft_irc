@@ -51,7 +51,12 @@ const std::string &Client::getUsername() const{
 }
 
 void Client::setUsername(std::string username){
-	_username = username;
+	if (_registrationStatus != USER_OK)
+		_username = username;
+	else
+		{
+			std::cout << "error" << std::endl;
+		}
 }
 
 std::string &Client::getNickname(){
@@ -80,7 +85,7 @@ void Client::appendBuffer(std::string message){
 	_buffer += message;
 }
 
-std::string &Client::getBuffer() const{
+std::string &Client::getBuffer(){
 	return _buffer;
 }
 
