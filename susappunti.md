@@ -1,3 +1,7 @@
+# TO DO FONDAMENTALI
+
+fare delete dei client sulla mappa del server 
+
 # Aggiornamento 26 Luglio
 
 La classe channel è abbastanza intuitiva quindi non ho aggiunto commenti a riguardo.
@@ -60,3 +64,4 @@ _registrationFlag si salverà lo stato del client
 nb - da verificare insieme:
 
 al momento della creazione del client l'fd dovrebbe essere già assegnato mentre avevamo detto di crearlo vuoto ma in realtà  comunque viene creato dopo che la password del server è ok, quindi avrà sia registrationglag che fd 
+

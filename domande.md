@@ -289,7 +289,7 @@ Progettazione e implementazione della classe Channel (membri, operatori, topic, 
 La logica di "chi può fare cosa" (operatore vs utente normale)
 KICK — Eject a client from the channel
 INVITE — Invite a client to a channel
-TOPIC — Change or view the channel topic
+OK - TOPIC — Change or view the channel topic
 MODE — con tutte le sotto-opzioni: i, t, k, o, l (questo comando da solo è corposo, ha 5 comportamenti diversi al suo interno)
 
 ┌───────────┐
