@@ -312,7 +312,7 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
   - solo numerica;
   - nel range valido;
   - conversione sicura senza overflow.
-- [ ] Conservare la password del server.
+- [OK] Conservare la password del server.
 - [OK] Creare una sola istanza di `Server`.
 - [OK] Avviare il server tramite `server.run()`.
 - [ ] Gestire esplicitamente il caso di argomenti errati.
@@ -335,8 +335,8 @@ std::map<int, Client> _clients;
 std::map<std::string, Channel> _channels;
 ```
 
-- [ ] Valutare una struttura per i nickname, oppure una funzione di ricerca nella mappa client.
-- [ ] Impedire copie accidentali del server, oppure implementarne correttamente la forma canonica.
+- [OK] Valutare una struttura per i nickname, oppure una funzione di ricerca nella mappa client.
+- [OK] Impedire copie accidentali del server, oppure implementarne correttamente la forma canonica.
 
 ### Inizializzazione
 
@@ -346,9 +346,9 @@ std::map<std::string, Channel> _channels;
   - `fcntl()`;
   - `bind()`;
   - `listen()`.
-- [FIX] Inizializzare completamente `sockaddr_in` prima dell'uso.
+- [OK] Inizializzare completamente `sockaddr_in` prima dell'uso.
 - [OK] Aggiungere il socket del server a `_pollfds`.
-- [PARZ] Controllare ogni valore di ritorno ( manca poll() )
+- [PARZ] Controllare ogni valore di ritorno ( manca a poll() )
 - [ ] Chiudere correttamente il socket se una fase fallisce.
 
 ### Event loop
@@ -369,8 +369,8 @@ std::map<std::string, Channel> _channels;
 - [OK] Trasformare `newClient()` in `Server::acceptClient()`.
 - [ ] Accettare tutte le connessioni in attesa finché `accept()` non restituisce `EAGAIN/EWOULDBLOCK`.
 - [OK] Rendere ogni nuovo socket non bloccante.
-- [ ] Creare subito `Client(newFd)`.
-- [ ] Inserire il client in `_clients` usando il fd come chiave.
+- [OK] Creare subito `Client(newFd)`.
+- [OK] Inserire il client in `_clients` usando il fd come chiave.
 - [OK] Inserire il fd in `_fds`.
 - [ ] Gestire il fallimento parziale senza lasciare fd aperti.
 
@@ -429,19 +429,19 @@ void sendToClient(Client& client, const std::string& message);
 
 - [OK] Conservare il fd ricevuto da `accept()`.
 - [OK] Inizializzare `_registrationStatus` a `0`.
-- [ ] Inizializzare esplicitamente stringhe e container, anche se lo fanno già di default.
-- [ ] Aggiungere eventuale stato di disconnessione solo se realmente utile.
+- [?] Inizializzare esplicitamente stringhe e container, anche se lo fanno già di default.
+- [?] Aggiungere eventuale stato di disconnessione solo se realmente utile.
 
 ### Registrazione IRC
 
-- [ ] Mantenere i flag:
+- [] Mantenere i flag:
   - `PASS_OK`;
   - `NICK_OK`;
   - `USER_OK`.
 - [OK] Rendere `isRegistered()` const.
-- [ ] Aggiungere `hasRegistrationFlag()`.
+- [KO] Aggiungere `hasRegistrationFlag()`.
 - [ ] Decidere come impedire comandi non consentiti prima della registrazione.
-- [ ] Impedire modifiche illegali a `USER` dopo la registrazione.
+- [OK] Impedire modifiche illegali a `USER` dopo la registrazione.
 - [ ] Gestire cambi di nickname dopo la registrazione.
 
 ### Identità
@@ -485,8 +485,8 @@ void sendToClient(Client& client, const std::string& message);
 
 ### Copia e assegnazione
 
-- [ ] Decidere se i `Channel` devono essere copiabili.
-- [ ] Se sì, copiare anche:
+- [OK] Decidere se i `Channel` devono essere copiabili.
+- [KO] Se sì, copiare anche:
   - `_members`;
   - `_operators`;
   - `_invited`.

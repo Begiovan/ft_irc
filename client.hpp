@@ -41,7 +41,7 @@ class Client {
 		const std::string &getUsername() const;
 		void setUsername(std::string username);
 
-	std::string &getNickname() ;
+		std::string &getNickname() ;
 		void setNickname(std::string nickname);
 
 		void addChannel(const Channel *chan) ;
