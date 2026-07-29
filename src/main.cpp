@@ -10,6 +10,8 @@ int main(int argc, char **argv)
         std::string password;
 
         port = std::atoi(argv[1]);
+        if (port <= 1024)
+            std::cout<<"inserire una porta con valore > 1024"<<std::endl;
         password = argv[2];
         try
         {

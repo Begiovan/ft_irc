@@ -3,6 +3,7 @@
 #include "channel.hpp"
 #include "client.hpp"
 #include <map>
+#include <string.h>
 
 class Client;
 

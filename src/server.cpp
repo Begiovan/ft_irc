@@ -25,7 +25,7 @@ void Server::setupSocket(int _port)
     }
 
     sockaddr_in serverAddress;
-    std::memset(&serverAddress, 0, sizeof(serverAddress));
+    memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
     serverAddress.sin_port = htons(_port);
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
@@ -90,6 +90,8 @@ void Server::acceptClient()
         close(acc);
         return ;
     }
+    Client* newClient = new Client(acc);
+    _clients.insert(std::pair<int, Client*>(acc, newClient));
     this->_fds.push_back(makePollFd(acc));
 }
 
@@ -102,11 +104,26 @@ int Server::receiveClient(int i)
         Server::disconnectClient(this->_fds[i].fd);
         return -1;
     }
-    buffer[bytes] = '\0';
-
-    std::cout << "client[" << i << "] >> ";
-    for (int s = 0; s < bytes; s++)
-        std::cout << buffer[s];
+    std::string recived(buffer, bytes);
+    std::map<int, Client*>::iterator it = _clients.find(_fds[i].fd);
+    if(it != _clients.end())
+    {
+        it->second->appendBuffer(recived);
+        while(true)
+        {
+            size_t pos = it->second->getBuffer().find('\n');
+            if(pos != std::string::npos)
+            {
+                std::string command = it->second->getBuffer().substr(0, pos);
+                it->second->getBuffer().erase(0, pos + 1);
+                std::cout<<"comando inserito: "<<command<<std::endl;
+            }
+            else
+                break ;
+        }
+    }
+    else
+        std::cout<<"client non trovato o errato"<<std::endl;
     return 0;
 }
 
@@ -120,6 +137,13 @@ void Server::disconnectClient(int fd)
         else
         {
             _fds.erase(_fds.begin() + i);
+            std::map<int, Client*>::iterator it = _clients.find(fd);
+            if(it != _clients.end())
+            {
+                delete(it->second);
+                _clients.erase(it);
+            }
+            std::cout<<"client ["<<i<<"] disconnesso"<<std::endl;
             break ;
         }
     
