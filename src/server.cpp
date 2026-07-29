@@ -90,6 +90,8 @@ void Server::acceptClient()
         close(acc);
         return ;
     }
+    Client *client = new Client(acc);
+    _clients[acc] = client;
     this->_fds.push_back(makePollFd(acc));
 }
 
