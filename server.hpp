@@ -11,6 +11,7 @@ class Channel;
 class Server {
 private:
     int _serverSocket;
+    int _port;
     std::string _password;
     std::vector<pollfd> _fds;
     std::map<int, Client*> _clients;
@@ -27,4 +28,5 @@ public:
 
     void setupSocket(int port);
     void run();
+    bool findClient(std::string value);
 };

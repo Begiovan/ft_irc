@@ -1,10 +1,10 @@
 #include "../server.hpp"
 
-Server::Server(int port, const std::string &password)
+Server::Server(int port, const std::string &password) : _port(port), _password(password)
 {
-    std::cout<<"server creato" <<std::endl<<"porta usata: "<<port<<std::endl;
-    std::cout<<"the password is: "<<password<<std::endl;
-    Server::setupSocket(port);
+    std::cout<<"server creato" << std::endl << "porta usata: "<<_port<<std::endl;
+    std::cout<<"the password is: "<<password <<std::endl;
+    Server::setupSocket(_port);
     _fds.push_back(makePollFd(_serverSocket));
 }
 
@@ -14,7 +14,7 @@ Server::~Server()
 }
 
 
-void Server::setupSocket(int port)
+void Server::setupSocket(int _port)
 {
     this->_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (this->_serverSocket == -1)
@@ -25,8 +25,9 @@ void Server::setupSocket(int port)
     }
 
     sockaddr_in serverAddress;
+    std::memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
-    serverAddress.sin_port = htons(port);
+    serverAddress.sin_port = htons(_port);
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int opt = 1;
@@ -147,4 +148,16 @@ void Server::run()
             }
         }
     }
+}
+
+bool Server::findClient(std::string value){
+    for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+    if (it->second->getNickname() == value)
+        return true;
+
+    if (it->second->getUsername() == value)
+        return true;
+    }
+    return false;
 }
