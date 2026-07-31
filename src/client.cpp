@@ -5,37 +5,6 @@ Client::Client(int fd){
 	_registrationStatus = 0;
 }
 
-// Client::Client(int fd, std::string username, std::string nickname) : _fd(fd), _username(username), _nickname(nickname){
-// 	_registrationStatus = USER_OK;
-// }
-
-Client::Client(const Client &other){
-	if (this != &other)
-	{
-		_fd = other._fd;
-		_username = other._username;
-		_nickname = other._nickname;
-		_channels = other._channels;
-		_registrationStatus = other._registrationStatus;
-		_buffer = other._buffer;
-
-	}
-}
-
-Client &Client::operator=(const Client &other){
-		if (this != &other)
-	{
-		_fd = other._fd;
-		_username = other._username;
-		_nickname = other._nickname;
-		_channels = other._channels;
-		_registrationStatus = other._registrationStatus;
-		_buffer = other._buffer;
-
-	}
-	return (*this);
-}
-
 Client::~Client(){}
 
 int Client::getFd() const{
@@ -46,12 +15,12 @@ void Client::setFd(int fd){
 	_fd = fd;
 }
 
-const std::string &Client::getUsername() const{
+const std::string &Client::getUsername(){
 	return _username;
 }
 
 void Client::setUsername(std::string username){
-	if (_registrationStatus != USER_OK)
+	if (_registrationStatus & USER_OK)
 		_username = username;
 	else
 		{
@@ -59,7 +28,7 @@ void Client::setUsername(std::string username){
 		}
 }
 
-std::string &Client::getNickname(){
+const std::string &Client::getUsername(){
 	return _nickname;
 }
 
@@ -85,7 +54,7 @@ void Client::appendBuffer(std::string message){
 	_buffer += message;
 }
 
-std::string &Client::getBuffer(){
+const std::string &Client::getBuffer(){
 	return _buffer;
 }
 
@@ -105,4 +74,8 @@ bool Client::isRegistered() const {
 	    return (_registrationStatus
         & (PASS_OK | NICK_OK | USER_OK))
         == (PASS_OK | NICK_OK | USER_OK);
+}
+
+bool Client::isInChannel(const Channel *channel){
+	return (_channels.find(channel) != _channels.end());
 }

@@ -30,26 +30,24 @@ class Client {
 		};
 
 		Client(int fd);
-		//Client(int fd, std::string username, std::string nickname);
-		Client(const Client &other);
-		Client &operator=(const Client &other);
 		~Client();
 
 		int getFd() const;
 		void setFd(int fd);
 
-		const std::string &getUsername() const;
+		const std::string &getUsername();
 		void setUsername(std::string username);
 
-		std::string &getNickname() ;
+		const std::string &getNickname();
 		void setNickname(std::string nickname);
 
 		void addChannel(const Channel *chan) ;
 		void removeChannel(const Channel *chan) ;
 		const std::set<const Channel*>& getChannels() const;
+		bool isInChannel(const Channel *channel);
 
 		void appendBuffer(std::string message);
-		std::string &getBuffer();
+		const std::string &getBuffer();
 		void clearBuffer();
 
 		int getRegistrationStatus() const;
