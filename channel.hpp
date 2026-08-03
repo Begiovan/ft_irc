@@ -25,13 +25,16 @@ public:
     explicit Channel(const std::string& name);
     ~Channel();
 
-    const std::string& getName() const;
-    const std::string& getTopic() const;
-    void setTopic(const std::string& topic);
+    // Membership
+    // void join(Client& client, const std::string& key);
+    // void part(const Client& client);
 
-    bool hasMember() const;
-    bool isOperator(const Client& client) const;
-    bool isInvited(const Client& client) const;
+    // OP commands
+
+    //void kick(const Client& executor, const Client& target);
+    //void invite(const Client& executor, const Client& target);
+    void setTopic(const Client& executor, const std::string& topic);    
+
 
     void addMember(Client& client);
     void removeMember(Client& client);
@@ -45,16 +48,28 @@ public:
     bool canJoin(const Client& other, const std::string& key) const;
     bool canChangeTopic(const Client& client) const;
 
-    void setInviteOnly(const Client& client);
-    void setTopicRestricted(const Client& client);
+    // Modes
+
+    void setInviteOnly(const Client& client, bool enabled);
+    void setTopicRestricted(const Client& client, bool enabled);
     void setKey(const Client& client, const std::string& key);
     void clearKey(const Client& client);
 
     void setUserLimit(const Client& client, int limit);
     void clearUserLimit(const Client& client);
 
+    // check
+
     bool empty() const;
-    bool isMember(const Client *client);
+    bool isMember(const Client *client) const;
+    bool isOperator(const Client& client) const;
+    bool isInvited(const Client& client) const;
+
+    // Getters
+    const std::string& getName() const;
+    const std::string& getTopic() const;
+
+
 };
 
 #endif
