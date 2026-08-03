@@ -30,4 +30,10 @@ public:
     void setupSocket(int port);
     void run();
     bool findClient(std::string value);
+    Channel *findChannel(const std::string &name);
+
+    // COMANDI
+    void kick(const std::string &name, Client &executor, Client &target, std::string &reason);
+
+
 };

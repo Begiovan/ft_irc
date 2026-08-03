@@ -88,31 +88,6 @@ main()
                                           +--> disconnectClient() se necessario
 ```
 
-### Limite attuale
-
-Il nuovo fd viene aggiunto a `poll`, ma non viene ancora creato e conservato un oggetto `Client` associato a quel fd.
-
-```text
-Il networking è ormai incapsulato nella classe Server.
-
-Il passo successivo è fare in modo che acceptClient() crei immediatamente
-un oggetto Client e lo inserisca nella mappa `_clients`.
-
-Attualmente il Server gestisce ancora solo i file descriptor.
-
-                Server
-                   |
-          +--------+--------+
-          |                 |
-      pollfd fd=5      Client(fd=5)
-          |                 |
-          |             ancora assente
-          |
-      socket connesso
-```
-
----
-
 ## 1.3 Classe `Client`
 
 ```text
@@ -328,8 +303,8 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 
 ```cpp
 int _serverSocket;
-int _port;                // TODO (non ancora memorizzata)
-std::string _password;    // TODO (non ancora memorizzata)
+int _port;               
+std::string _password;    
 std::vector<pollfd> _fds; 
 std::map<int, Client> _clients;
 std::map<std::string, Channel> _channels;

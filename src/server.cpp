@@ -185,3 +185,29 @@ bool Server::findClient(std::string value){
     }
     return false;
 }
+
+Channel *Server::findChannel(const std::string& name)
+{
+    std::map<std::string, Channel*>::iterator it = _channels.find(name);
+
+    if (it == _channels.end())
+        return NULL;
+
+    return it->second;
+}
+
+
+void Server::kick(const std::string &name, Client &executor, Client &target, std::string &reason){
+
+	Channel *chan = findChannel(name);
+
+	if(!chan)
+		throw std::runtime_error("Channel not found");
+	if (!(chan->isOperator(executor)))
+        throw std::runtime_error("User not allowed");
+    if (!(chan->isMember(&target)))
+        throw std::runtime_error("User not in channel");
+	// broadcast TO DO
+
+	chan->removeMember(target);
+}
