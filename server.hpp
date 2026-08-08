@@ -4,6 +4,7 @@
 #include "client.hpp"
 #include <map>
 #include <string.h>
+#include "irc_response.hpp"
 
 class Client;
 
@@ -39,6 +40,6 @@ public:
 
     // COMANDI
     void kick(const std::string &name, Client &executor, Client &target, std::string &reason);
-
+    void Join(const std::string &name, Client &client, const std::string &key);
 
 };

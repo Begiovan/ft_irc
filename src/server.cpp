@@ -259,4 +259,49 @@ void Server::kick(const std::string &name, Client &executor, Client &target, std
     std::string message = target.getNickname() + " has been kicked. Reason: " + reason;
     broadcast(*chan, message);    
 	chan->removeMember(target);
+    target.removeChannel(chan);
+
 }
+
+void Server::Join(const std::string &name, Client &client, const std::string &key) {
+    if (!client.isRegistered())
+         return;
+
+     Channel *chan = findChannel(name);
+     if(!chan)
+     {
+         chan = new Channel(name);
+         _channels.insert(std::make_pair(name,chan));
+         chan->addOperator(client);
+     }
+    Channel::JoinResult res = chan->canJoin(client, key);
+    if (res != Channel::JOIN_OK)
+    {
+        std::string err;
+        switch (res)
+        {
+            case Channel::JOIN_ERR_INVITE_ONLY:
+                err = ERR_INVITEONLYCHAN(client.getNickname(), name);
+                break;
+            case Channel::JOIN_ERR_BAD_KEY:
+                err = ERR_BADCHANNELKEY(client.getNickname(), name);
+                break;
+            case Channel::JOIN_ERR_CHANNEL_FULL:
+                err = ERR_CHANNELISFULL(client.getNickname(), name);
+                break;
+            case Channel::JOIN_ERR_ALREADY_IN:
+                err = ERR_USERONCHANNEL(client.getNickname(), name);
+                break;
+            default:
+                err = ERR_UNKNOWNCOMMAND(client.getNickname(), "JOIN");
+                break;
+        }
+        sendToClient(client, err + "\r\n");
+        return;
+    }
+
+     chan->addMember(client);
+     std::string message = client.getNickname() + " just joined the channel.";
+     broadcast(*chan, message);
+     client.addChannel(chan);
+ }
