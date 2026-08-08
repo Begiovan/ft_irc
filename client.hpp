@@ -17,7 +17,8 @@ class Client {
 		int _registrationStatus;
 		std::string _username;
 		std::string _nickname;
-		std::string _buffer;
+		std::string _buffer; //recv()
+		std::string _sendBuffer; //send()
 		std::set<const Channel*> _channels;
 
 
@@ -47,8 +48,12 @@ class Client {
 		bool isInChannel(const Channel *channel);
 
 		void appendBuffer(std::string message);
-		const std::string &getBuffer();
+		std::string &getBuffer();
 		void clearBuffer();
+
+		void appendSendBuffer(std::string message);
+		std::string &getSendBuffer();
+		void clearSendBuffer();
 
 		int getRegistrationStatus() const;
 		void setRegistrationStatus(RegistrationFlag flag);

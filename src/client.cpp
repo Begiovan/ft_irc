@@ -54,7 +54,7 @@ void Client::appendBuffer(std::string message){
 	_buffer += message;
 }
 
-const std::string &Client::getBuffer(){
+std::string &Client::getBuffer(){
 	return _buffer;
 }
 
@@ -78,4 +78,14 @@ bool Client::isRegistered() const {
 
 bool Client::isInChannel(const Channel *channel){
 	return (_channels.find(channel) != _channels.end());
+}
+
+void Client::appendSendBuffer(std::string message){
+	_sendBuffer += message;
+}
+std::string &Client::getSendBuffer(){
+	return _sendBuffer;
+}
+void Client::clearSendBuffer(){
+	_sendBuffer.erase();
 }
