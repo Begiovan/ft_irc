@@ -26,50 +26,61 @@ public:
     ~Channel();
 
     // Membership
-    // void join(Client& client, const std::string& key);
-    // void part(const Client& client);
-
-    // OP commands
-
-    //void kick(const Client& executor, const Client& target);
-    //void invite(const Client& executor, const Client& target);
-    void setTopic(const Client& executor, const std::string& topic);    
-
 
     void addMember(Client& client);
     void removeMember(Client& client);
 
-    void addOperator(const Client& client);
-    void removeOperator(const Client& client);
-
     void inviteUser(const Client& client);
     void removeInvite(const Client& client);
 
-    bool canJoin(const Client& other, const std::string& key) const;
-    bool canChangeTopic(const Client& client) const;
+    // OPERATOR
+    void addOperator(const Client& client);
+    void removeOperator(const Client& client);
+    
+    // check user
 
-    // Modes
-
-    void setInviteOnly(const Client& client, bool enabled);
-    void setTopicRestricted(const Client& client, bool enabled);
-    void setKey(const Client& client, const std::string& key);
-    void clearKey(const Client& client);
-
-    void setUserLimit(const Client& client, int limit);
-    void clearUserLimit(const Client& client);
-
-    // check
-
+    enum JoinResult {
+        JOIN_OK,
+        JOIN_ERR_INVITE_ONLY,
+        JOIN_ERR_BAD_KEY,
+        JOIN_ERR_CHANNEL_FULL,
+        JOIN_ERR_ALREADY_IN
+    };
+    
     bool empty() const;
     bool isMember(const Client *client) const;
     bool isOperator(const Client& client) const;
-    bool isInvited(const Client& client) const;
+    JoinResult canJoin(const Client& other, const std::string& key) const;
+    bool canChangeTopic(const Client& client) const;
 
     // Getters
+
     const std::string& getName() const;
-    const std::string& getTopic() const;
     const std::set<const Client*> &getMembers() const;
 
+    // TOPIC 
+
+    void setTopic(const Client& executor, const std::string& topic); // topic
+    void setTopicRestricted(const Client& client, bool enabled); // mode
+    const std::string& getTopic() const;
+    bool topicRes() const;   
+
+    // USER LIMIT
+    void clearUserLimit(const Client& client);
+    void setUserLimit(const Client& client, int limit);
+
+    // INVITE
+
+    void setInviteOnly(const Client& client, bool enabled);
+    bool isInvited(const Client& client) const;
+    bool inviteRes() const;
+
+    // KEY
+    
+    bool hasKey() const;
+    const std::string &getKey() const;
+    void setKey(const Client& client, const std::string& key);
+    void clearKey(const Client& client);
 
 };
 
