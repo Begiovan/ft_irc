@@ -447,7 +447,7 @@ void sendToClient(Client& client, const std::string& message);
 
 ### Modalità obbligatorie
 
-- [TODO] `i` — invite-only:
+- [OK] `i` — invite-only:
   - attivazione;
   - disattivazione;
   - controllo invito in `JOIN`.
@@ -570,14 +570,14 @@ Command command
 
 ### `JOIN`
 
-- [ ] Verificare registrazione del client.
-- [ ] Validare nome del canale.
-- [ ] Creare il Channel se non esiste.
-- [ ] Controllare `+i`, `+k` e `+l`.
-- [ ] Aggiungere il client su entrambi i lati della relazione.
-- [ ] Rendere operatore il primo membro.
-- [ ] Inviare il `JOIN` a tutti i membri.
-- [ ] Inviare topic e lista nomi.
+- [OK] Verificare registrazione del client.
+- [OK] Validare nome del canale.
+- [OK] Creare il Channel se non esiste.
+- [OK] Controllare `+i`, `+k` e `+l`.
+- [OK] Aggiungere il client su entrambi i lati della relazione.
+- [OK] Rendere operatore il primo membro.
+- [OK] Inviare il `JOIN` a tutti i membri.
+- [TODO] Inviare topic e lista nomi.
 
 ### `PART`
 
@@ -604,13 +604,13 @@ Command command
 
 ### `KICK`
 
-- [ ] Verificare esistenza del canale.
-- [ ] Verificare che il mittente sia operatore.
-- [ ] Verificare che il target sia membro.
-- [ ] Inviare `KICK` prima della rimozione.
-- [ ] Rimuovere completamente il target dal canale.
-- [ ] Aggiornare anche il set dei canali del target.
-- [ ] Eliminare il canale se vuoto.
+- [OK] Verificare esistenza del canale.
+- [OK] Verificare che il mittente sia operatore.
+- [OK] Verificare che il target sia membro.
+- [OK] Inviare `KICK` prima della rimozione.
+- [OK] Rimuovere completamente il target dal canale.
+- [OK] Aggiornare anche il set dei canali del target.
+- [TODO] Eliminare il canale se vuoto.
 
 ### `MODE`
 
