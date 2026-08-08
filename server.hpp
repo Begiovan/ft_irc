@@ -35,6 +35,7 @@ public:
     // MESSAGGI
     void sendToClient(Client &client, const std::string &message); // TO DO
     void broadcast(const Channel &channel, const std::string &message);
+    void flushClient(int fd);
 
     // COMANDI
     void kick(const std::string &name, Client &executor, Client &target, std::string &reason);

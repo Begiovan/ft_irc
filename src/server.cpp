@@ -153,6 +153,21 @@ void Server::run()
 {
     while (true)
     {
+        for (size_t j = 0; j < _fds.size(); j++)
+        {
+            if(_fds[j].fd != _serverSocket)
+            {
+                std::map<int, Client*>::iterator it = _clients.find(_fds[j].fd);
+                if(it != _clients.end())
+                {
+                    if (it->second->getSendBuffer().empty())
+                        _fds[j].events = POLLIN;
+                    else
+                        _fds[j].events = POLLIN | POLLOUT;
+
+                }
+            }
+        }
         poll(&_fds[0], _fds.size(), -1);
 
         for (size_t i = 0; i < _fds.size(); i++)
@@ -169,6 +184,10 @@ void Server::run()
                     if(Server::receiveClient(i) < 0)
                         i--;
                 }
+            }
+            if (_fds[i].revents & POLLOUT)
+            {
+                Server::flushClient(_fds[i].fd);
             }
         }
     }
@@ -197,23 +216,30 @@ Channel *Server::findChannel(const std::string& name)
 }
 
 void Server::sendToClient(Client &client, const std::string &message){
-
     client.appendSendBuffer(message);
-    ssize_t sent = send(client.getFd(), client.getSendBuffer().c_str(), client.getSendBuffer().size(), 0);
-    if (sent > 0)
-        client.getSendBuffer().erase(0, sent);
-    else if (sent == -1)
+}
+
+void Server::flushClient(int fd){
+
+    std::map<int, Client*>::iterator it = _clients.find(fd);
+    if(it != _clients.end())
     {
-        if (errno == EAGAIN || errno == EWOULDBLOCK)
-            return;
-        perror("send");
+        ssize_t sent = send(fd, it->second->getSendBuffer().c_str(), it->second->getSendBuffer().size(), 0);
+        if (sent > 0)
+            it->second->getSendBuffer().erase(0, sent);
+        else if (sent == -1)
+        {
+            if (errno == EAGAIN || errno == EWOULDBLOCK)
+                return;
+            perror("send");
+        }
     }
 }
 
 void Server::broadcast(const Channel &channel, const std::string &message){
     const std::set<const Client *> &members = channel.getMembers();
     for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); it++)
-        sendToClient(**it, message);
+        sendToClient(const_cast<Client&>(**it), message);
 }
 
 
