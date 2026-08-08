@@ -196,32 +196,6 @@ Channel
 
 ---
 
-## 1.5 Bozza gestione comandi
-
-```text
-funzioni_mode.cpp
- |
- +-- handleTopic()
- |
- +-- handleKick()
-```
-
-### Stato
-
-```text
-[PARZ] chiarisce l'idea di separare il comando dalla classe Channel
-[FIX]  `Class` deve essere `class`
-[FIX]  viene usato `this` fuori da una classe
-[FIX]  confronto stringa con NULL non valido
-[FIX]  _nickName non è disponibile nel contesto
-[FIX]  KICK rimuove solo il ruolo operatore, non il membro dal canale
-[TODO] invio delle risposte al client tramite send()
-[TODO] broadcast agli altri membri del canale
-[TODO] codici numerici di errore IRC
-```
-
----
-
 # 2. Architettura verso cui portare il progetto
 
 ```text
@@ -276,21 +250,21 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 
 ## 3.1 `main`
 
-- [ ] Accettare esattamente i parametri richiesti:
+- [OK] Accettare esattamente i parametri richiesti:
 
 ```text
 ./ircserv <port> <password>
 ```
 
 - [OK] Verificare numero degli argomenti.
-- [ ] Validare la porta:
+- [TODO] Validare la porta:
   - solo numerica;
-  - nel range valido;
+  - OK - nel range valido;
   - conversione sicura senza overflow.
 - [OK] Conservare la password del server.
 - [OK] Creare una sola istanza di `Server`.
 - [OK] Avviare il server tramite `server.run()`.
-- [ ] Gestire esplicitamente il caso di argomenti errati.
+- [OK] Gestire esplicitamente il caso di argomenti errati.
 
 ---
 
@@ -299,7 +273,7 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 ### Attributi principali
 
 - [OK] Creare `Server.hpp` e `Server.cpp`.
-- [ ] Aggiungere almeno:
+- [OK] Aggiungere almeno:
 
 ```cpp
 int _serverSocket;
@@ -323,78 +297,77 @@ std::map<std::string, Channel> _channels;
   - `listen()`.
 - [OK] Inizializzare completamente `sockaddr_in` prima dell'uso.
 - [OK] Aggiungere il socket del server a `_pollfds`.
-- [PARZ] Controllare ogni valore di ritorno ( manca a poll() )
-- [ ] Chiudere correttamente il socket se una fase fallisce.
+- [TODO] Controllare ogni valore di ritorno ( manca a poll() )
+- [OK] Chiudere correttamente il socket se una fase fallisce.
 
 ### Event loop
 
 - [OK] Trasformare `makePoll()` in `Server::run()`.
-- [ ] Controllare il valore restituito da `poll()`.
-- [ ] Gestire `EINTR` se necessario.
-- [ ] Controllare `revents` per:
+- [TODO] Controllare il valore restituito da `poll()`.
+- [?] Gestire `EINTR` se necessario.
+- [?] Controllare `revents` per:
   - `POLLIN`;
   - `POLLHUP`;
   - `POLLERR`;
   - `POLLNVAL`.
 - [OK] Evitare errori sugli indici quando un elemento viene eliminato dal vector.
-- [ ] Garantire che ogni operazione I/O resti non bloccante.
+- [OK] Garantire che ogni operazione I/O resti non bloccante.
 
 ### Accettazione client
 
 - [OK] Trasformare `newClient()` in `Server::acceptClient()`.
-- [ ] Accettare tutte le connessioni in attesa finché `accept()` non restituisce `EAGAIN/EWOULDBLOCK`.
+- [?] Accettare tutte le connessioni in attesa finché `accept()` non restituisce `EAGAIN/EWOULDBLOCK`.
 - [OK] Rendere ogni nuovo socket non bloccante.
 - [OK] Creare subito `Client(newFd)`.
 - [OK] Inserire il client in `_clients` usando il fd come chiave.
 - [OK] Inserire il fd in `_fds`.
-- [ ] Gestire il fallimento parziale senza lasciare fd aperti.
+- [?] Gestire il fallimento parziale senza lasciare fd aperti.
 
 ### Ricezione dati
 
 - [OK] Trasformare `incomingMsg()` in `Server::receiveFromClient()`.
-- [ ] Trovare il `Client` tramite il fd del `pollfd`.
-- [ ] Aggiungere i byte ricevuti al buffer di quel client.
-- [ ] Gestire correttamente:
+- [OK] Trovare il `Client` tramite il fd del `pollfd`.
+- [OK] Aggiungere i byte ricevuti al buffer di quel client.
+- [OK] Gestire correttamente:
   - `recv() > 0`;
   - `recv() == 0`;
   - `recv() == -1` con `EAGAIN/EWOULDBLOCK`;
   - altri errori.
-- [ ] Estrarre tutte le righe IRC complete presenti dopo una singola `recv()`.
-- [ ] Lasciare nel buffer solamente l'eventuale comando incompleto.
-- [ ] Gestire il limite massimo previsto per un messaggio IRC.
+- [OK] Estrarre tutte le righe IRC complete presenti dopo una singola `recv()`.
+- [OK] Lasciare nel buffer solamente l'eventuale comando incompleto.
+- [TODO] Gestire il limite massimo previsto per un messaggio IRC. (20 parole)
 
 ### Invio dati
 
-- [ ] Creare una funzione centralizzata, per esempio:
+- [TODO] Creare una funzione centralizzata, per esempio:
 
 ```cpp
 void sendToClient(Client& client, const std::string& message);
 ```
 
-- [ ] Gestire invii parziali di `send()`.
-- [ ] Terminare correttamente i messaggi con `\r\n`.
-- [ ] Non usare `std::cout` come risposta al client IRC.
-- [ ] Implementare broadcast a tutti i membri di un canale.
-- [ ] Implementare broadcast con esclusione opzionale del mittente.
+- [TODO] Gestire invii parziali di `send()`.
+- [TODO] Terminare correttamente i messaggi con `\r\n`.
+- [TODO] Non usare `std::cout` come risposta al client IRC.
+- [TODO] Implementare broadcast a tutti i membri di un canale.
 
 ### Lookup e ownership
 
-- [ ] Cercare un client per fd.
-- [ ] Cercare un client per nickname.
-- [ ] Verificare unicità dei nickname.
-- [ ] Cercare un canale per nome.
-- [ ] Creare un canale al primo `JOIN` se non esiste.
-- [ ] Eliminare un canale quando non ha più membri.
+- [TODO] Cercare un client per fd.
+- [OK] Cercare un client per nickname.
+- [TODO] Verificare unicità dei nickname.
+- [OK] Cercare un canale per nome.
+- [TODO] Creare un canale al primo `JOIN` se non esiste.
+- [TODO] Eliminare un canale quando non ha più membri.
 
 ### Disconnessione
 
-- [PARZ] Creare `Server::disconnectClient()`.
-- [ ] Rimuovere il client da tutti i Channel.
-- [ ] Informare gli altri utenti con un messaggio `QUIT` quando necessario.
-- [ ] Rimuovere il client da `_clients`.
-- [ ] Rimuovere il fd da `_fds`.
-- [ ] Chiudere il fd una sola volta.
-- [ ] Eliminare eventuali canali rimasti vuoti.
+- [OK] Creare `Server::disconnectClient()`.
+- [TODO] Rimuovere il client da tutti i Channel.
+- [TODO] Informare gli altri utenti con un messaggio `QUIT` quando necessario.
+- [OK] Rimuovere il client da `_clients`.
+- [OK] Rimuovere il fd da `_fds`.
+- [OK] Chiudere il fd una sola volta.
+- [TODO] Eliminare eventuali canali rimasti vuoti.
 
 ---
 
@@ -405,42 +378,40 @@ void sendToClient(Client& client, const std::string& message);
 - [OK] Conservare il fd ricevuto da `accept()`.
 - [OK] Inizializzare `_registrationStatus` a `0`.
 - [?] Inizializzare esplicitamente stringhe e container, anche se lo fanno già di default.
-- [?] Aggiungere eventuale stato di disconnessione solo se realmente utile.
 
 ### Registrazione IRC
 
-- [] Mantenere i flag:
+- [TODO] Mantenere i flag:
   - `PASS_OK`;
   - `NICK_OK`;
   - `USER_OK`.
 - [OK] Rendere `isRegistered()` const.
 - [KO] Aggiungere `hasRegistrationFlag()`.
-- [ ] Decidere come impedire comandi non consentiti prima della registrazione.
+- [OK] Decidere come impedire comandi non consentiti prima della registrazione.
 - [OK] Impedire modifiche illegali a `USER` dopo la registrazione.
-- [ ] Gestire cambi di nickname dopo la registrazione.
+- [TODO] Gestire cambi di nickname dopo la registrazione.
 
 ### Identità
 
-- [ ] Validare nickname e username nel command handler.
-- [ ] Restituire `const std::string&` dai getter per evitare copie inutili.
-- [ ] Uniformare il nome dell'attributo `_nickname` in tutto il progetto.
-- [ ] Valutare se aggiungere il real name/trailing del comando `USER` se richiesto dalla vostra interpretazione del protocollo.
+- [TODO] Validare nickname e username nel command handler.
+- [TODO] Restituire `const std::string&` dai getter per evitare copie inutili.
+- [TODO] Uniformare il nome dell'attributo `_nickname` in tutto il progetto.
 
 ### Buffer
 
 - [OK] Rinominare `setBuffer()` in `appendBuffer()`.
-- [ ] Restituire il buffer tramite `const std::string&`.
-- [ ] Aggiungere una funzione per rimuovere solo la parte già processata.
-- [ ] Non cancellare tutto il buffer se contiene anche un comando incompleto successivo.
-- [ ] Gestire più comandi arrivati nella stessa `recv()`.
-- [ ] Gestire un comando diviso tra più `recv()`.
+- [TODO] Restituire il buffer tramite `const std::string&`.
+- [OK] Aggiungere una funzione per rimuovere solo la parte già processata.
+- [OK] Non cancellare tutto il buffer se contiene anche un comando incompleto successivo.
+- [OK] Gestire più comandi arrivati nella stessa `recv()`.
+- [OK] Gestire un comando diviso tra più `recv()`.
 
 ### Relazione con i canali
 
-- [ ] Decidere definitivamente tra `Channel*` e `const Channel*`.
-- [ ] Aggiungere `isInChannel()`.
-- [ ] Aggiornare `_channels` durante `JOIN`, `PART`, `KICK` e `QUIT`.
-- [ ] Evitare puntatori rimasti verso Channel già distrutti.
+- [TODO] Decidere definitivamente tra `Channel*` e `const Channel*`.
+- [OK] Aggiungere `isInChannel()`.
+- [TODO] Aggiornare `_channels` durante `JOIN`, `PART`, `KICK` e `QUIT`.
+- [TODO] Evitare puntatori rimasti verso Channel già distrutti.
 
 ---
 
@@ -448,15 +419,15 @@ void sendToClient(Client& client, const std::string& message);
 
 ### Membri e operatori
 
-- [ ] Uniformare il tipo usato per membri, operatori e invitati:
+- [OK] Uniformare il tipo usato per membri, operatori e invitati:
   - tutti `Client*`, oppure
   - membri `Client*` e lookup coerente per fd.
 - [OK] Aggiungere `isMember()`.
-- [ ] Impedire duplicati durante `JOIN`.
+- [TODO] Impedire duplicati durante `JOIN`.
 - [OK] Aggiornare anche il `Client` durante add/remove.
-- [ ] Rimuovere un utente da membri, operatori e invitati durante `PART/KICK/QUIT`.
+- [TODO] Rimuovere un utente da membri, operatori e invitati durante `PART/KICK/QUIT`.
 - [OK] Stabilire cosa succede se non restano operatori ma il canale è ancora popolato.
-- [ ] Eliminare il canale dal server quando diventa vuoto.
+- [TODO] Eliminare il canale dal server quando diventa vuoto.
 
 ### Copia e assegnazione
 
@@ -465,52 +436,52 @@ void sendToClient(Client& client, const std::string& message);
   - `_members`;
   - `_operators`;
   - `_invited`.
-- [ ] Se no, impedire la copia invece di lasciarla parziale.
+- [OK] Se no, impedire la copia invece di lasciarla parziale.
 
 ### Topic
 
-- [ ] Permettere lettura del topic.
-- [ ] Permettere modifica rispettando `+t`.
-- [ ] Distinguere topic assente da topic vuoto, se necessario per le risposte.
-- [ ] Inviare il topic aggiornato a tutti i membri.
+- [OK] Permettere lettura del topic.
+- [OK] Permettere modifica rispettando `+t`.
+- [OK] Distinguere topic assente da topic vuoto, se necessario per le risposte.
+- [TODO] Inviare il topic aggiornato a tutti i membri.
 
 ### Modalità obbligatorie
 
-- [ ] `i` — invite-only:
+- [TODO] `i` — invite-only:
   - attivazione;
   - disattivazione;
   - controllo invito in `JOIN`.
-- [ ] `t` — topic riservato agli operatori:
+- [TODO] `t` — topic riservato agli operatori:
   - attivazione;
   - disattivazione;
   - controllo in `TOPIC`.
-- [ ] `k` — chiave del canale:
+- [TODO] `k` — chiave del canale:
   - impostazione;
   - rimozione;
   - confronto durante `JOIN`.
-- [ ] `o` — privilegio operatore:
+- [TODO] `o` — privilegio operatore:
   - promozione di un membro;
   - rimozione del privilegio;
   - rifiuto se il target non è nel canale.
-- [ ] `l` — limite utenti:
+- [TODO] `l` — limite utenti:
   - impostazione con parametro numerico valido;
   - rimozione;
   - controllo durante `JOIN`.
-- [ ] Produrre una rappresentazione corrente delle mode per le risposte a `MODE`.
-- [ ] Non lasciare alla classe `Channel` il compito di inviare errori o messaggi di protocollo.
+- [TODO] Produrre una rappresentazione corrente delle mode per le risposte a `MODE`.
+- [TODO] Non lasciare alla classe `Channel` il compito di inviare errori o messaggi di protocollo.
 
 ### Inviti
 
-- [ ] Aggiungere un utente alla lista invitati con `INVITE`.
-- [ ] Controllare che chi invita abbia i permessi richiesti.
-- [ ] Consumare/rimuovere l'invito dopo il `JOIN`, secondo il comportamento scelto.
-- [ ] Pulire gli inviti quando un client si disconnette.
+- [TODO] Aggiungere un utente alla lista invitati con `INVITE`.
+- [TODO] Controllare che chi invita abbia i permessi richiesti.
+- [TODO] Consumare/rimuovere l'invito dopo il `JOIN`, secondo il comportamento scelto.
+- [TODO] Pulire gli inviti quando un client si disconnette.
 
 ---
 
 ## 3.5 Parser IRC
 
-- [ ] Creare una rappresentazione del comando, per esempio:
+- [TODO] Creare una rappresentazione del comando, per esempio:
 
 ```cpp
 struct Command
@@ -521,14 +492,14 @@ struct Command
 };
 ```
 
-- [ ] Separare una riga completa dal buffer.
-- [ ] Rimuovere `\r\n` dalla riga prima del parsing.
-- [ ] Separare il nome del comando dai parametri.
-- [ ] Normalizzare il nome del comando in maiuscolo.
-- [ ] Gestire il parametro trailing introdotto da `:`.
-- [ ] Gestire spazi multipli senza generare parametri vuoti inutili.
-- [ ] Rilevare comando vuoto o malformato.
-- [ ] Non eseguire direttamente la logica applicativa dentro il parser.
+- [TODO] Separare una riga completa dal buffer.
+- [TODO] Rimuovere `\r\n` dalla riga prima del parsing.
+- [TODO] Separare il nome del comando dai parametri.
+- [TODO] Normalizzare il nome del comando in maiuscolo.
+- [TODO] Gestire il parametro trailing introdotto da `:`.
+- [TODO] Gestire spazi multipli senza generare parametri vuoti inutili.
+- [TODO] Rilevare comando vuoto o malformato.
+- [TODO] Non eseguire direttamente la logica applicativa dentro il parser.
 
 Esempio:
 
@@ -546,19 +517,19 @@ Output:
 
 ## 3.6 Dispatcher / Command Handler
 
-- [ ] Creare un punto centrale che riceva:
+- [TODO] Creare un punto centrale che riceva:
 
 ```cpp
 Client& sender
 Command command
 ```
 
-- [ ] Associare ogni nome comando alla relativa funzione.
-- [ ] Verificare quali comandi sono consentiti prima della registrazione.
-- [ ] Verificare numero minimo/massimo dei parametri.
-- [ ] Delegare a `Server`, `Client` e `Channel` senza duplicare ownership.
-- [ ] Costruire e inviare risposte numeriche corrette.
-- [ ] Non inserire tutta la logica in una sola funzione enorme.
+- [TODO] Associare ogni nome comando alla relativa funzione.
+- [TODO] Verificare quali comandi sono consentiti prima della registrazione.
+- [TODO] Verificare numero minimo/massimo dei parametri.
+- [TODO] Delegare a `Server`, `Client` e `Channel` senza duplicare ownership.
+- [TODO] Costruire e inviare risposte numeriche corrette.
+- [TODO] Non inserire tutta la logica in una sola funzione enorme.
 
 ---
 
