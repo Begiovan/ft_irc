@@ -196,6 +196,26 @@ Channel *Server::findChannel(const std::string& name)
     return it->second;
 }
 
+void Server::sendToClient(Client &client, const std::string &message){
+
+    client.appendSendBuffer(message);
+    ssize_t sent = send(client.getFd(), client.getSendBuffer().c_str(), client.getSendBuffer().size(), 0);
+    if (sent > 0)
+        client.getSendBuffer().erase(0, sent);
+    else if (sent == -1)
+    {
+        if (errno == EAGAIN || errno == EWOULDBLOCK)
+            return;
+        perror("send");
+    }
+}
+
+void Server::broadcast(const Channel &channel, const std::string &message){
+    const std::set<const Client *> &members = channel.getMembers();
+    for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); it++)
+        sendToClient(**it, message);
+}
+
 
 void Server::kick(const std::string &name, Client &executor, Client &target, std::string &reason){
 
@@ -207,7 +227,7 @@ void Server::kick(const std::string &name, Client &executor, Client &target, std
         throw std::runtime_error("User not allowed");
     if (!(chan->isMember(&target)))
         throw std::runtime_error("User not in channel");
-	// broadcast TO DO
-
+    std::string message = target.getNickname() + " has been kicked. Reason: " + reason;
+    broadcast(*chan, message);    
 	chan->removeMember(target);
 }
