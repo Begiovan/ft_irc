@@ -127,3 +127,7 @@ void Channel::clearUserLimit(const Client& client) {
 bool Channel::isMember(const Client *client) const{
 	return _members.find(client) != _members.end();
 }
+
+const std::set<const Client*> &Channel::getMembers() const{
+    return(_members);
+}

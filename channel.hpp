@@ -68,6 +68,7 @@ public:
     // Getters
     const std::string& getName() const;
     const std::string& getTopic() const;
+    const std::set<const Client*> &getMembers() const;
 
 
 };
