@@ -6,7 +6,8 @@ NAME = ircserv
 SRCS = src/main.cpp \
 		src/server.cpp \
 		src/channel.cpp \
-		src/client.cpp
+		src/client.cpp \
+		src/command.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 

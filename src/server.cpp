@@ -116,7 +116,10 @@ int Server::receiveClient(int i)
             {
                 std::string command = it->second->getBuffer().substr(0, pos);
                 it->second->getBuffer().erase(0, pos + 1);
-                std::cout<<"comando inserito: "<<command<<std::endl;
+                Command cmd = parseCommand(command);
+                std::cout << "comando: " << cmd.command << std::endl;
+                for (size_t p = 0; p < cmd.params.size(); p++)
+                    std::cout << "parametro: " << cmd.params[p] << std::endl;
             }
             else
                 break ;
