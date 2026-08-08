@@ -377,7 +377,7 @@ void sendToClient(Client& client, const std::string& message);
 
 - [OK] Conservare il fd ricevuto da `accept()`.
 - [OK] Inizializzare `_registrationStatus` a `0`.
-- [?] Inizializzare esplicitamente stringhe e container, anche se lo fanno già di default.
+- [KO] Inizializzare esplicitamente stringhe e container, anche se lo fanno già di default.
 
 ### Registrazione IRC
 
@@ -394,13 +394,13 @@ void sendToClient(Client& client, const std::string& message);
 ### Identità
 
 - [TODO] Validare nickname e username nel command handler.
-- [TODO] Restituire `const std::string&` dai getter per evitare copie inutili.
-- [TODO] Uniformare il nome dell'attributo `_nickname` in tutto il progetto.
+- [OK] Restituire `const std::string&` dai getter per evitare copie inutili.
+- [KO] Uniformare il nome dell'attributo `_nickname` in tutto il progetto.
 
 ### Buffer
 
 - [OK] Rinominare `setBuffer()` in `appendBuffer()`.
-- [TODO] Restituire il buffer tramite `const std::string&`.
+- [OK] Restituire il buffer tramite `const std::string&`.
 - [OK] Aggiungere una funzione per rimuovere solo la parte già processata.
 - [OK] Non cancellare tutto il buffer se contiene anche un comando incompleto successivo.
 - [OK] Gestire più comandi arrivati nella stessa `recv()`.
@@ -408,7 +408,7 @@ void sendToClient(Client& client, const std::string& message);
 
 ### Relazione con i canali
 
-- [TODO] Decidere definitivamente tra `Channel*` e `const Channel*`.
+- [OK] Decidere definitivamente tra `Channel*` e `const Channel*`.
 - [OK] Aggiungere `isInChannel()`.
 - [TODO] Aggiornare `_channels` durante `JOIN`, `PART`, `KICK` e `QUIT`.
 - [TODO] Evitare puntatori rimasti verso Channel già distrutti.
