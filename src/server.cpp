@@ -276,6 +276,11 @@ void Server::kick(const std::string &name, Client &executor, Client &target, std
     broadcast(*chan, message);
     chan->removeMember(target);
     target.removeChannel(chan);
+    if (chan->empty())
+    {
+        delete chan;
+        _channels.erase(name);
+    }
 }
 
 void Server::join(const std::string &name, Client &client, const std::string &key)
@@ -322,6 +327,24 @@ void Server::join(const std::string &name, Client &client, const std::string &ke
     std::string message = RPL_JOIN(client.getNickname(), name) + "\r\n";
     broadcast(*chan, message);
     client.addChannel(chan);
+
+    if (chan->getTopic().empty())
+        sendToClient(client, RPL_NOTOPIC(client.getNickname(), name) + "\r\n");
+    else
+        sendToClient(client, RPL_TOPIC(client.getNickname(), name, chan->getTopic()) + "\r\n");
+
+    std::string users;
+    const std::set<const Client *> &members = chan->getMembers();
+    for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
+    {
+        if (!users.empty())
+            users += ' ';
+        if (chan->isOperator(**it))
+            users += '@';
+        users += const_cast<Client *>(*it)->getNickname();
+    }
+    sendToClient(client, RPL_NAMREPLY(client.getNickname(), name, users) + "\r\n");
+    sendToClient(client, RPL_ENDOFNAMES(client.getNickname(), name) + "\r\n");
 }
 
 void Server::topic(Client &executor, std::string &name, std::string &topic){
