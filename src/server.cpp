@@ -2,17 +2,17 @@
 
 Server::Server(int port, const std::string &password) : _port(port), _password(password)
 {
-    std::cout<<"server creato" << std::endl << "porta usata: "<<_port<<std::endl;
-    std::cout<<"the password is: "<<password <<std::endl;
+    std::cout << "server creato" << std::endl
+              << "porta usata: " << _port << std::endl;
+    std::cout << "the password is: " << password << std::endl;
     Server::setupSocket(_port);
     _fds.push_back(makePollFd(_serverSocket));
 }
 
 Server::~Server()
 {
-    std::cout<<"Destructor called"<<std::endl;
+    std::cout << "Destructor called" << std::endl;
 }
-
 
 void Server::setupSocket(int _port)
 {
@@ -31,7 +31,7 @@ void Server::setupSocket(int _port)
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int opt = 1;
-    if(setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+    if (setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
     {
         std::cout << "errore di setsockopt" << std::endl;
         perror("setsockopt");
@@ -44,7 +44,7 @@ void Server::setupSocket(int _port)
         std::cout << "errore di fcntl" << std::endl;
         perror("fcntl");
         close(this->_serverSocket);
-        throw std::runtime_error("fcntl failed");    
+        throw std::runtime_error("fcntl failed");
     }
 
     if (bind(this->_serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
@@ -81,17 +81,17 @@ void Server::acceptClient()
     {
         std::cout << "errore di accept" << std::endl;
         perror("accept");
-        return ;    
+        return;
     }
     if (fcntl(acc, F_SETFL, O_NONBLOCK) == -1)
     {
         std::cout << "errore di fcntl" << std::endl;
         perror("fcntl");
         close(acc);
-        return ;
+        return;
     }
-    Client* newClient = new Client(acc);
-    _clients.insert(std::pair<int, Client*>(acc, newClient));
+    Client *newClient = new Client(acc);
+    _clients.insert(std::pair<int, Client *>(acc, newClient));
     this->_fds.push_back(makePollFd(acc));
 }
 
@@ -105,14 +105,14 @@ int Server::receiveClient(int i)
         return -1;
     }
     std::string recived(buffer, bytes);
-    std::map<int, Client*>::iterator it = _clients.find(_fds[i].fd);
-    if(it != _clients.end())
+    std::map<int, Client *>::iterator it = _clients.find(_fds[i].fd);
+    if (it != _clients.end())
     {
         it->second->appendBuffer(recived);
-        while(true)
+        while (true)
         {
             size_t pos = it->second->getBuffer().find('\n');
-            if(pos != std::string::npos)
+            if (pos != std::string::npos)
             {
                 std::string command = it->second->getBuffer().substr(0, pos);
                 it->second->getBuffer().erase(0, pos + 1);
@@ -122,11 +122,11 @@ int Server::receiveClient(int i)
                     std::cout << "parametro: " << cmd.params[p] << std::endl;
             }
             else
-                break ;
+                break;
         }
     }
     else
-        std::cout<<"client non trovato o errato"<<std::endl;
+        std::cout << "client non trovato o errato" << std::endl;
     return 0;
 }
 
@@ -134,22 +134,21 @@ void Server::disconnectClient(int fd)
 {
     close(fd);
     size_t i = 0;
-    while(i < _fds.size())
-        if(fd != Server::_fds[i].fd)
+    while (i < _fds.size())
+        if (fd != Server::_fds[i].fd)
             i++;
         else
         {
             _fds.erase(_fds.begin() + i);
-            std::map<int, Client*>::iterator it = _clients.find(fd);
-            if(it != _clients.end())
+            std::map<int, Client *>::iterator it = _clients.find(fd);
+            if (it != _clients.end())
             {
-                delete(it->second);
+                delete (it->second);
                 _clients.erase(it);
             }
-            std::cout<<"client ["<<i<<"] disconnesso"<<std::endl;
-            break ;
+            std::cout << "client [" << i << "] disconnesso" << std::endl;
+            break;
         }
-    
 }
 
 void Server::run()
@@ -158,16 +157,15 @@ void Server::run()
     {
         for (size_t j = 0; j < _fds.size(); j++)
         {
-            if(_fds[j].fd != _serverSocket)
+            if (_fds[j].fd != _serverSocket)
             {
-                std::map<int, Client*>::iterator it = _clients.find(_fds[j].fd);
-                if(it != _clients.end())
+                std::map<int, Client *>::iterator it = _clients.find(_fds[j].fd);
+                if (it != _clients.end())
                 {
                     if (it->second->getSendBuffer().empty())
                         _fds[j].events = POLLIN;
                     else
                         _fds[j].events = POLLIN | POLLOUT;
-
                 }
             }
         }
@@ -184,7 +182,7 @@ void Server::run()
                 }
                 else
                 {
-                    if(Server::receiveClient(i) < 0)
+                    if (Server::receiveClient(i) < 0)
                         i--;
                 }
             }
@@ -196,21 +194,22 @@ void Server::run()
     }
 }
 
-bool Server::findClient(std::string value){
-    for (std::map<int, Client*>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+bool Server::findClient(std::string value)
+{
+    for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
-    if (it->second->getNickname() == value)
-        return true;
+        if (it->second->getNickname() == value)
+            return true;
 
-    if (it->second->getUsername() == value)
-        return true;
+        if (it->second->getUsername() == value)
+            return true;
     }
     return false;
 }
 
-Channel *Server::findChannel(const std::string& name)
+Channel *Server::findChannel(const std::string &name)
 {
-    std::map<std::string, Channel*>::iterator it = _channels.find(name);
+    std::map<std::string, Channel *>::iterator it = _channels.find(name);
 
     if (it == _channels.end())
         return NULL;
@@ -218,14 +217,16 @@ Channel *Server::findChannel(const std::string& name)
     return it->second;
 }
 
-void Server::sendToClient(Client &client, const std::string &message){
+void Server::sendToClient(Client &client, const std::string &message)
+{
     client.appendSendBuffer(message);
 }
 
-void Server::flushClient(int fd){
+void Server::flushClient(int fd)
+{
 
-    std::map<int, Client*>::iterator it = _clients.find(fd);
-    if(it != _clients.end())
+    std::map<int, Client *>::iterator it = _clients.find(fd);
+    if (it != _clients.end())
     {
         ssize_t sent = send(fd, it->second->getSendBuffer().c_str(), it->second->getSendBuffer().size(), 0);
         if (sent > 0)
@@ -239,69 +240,84 @@ void Server::flushClient(int fd){
     }
 }
 
-void Server::broadcast(const Channel &channel, const std::string &message){
+void Server::broadcast(const Channel &channel, const std::string &message)
+{
     const std::set<const Client *> &members = channel.getMembers();
     for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); it++)
-        sendToClient(const_cast<Client&>(**it), message);
+        sendToClient(const_cast<Client &>(**it), message);
 }
 
+void Server::kick(const std::string &name, Client &executor, Client &target, std::string &reason)
+{
 
-void Server::kick(const std::string &name, Client &executor, Client &target, std::string &reason){
+    Channel *chan = findChannel(name);
 
-	Channel *chan = findChannel(name);
-
-	if(!chan)
-		throw std::runtime_error("Channel not found");
-	if (!(chan->isOperator(executor)))
-        throw std::runtime_error("User not allowed");
+    if (!chan)
+    {
+        sendToClient(executor,ERR_NOTONCHANNEL(executor.getNickname(), name) + "\r\n");
+        return;
+    }
+    if (!(chan->isMember(&executor)))
+    {
+        sendToClient(executor, ERR_NOTONCHANNEL(executor.getNickname(), name)+ "\r\n");
+        return;
+    }
+    if (!(chan->isOperator(executor)))
+    {
+        sendToClient(executor, ERR_CHANOPRIVSNEEDED(executor.getNickname(), name)+ "\r\n");
+        return;
+    }
     if (!(chan->isMember(&target)))
-        throw std::runtime_error("User not in channel");
-    std::string message = target.getNickname() + " has been kicked. Reason: " + reason;
-    broadcast(*chan, message);    
-	chan->removeMember(target);
+    {
+        sendToClient(executor, ERR_USERNOTINCHANNEL(executor.getNickname(), target.getNickname(), name)+ "\r\n");
+        return;
+    }
+    std::string message = RPL_KICK(executor.getNickname(), name, target.getNickname(), reason) + "\r\n";
+    broadcast(*chan, message);
+    chan->removeMember(target);
     target.removeChannel(chan);
-
 }
 
-void Server::Join(const std::string &name, Client &client, const std::string &key) {
+void Server::Join(const std::string &name, Client &client, const std::string &key)
+{
     if (!client.isRegistered())
-         return;
+        return;
 
-     Channel *chan = findChannel(name);
-     if(!chan)
-     {
-         chan = new Channel(name);
-         _channels.insert(std::make_pair(name,chan));
-         chan->addOperator(client);
-     }
+    Channel *chan = findChannel(name);
+    if (!chan)
+    {
+        chan = new Channel(name);
+        _channels.insert(std::make_pair(name, chan));
+        chan->addOperator(client);
+    }
     Channel::JoinResult res = chan->canJoin(client, key);
     if (res != Channel::JOIN_OK)
     {
         std::string err;
         switch (res)
         {
-            case Channel::JOIN_ERR_INVITE_ONLY:
-                err = ERR_INVITEONLYCHAN(client.getNickname(), name);
-                break;
-            case Channel::JOIN_ERR_BAD_KEY:
-                err = ERR_BADCHANNELKEY(client.getNickname(), name);
-                break;
-            case Channel::JOIN_ERR_CHANNEL_FULL:
-                err = ERR_CHANNELISFULL(client.getNickname(), name);
-                break;
-            case Channel::JOIN_ERR_ALREADY_IN:
-                err = ERR_USERONCHANNEL(client.getNickname(), name);
-                break;
-            default:
-                err = ERR_UNKNOWNCOMMAND(client.getNickname(), "JOIN");
-                break;
+        case Channel::JOIN_ERR_INVITE_ONLY:
+            err = ERR_INVITEONLYCHAN(client.getNickname(), name);
+            break;
+        case Channel::JOIN_ERR_BAD_KEY:
+            err = ERR_BADCHANNELKEY(client.getNickname(), name);
+            break;
+        case Channel::JOIN_ERR_CHANNEL_FULL:
+            err = ERR_CHANNELISFULL(client.getNickname(), name);
+            break;
+        case Channel::JOIN_ERR_ALREADY_IN:
+            err = ERR_USERONCHANNEL(client.getNickname(), name);
+            break;
+        default:
+            err = ERR_UNKNOWNCOMMAND(client.getNickname(), "JOIN");
+            break;
         }
         sendToClient(client, err + "\r\n");
         return;
     }
 
-     chan->addMember(client);
-     std::string message = client.getNickname() + " just joined the channel.";
-     broadcast(*chan, message);
-     client.addChannel(chan);
- }
+    chan->addMember(client);
+    std::string message = RPL_JOIN(client.getNickname(), name) + "\r\n";
+    broadcast(*chan, message);
+    client.addChannel(chan);
+}
