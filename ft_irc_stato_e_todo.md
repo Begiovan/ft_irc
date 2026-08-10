@@ -589,10 +589,10 @@ Command command
 
 ### `TOPIC`
 
-- [ ] Senza nuovo topic: restituire il topic attuale.
-- [ ] Con nuovo topic: verificare membership e `+t`.
-- [ ] Salvare il nuovo topic.
-- [ ] Comunicare il cambiamento a tutti i membri.
+- [OK] Senza nuovo topic: restituire il topic attuale.
+- [OK] Con nuovo topic: verificare membership e `+t`.
+- [OK] Salvare il nuovo topic.
+- [OK] Comunicare il cambiamento a tutti i membri.
 
 ### `INVITE`
 

@@ -254,7 +254,7 @@ void Server::kick(const std::string &name, Client &executor, Client &target, std
 
     if (!chan)
     {
-        sendToClient(executor,ERR_NOTONCHANNEL(executor.getNickname(), name) + "\r\n");
+        sendToClient(executor,ERR_NOSUCHCHANNEL(executor.getNickname(), name) + "\r\n");
         return;
     }
     if (!(chan->isMember(&executor)))
@@ -278,11 +278,13 @@ void Server::kick(const std::string &name, Client &executor, Client &target, std
     target.removeChannel(chan);
 }
 
-void Server::Join(const std::string &name, Client &client, const std::string &key)
+void Server::join(const std::string &name, Client &client, const std::string &key)
 {
     if (!client.isRegistered())
+    {
+        sendToClient(client, ERR_NOTREGISTERED(client.getNickname()) + "\r\n");
         return;
-
+    }
     Channel *chan = findChannel(name);
     if (!chan)
     {
@@ -320,4 +322,47 @@ void Server::Join(const std::string &name, Client &client, const std::string &ke
     std::string message = RPL_JOIN(client.getNickname(), name) + "\r\n";
     broadcast(*chan, message);
     client.addChannel(chan);
+}
+
+void Server::topic(Client &executor, std::string &name, std::string &topic){
+    Channel *chan = findChannel(name);
+
+    if (!chan)
+    {
+        sendToClient(executor,ERR_NOSUCHCHANNEL(executor.getNickname(), name) + "\r\n");
+        return;
+    }
+    if (!(chan->isMember(&executor)))
+    {
+        sendToClient(executor, ERR_NOTONCHANNEL(executor.getNickname(), name)+ "\r\n");
+        return;
+    }
+    if(topic.empty()) // view topic 
+    {
+        // topic chan unset
+        if (chan->getTopic().empty())
+        {
+            sendToClient(executor, RPL_NOTOPIC(executor.getNickname(), name)+ "\r\n");
+            return;
+        }
+        // topic chan set
+        else {
+            sendToClient(executor, RPL_TOPIC(executor.getNickname(), name, chan->getTopic())+ "\r\n");
+            return;
+        }
+    }
+    else // set topic
+    {
+        if(!chan->canChangeTopic(executor))
+        {
+            sendToClient(executor, ERR_CHANOPRIVSNEEDED(executor.getNickname(), name)+ "\r\n");
+            return;
+        }
+        else
+        {
+            chan->setTopic(executor, topic);
+            std::string message = ":" + executor.getNickname() + " TOPIC " + name + " :" + chan->getTopic() + "\r\n";
+            broadcast(*chan, message);
+        }
+    }
 }

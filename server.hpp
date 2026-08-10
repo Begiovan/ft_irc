@@ -40,6 +40,6 @@ public:
 
     // COMANDI
     void kick(const std::string &name, Client &executor, Client &target, std::string &reason);
-    void Join(const std::string &name, Client &client, const std::string &key);
-
+    void join(const std::string &name, Client &client, const std::string &key);
+    void topic(Client &executor, std::string &name, std::string &topic);
 };
