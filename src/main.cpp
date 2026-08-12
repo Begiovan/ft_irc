@@ -1,5 +1,5 @@
-#include "../ft_irc.hpp"
-#include "../server.hpp"
+#include "ft_irc.hpp"
+#include "server.hpp"
 #include <cstdlib>
 
 int main(int argc, char **argv)

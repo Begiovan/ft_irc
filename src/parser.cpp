@@ -1,4 +1,4 @@
-#include "../command.hpp"
+#include "parser.hpp"
 
 Command parseCommand(const std::string &line){
 
