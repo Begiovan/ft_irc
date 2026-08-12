@@ -215,6 +215,15 @@ bool Server::findClient(std::string value)
     return false;
 }
 
+Client *Server::returnClient(std::string value){
+        for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+    {
+        if (it->second->getNickname() == value)
+            return it->second;
+    }
+    return NULL;
+}
+
 Channel *Server::findChannel(const std::string &name)
 {
     std::map<std::string, Channel *>::iterator it = _channels.find(name);
@@ -223,6 +232,14 @@ Channel *Server::findChannel(const std::string &name)
         return NULL;
 
     return it->second;
+}
+
+Channel *Server::createChannel(const std::string &name)
+{
+    Channel *channel = new Channel(name);
+
+    _channels.insert(std::make_pair(name, channel));
+    return channel;
 }
 
 void Server::sendToClient(Client &client, const std::string &message)

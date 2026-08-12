@@ -33,6 +33,7 @@ public:
     bool findClient(std::string value);
     Client *returnClient(std::string value);
     Channel *findChannel(const std::string &name);
+    Channel *createChannel(const std::string &name);
 
     // MESSAGGI
     void sendToClient(Client &client, const std::string &message); // TO DO
