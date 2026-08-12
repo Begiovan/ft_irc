@@ -38,8 +38,17 @@ class Join : public ACommand {
 class Topic : public ACommand {
     public:
         Topic(Server &server, bool isAuth);
-        ~Topic();;
+        ~Topic();
         void execute(Client *client, std::vector<std::string> params);
+};
+
+class Invite : public ACommand {
+
+        public:
+        Invite(Server &server, bool isAuth);
+        ~Invite();
+        void execute(Client *client, std::vector<std::string> params);
+
 };
 
 #endif

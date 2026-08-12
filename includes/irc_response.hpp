@@ -33,8 +33,9 @@
 #define RPL_WELCOME(source)                             "001 " + source + " :Welcome " + source + " to the ft_irc network"
 #define RPL_NAMREPLY(source, channel, users)            "353 " + source + " = " + channel + " :" + users
 #define RPL_ENDOFNAMES(source, channel)                 "366 " + source + " " + channel + " :End of /NAMES list."
-#define RPL_NOTOPIC(source, channel)					"331" + source + " " + channel + " :No topic set."
-#define RPL_TOPIC(source, channel, topic)				"332" + source + " " + channel + " :" + topic
+#define RPL_NOTOPIC(source, channel)                    "331 " + source + " " + channel + " :No topic set."
+#define RPL_TOPIC(source, channel, topic)               "332 " + source + " " + channel + " :" + topic
+#define RPL_INVITING(source, target, channel)           "341 " + source + " " + target + " " + channel
 
 /* Command Responses */
 
@@ -46,5 +47,6 @@
 #define RPL_QUIT(source, message)                       ":" + source + " QUIT :Quit: " + message
 #define RPL_KICK(source, channel, target, reason)       ":" + source + " KICK " + channel + " " + target + " :" + reason
 #define RPL_MODE(source, channel, modes, args)          ":" + source + " MODE " + channel + " " + modes + " " + args
+#define RPL_INVITE(source, target, channel)				":" + source + " INVITE " + target + " :" + channel
 
 #endif
