@@ -13,8 +13,7 @@ void Join::execute(Client *client, std::vector<std::string> params){
 	}
 	Channel *chan = _server->findChannel(params[0]);
 	if(!chan){
-		chan = new Channel(params[0]);
-		_server->_channels.insert(std::make_pair(params[0], chan));
+		_server->createChannel(params[0]);
 		chan->addMember(*client);
 		chan->addOperator(*client);
 	}
