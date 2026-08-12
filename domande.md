@@ -281,13 +281,13 @@ Parser dei messaggi IRC (comando + parametri)
 PASS, NICK, USER — tutta la fase di autenticazione/registrazione
 PING/PONG, QUIT, gestione disconnessioni
 PRIVMSG (privato e su canale — la parte di "invio", non la struttura Channel)
-JOIN, PART (la parte "un client entra/esce", non la struttura interna del canale)
+OK JOIN, PART (la parte "un client entra/esce", non la struttura interna del canale)
 
 
 Persona 2 — Canali e amministrazione (dominio Channel completo)
 Progettazione e implementazione della classe Channel (membri, operatori, topic, modes)
 La logica di "chi può fare cosa" (operatore vs utente normale)
-KICK — Eject a client from the channel
+OK KICK — Eject a client from the channel
 INVITE — Invite a client to a channel
 OK - TOPIC — Change or view the channel topic
 MODE — con tutte le sotto-opzioni: i, t, k, o, l (questo comando da solo è corposo, ha 5 comportamenti diversi al suo interno)

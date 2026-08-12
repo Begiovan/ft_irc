@@ -1,37 +1,15 @@
-// queste funzioni vanno inserite nella classe server per gestire i cambi di mode del channel una volta che il parser riconosce il comando
-class Client;
-class Channel;
+
+// invite op privilage user limit e mode devono essere fatti da op 
 
 
-#include <string>
-#include <iostream>
-// /TOPIC : se non c'è una stringa topic, stampa il topic del chan, se invece gliela passiamo, controlla se ha i permessi e lo cambia
-
-void handleTopic(Channel &channel, std::string &topic){
-
-	if (topic.empty())
-		std::cout << channel.getTopic() << std::endl;
-	if(channel.canChangeTopic(this))
-		channel.setTopic(topic);
-	else
-		std::cout << _nickName << " don't have permission to change the topic" << std::endl;
-}
-
-// KICK
-
-void handleKick(Channel &channel, Client &other){
-	if(channel.isOperator(this))
-		channel.removeMember(other);
-	else
-		std::cout << _nickName << " don't have permission to change the topic" << std::endl;
-}
+// i check comuni a tutti i comandi tipo: esistenza chan, registrazione utente ecc, spostarli in commandhandler
 
 
 
+controllo chan empty direttamente in server
 
+creare funzione per accedere alla lista di channels in server
 
+verificare se ha senso avere isauth dentro alla classe e nel costruttore ( magari si puo verificare direttamente nel cmd handler)
 
-
-
-
-
+implementare returnclient in server

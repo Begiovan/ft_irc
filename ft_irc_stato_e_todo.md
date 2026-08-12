@@ -577,7 +577,7 @@ Command command
 - [OK] Aggiungere il client su entrambi i lati della relazione.
 - [OK] Rendere operatore il primo membro.
 - [OK] Inviare il `JOIN` a tutti i membri.
-- [TODO] Inviare topic e lista nomi.
+- [OK] Inviare topic e lista nomi.
 
 ### `PART`
 
@@ -610,7 +610,7 @@ Command command
 - [OK] Inviare `KICK` prima della rimozione.
 - [OK] Rimuovere completamente il target dal canale.
 - [OK] Aggiornare anche il set dei canali del target.
-- [TODO] Eliminare il canale se vuoto.
+- [OK] Eliminare il canale se vuoto.
 
 ### `MODE`
 
@@ -658,9 +658,9 @@ Command command
 
 ## 3.11 Risposte IRC ed errori numerici
 
-- [ ] Creare funzioni/helper per formattare messaggi IRC.
+- [OK] Creare funzioni/helper per formattare messaggi IRC.
 - [ ] Aggiungere il prefisso server quando necessario.
-- [ ] Aggiungere nickname del destinatario ai numerici.
+- [OK] Aggiungere nickname del destinatario ai numerici.
 - [ ] Implementare almeno tutti i numerici richiesti dai flussi mandatori.
 - [ ] Gestire, tra gli altri, errori per:
   - comando sconosciuto;
@@ -677,7 +677,7 @@ Command command
   - chiave errata;
   - canale pieno;
   - mode sconosciuta.
-- [ ] Centralizzare la formattazione per evitare stringhe duplicate sparse nel codice.
+- [OK] Centralizzare la formattazione per evitare stringhe duplicate sparse nel codice.
 
 ---
 
