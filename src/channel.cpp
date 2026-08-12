@@ -6,8 +6,6 @@ Channel::~Channel() {}
 
 void Channel::addMember(Client& client) {
     _members.insert(&client);
-    if (_operators.empty())
-        _operators.insert(client.getFd());
 }
 
 void Channel::removeMember(Client& client) {

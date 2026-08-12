@@ -7,17 +7,22 @@ Join::~Join(){}
 
 void Join::execute(Client *client, std::vector<std::string> params){
 
-    	if (params.size() == 1){
-		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "KICK")+ "\r\n");
+    if (params.size() < 1){
+		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "JOIN")+ "\r\n");
 		return;
 	}
 	Channel *chan = _server->findChannel(params[0]);
 	if(!chan){
-		_server->createChannel(params[0]);
+		chan = _server->createChannel(params[0]);
 		chan->addMember(*client);
 		chan->addOperator(*client);
+        return;
 	}
-	Channel::JoinResult res = chan->canJoin(*client, params[1]);
+    Channel::JoinResult res;
+    if (params.size() == 1)
+        res = chan->canJoin(*client, NULL);
+    else
+        res = chan->canJoin(*client, params[1]);
 	if (res != Channel::JOIN_OK){
 		std::string err;
 		        switch (res)
