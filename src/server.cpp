@@ -1,4 +1,4 @@
-#include "../server.hpp"
+#include "server.hpp"
 
 Server::Server(int port, const std::string &password) : _port(port), _password(password)
 {
@@ -95,6 +95,12 @@ void Server::acceptClient()
     this->_fds.push_back(makePollFd(acc));
 }
 
+ACommand *Server::dispatch(Command cmd)
+{
+    (void)cmd;
+    return NULL;
+}
+
 int Server::receiveClient(int i)
 {
     char buffer[1024];
@@ -114,9 +120,11 @@ int Server::receiveClient(int i)
             size_t pos = it->second->getBuffer().find('\n');
             if (pos != std::string::npos)
             {
-                std::string command = it->second->getBuffer().substr(0, pos);
+                std::string commandLine = it->second->getBuffer().substr(0, pos);
                 it->second->getBuffer().erase(0, pos + 1);
-                Command cmd = parseCommand(command);
+                Command cmd = parseCommand(commandLine);
+                ACommand *commandHandler = dispatch(cmd);
+                (void)commandHandler;
                 std::cout << "comando: " << cmd.command << std::endl;
                 for (size_t p = 0; p < cmd.params.size(); p++)
                     std::cout << "parametro: " << cmd.params[p] << std::endl;
@@ -247,145 +255,3 @@ void Server::broadcast(const Channel &channel, const std::string &message)
         sendToClient(const_cast<Client &>(**it), message);
 }
 
-void Server::kick(const std::string &name, Client &executor, Client &target, std::string &reason)
-{
-
-    Channel *chan = findChannel(name);
-
-    if (!chan)
-    {
-        sendToClient(executor,ERR_NOSUCHCHANNEL(executor.getNickname(), name) + "\r\n");
-        return;
-    }
-    if (!(chan->isMember(&executor)))
-    {
-        sendToClient(executor, ERR_NOTONCHANNEL(executor.getNickname(), name)+ "\r\n");
-        return;
-    }
-    if (!(chan->isOperator(executor)))
-    {
-        sendToClient(executor, ERR_CHANOPRIVSNEEDED(executor.getNickname(), name)+ "\r\n");
-        return;
-    }
-    if (!(chan->isMember(&target)))
-    {
-        sendToClient(executor, ERR_USERNOTINCHANNEL(executor.getNickname(), target.getNickname(), name)+ "\r\n");
-        return;
-    }
-    std::string message = RPL_KICK(executor.getNickname(), name, target.getNickname(), reason) + "\r\n";
-    broadcast(*chan, message);
-    chan->removeMember(target);
-    target.removeChannel(chan);
-    if (chan->empty())
-    {
-        delete chan;
-        _channels.erase(name);
-    }
-}
-
-void Server::join(const std::string &name, Client &client, const std::string &key)
-{
-    if (!client.isRegistered())
-    {
-        sendToClient(client, ERR_NOTREGISTERED(client.getNickname()) + "\r\n");
-        return;
-    }
-    Channel *chan = findChannel(name);
-    if (!chan)
-    {
-        chan = new Channel(name);
-        _channels.insert(std::make_pair(name, chan));
-        chan->addOperator(client);
-    }
-    Channel::JoinResult res = chan->canJoin(client, key);
-    if (res != Channel::JOIN_OK)
-    {
-        std::string err;
-        switch (res)
-        {
-        case Channel::JOIN_ERR_INVITE_ONLY:
-            err = ERR_INVITEONLYCHAN(client.getNickname(), name);
-            break;
-        case Channel::JOIN_ERR_BAD_KEY:
-            err = ERR_BADCHANNELKEY(client.getNickname(), name);
-            break;
-        case Channel::JOIN_ERR_CHANNEL_FULL:
-            err = ERR_CHANNELISFULL(client.getNickname(), name);
-            break;
-        case Channel::JOIN_ERR_ALREADY_IN:
-            err = ERR_USERONCHANNEL(client.getNickname(), name);
-            break;
-        default:
-            err = ERR_UNKNOWNCOMMAND(client.getNickname(), "JOIN");
-            break;
-        }
-        sendToClient(client, err + "\r\n");
-        return;
-    }
-
-    chan->addMember(client);
-    std::string message = RPL_JOIN(client.getNickname(), name) + "\r\n";
-    broadcast(*chan, message);
-    client.addChannel(chan);
-
-    if (chan->getTopic().empty())
-        sendToClient(client, RPL_NOTOPIC(client.getNickname(), name) + "\r\n");
-    else
-        sendToClient(client, RPL_TOPIC(client.getNickname(), name, chan->getTopic()) + "\r\n");
-
-    std::string users;
-    const std::set<const Client *> &members = chan->getMembers();
-    for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
-    {
-        if (!users.empty())
-            users += ' ';
-        if (chan->isOperator(**it))
-            users += '@';
-        users += const_cast<Client *>(*it)->getNickname();
-    }
-    sendToClient(client, RPL_NAMREPLY(client.getNickname(), name, users) + "\r\n");
-    sendToClient(client, RPL_ENDOFNAMES(client.getNickname(), name) + "\r\n");
-}
-
-void Server::topic(Client &executor, std::string &name, std::string &topic){
-    Channel *chan = findChannel(name);
-
-    if (!chan)
-    {
-        sendToClient(executor,ERR_NOSUCHCHANNEL(executor.getNickname(), name) + "\r\n");
-        return;
-    }
-    if (!(chan->isMember(&executor)))
-    {
-        sendToClient(executor, ERR_NOTONCHANNEL(executor.getNickname(), name)+ "\r\n");
-        return;
-    }
-    if(topic.empty()) // view topic 
-    {
-        // topic chan unset
-        if (chan->getTopic().empty())
-        {
-            sendToClient(executor, RPL_NOTOPIC(executor.getNickname(), name)+ "\r\n");
-            return;
-        }
-        // topic chan set
-        else {
-            sendToClient(executor, RPL_TOPIC(executor.getNickname(), name, chan->getTopic())+ "\r\n");
-            return;
-        }
-    }
-    else // set topic
-    {
-        if(!chan->canChangeTopic(executor))
-        {
-            sendToClient(executor, ERR_CHANOPRIVSNEEDED(executor.getNickname(), name)+ "\r\n");
-            return;
-        }
-        else
-        {
-            chan->setTopic(executor, topic);
-            std::string message = ":" + executor.getNickname() + " TOPIC " + name + " :" + chan->getTopic() + "\r\n";
-            broadcast(*chan, message);
-        }
-    }
-}
