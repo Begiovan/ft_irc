@@ -1,4 +1,5 @@
 CXX = c++
+CPPFLAGS = -Iincludes
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
 NAME = ircserv
@@ -7,17 +8,17 @@ SRCS = src/main.cpp \
 		src/server.cpp \
 		src/channel.cpp \
 		src/client.cpp \
-		src/command.cpp
+		src/parser.cpp
 
 OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
 
 $(NAME): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(NAME) $(OBJS)
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $(NAME) $(OBJS)
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
 	rm -f $(OBJS)
