@@ -9,9 +9,17 @@ int main(int argc, char **argv)
         int port;
         std::string password;
 
+        if (!isPositiveInteger(argv[1]))
+        {
+            std::cerr << "Errore: porta non valida" << std::endl;
+            return 1;
+        }
         port = std::atoi(argv[1]);
         if (port <= 1024)
-            std::cout<<"inserire una porta con valore > 1024"<<std::endl;
+        {
+            std::cerr << "inserire una porta con valore > 1024" << std::endl;
+            return 1;
+        }
         password = argv[2];
         try
         {
