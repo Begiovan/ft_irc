@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Join::Join(Server &server, bool isAuth) : ACommand(server, isAuth){}
+Join::Join(Server &server) : ACommand(server){}
 Join::~Join(){}
 
 // sintax: JOIN channel key (optional)
@@ -47,6 +47,8 @@ void Join::execute(Client *client, std::vector<std::string> params){
 		return;
 	}
 	chan->addMember(*client);
+    if (chan->isInvited(*client))
+        chan->removeInvite(*client);
 	_server->broadcast(*chan,  RPL_JOIN(client->getNickname(), params[0]) + "\r\n" );
 	client->addChannel(chan);
 	    if (chan->getTopic().empty())

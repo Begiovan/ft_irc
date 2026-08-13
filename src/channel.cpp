@@ -70,70 +70,37 @@ const std::set<const Client*> &Channel::getMembers() const{
     return(_members);
 }
     // TOPIC 
-void Channel::setTopic(const Client& executor, const std::string& topic) {
-    if (canChangeTopic(executor))
-        _topic = topic;
+void Channel::setTopic(const std::string& topic) {
+    _topic = topic;
 }
 
-void Channel::setTopicRestricted(const Client& client, bool enabled) {
-    if (!isOperator(client))
-        return;
+void Channel::setTopicRestricted(bool enabled) {
     _topicRestricted = enabled;
 }
 
-const std::string& Channel::getTopic() const {
-    return _topic;
-}
-bool Channel::topicRes() const {
-    return (_topicRestricted);
-}
-
-    // USER LIMIT
-void Channel::clearUserLimit(const Client& client) {
-    if (!isOperator(client))
-        return;
+void Channel::clearUserLimit() {
     _userLimit = -1;
 }
 
-void Channel::setUserLimit(const Client& client, int limit) {
-    if (!isOperator(client))
-        return;
+void Channel::setUserLimit(int limit) {
     if (limit > 0)
         _userLimit = limit;
     else
         std::cout << "invalid User limit" << std::endl;
 }
-    // INVITE
-void Channel::setInviteOnly(const Client& client, bool enabled) {
-    if (!isOperator(client))
-        return;
+
+int Channel::getUserLimit() const{
+    return _userLimit;
+}
+
+void Channel::setInviteOnly(bool enabled) {
     _inviteOnly = enabled;
 }
 
-bool Channel::isInvited(const Client& client) const {
-    return _invited.find(client.getFd()) != _invited.end();
-}
-
-bool Channel::inviteRes() const {
-    return _inviteOnly;
-}
-
-// KEY
-bool Channel::hasKey() const {
-    return !_key.empty();
- }
-const std::string &Channel::getKey() const{
-    return (_key);
-}
-
-void Channel::setKey(const Client& client, const std::string& key) {
-    if (!isOperator(client))
-        return;
+void Channel::setKey(const std::string& key) {
     _key = key;
 }
 
-void Channel::clearKey(const Client& client) {
-    if (!isOperator(client))
-        return;
+void Channel::clearKey() {
     _key = "";
 }

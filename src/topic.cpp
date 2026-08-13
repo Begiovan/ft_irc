@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Topic::Topic(Server &server, bool isAuth) : ACommand(server, isAuth){}
+Topic::Topic(Server &server) : ACommand(server){}
 Topic::~Topic(){}
 
 // sintax : TOPIC channel -> mostra il topic
@@ -40,7 +40,7 @@ void Topic::execute(Client *client, std::vector<std::string> params){
 		return;
 	}
 
-	chan->setTopic(*client, params[1]);
+	chan->setTopic(params[1]);
 	std::string message = ":" + client->getNickname() + " TOPIC " + params[0] + " :" + chan->getTopic() + "\r\n";
 	_server->broadcast(*chan, message);
 }

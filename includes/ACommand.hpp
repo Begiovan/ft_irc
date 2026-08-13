@@ -11,10 +11,9 @@ struct Command;
 class ACommand {
 protected:
     Server *_server;
-    bool _isauth;
 
 public:
-    explicit ACommand(Server &server, bool isAuth) : _server(&server), _isauth(isAuth) {}
+    explicit ACommand(Server &server) : _server(&server) {}
     virtual ~ACommand() {}
 
     virtual void execute(Client *client, std::vector<std::string> args) = 0;
@@ -22,7 +21,7 @@ public:
 
 class Kick : public ACommand {
     public:
-        Kick(Server &server, bool isAuth);
+        Kick(Server &server);
         ~Kick();
         void execute(Client *client, std::vector<std::string> params);
 };
@@ -30,14 +29,14 @@ class Kick : public ACommand {
 class Join : public ACommand {
 
     public:
-        Join(Server &server, bool isAuth);
+        Join(Server &server);
         ~Join();
         void execute(Client *client, std::vector<std::string> params);
 };
 
 class Topic : public ACommand {
     public:
-        Topic(Server &server, bool isAuth);
+        Topic(Server &server);
         ~Topic();
         void execute(Client *client, std::vector<std::string> params);
 };
@@ -45,10 +44,18 @@ class Topic : public ACommand {
 class Invite : public ACommand {
 
         public:
-        Invite(Server &server, bool isAuth);
+        Invite(Server &server);
         ~Invite();
         void execute(Client *client, std::vector<std::string> params);
 
+};
+
+class Mode : public ACommand {
+
+    public:
+    Mode(Server &server);
+    ~Mode();
+    void execute(Client *client, std::vector<std::string> params);
 };
 
 #endif

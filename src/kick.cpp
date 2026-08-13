@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Kick::Kick(Server &server, bool isAuth) : ACommand(server, isAuth){}
+Kick::Kick(Server &server) : ACommand(server){}
 Kick::~Kick(){}
 
 // sintax: KICK channel target: message (optional)
@@ -43,6 +43,8 @@ void Kick::execute(Client *client, std::vector<std::string> params){
 	if (params.size() == 3)
 		reason = params[2];
 	_server->broadcast(*chan, RPL_KICK(client->getNickname(), params[0], params[1], reason)  + "\r\n");
+	chan->removeOperator(*target);
+	chan->removeInvite(*target);
 	chan->removeMember(*target);
 	target->removeChannel(chan);
 }

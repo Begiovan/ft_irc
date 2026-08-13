@@ -60,18 +60,19 @@ public:
 
     // TOPIC 
 
-    void setTopic(const Client& executor, const std::string& topic); // topic
-    void setTopicRestricted(const Client& client, bool enabled); // mode
+    void setTopic(const std::string& topic); // topic
+    void setTopicRestricted(bool enabled); // mode
     const std::string& getTopic() const;
     bool topicRes() const;   
 
     // USER LIMIT
-    void clearUserLimit(const Client& client);
-    void setUserLimit(const Client& client, int limit);
+    void clearUserLimit();
+    void setUserLimit(int limit);
+    int getUserLimit() const;
 
     // INVITE
 
-    void setInviteOnly(const Client& client, bool enabled);
+    void setInviteOnly(bool enabled);
     bool isInvited(const Client& client) const;
     bool inviteRes() const;
 
@@ -79,8 +80,8 @@ public:
     
     bool hasKey() const;
     const std::string &getKey() const;
-    void setKey(const Client& client, const std::string& key);
-    void clearKey(const Client& client);
+    void setKey(const std::string& key);
+    void clearKey();
 
 };
 

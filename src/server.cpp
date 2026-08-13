@@ -97,7 +97,14 @@ void Server::acceptClient()
 
 ACommand *Server::dispatch(Command cmd)
 {
-    (void)cmd;
+    if (cmd.command == "KICK")
+        return new Kick(*this);
+    if (cmd.command == "INVITE")
+        return new Invite(*this);
+    if (cmd.command == "TOPIC")
+        return new Topic(*this);
+    if (cmd.command == "JOIN")
+        return new Join(*this);
     return NULL;
 }
 
@@ -123,11 +130,22 @@ int Server::receiveClient(int i)
                 std::string commandLine = it->second->getBuffer().substr(0, pos);
                 it->second->getBuffer().erase(0, pos + 1);
                 Command cmd = parseCommand(commandLine);
-                ACommand *commandHandler = dispatch(cmd);
-                (void)commandHandler;
-                std::cout << "comando: " << cmd.command << std::endl;
-                for (size_t p = 0; p < cmd.params.size(); p++)
-                    std::cout << "parametro: " << cmd.params[p] << std::endl;
+                std::map<int, Client *>::iterator clientIt = _clients.find(_fds[i].fd);
+                if (clientIt != _clients.end())
+                {
+                    // TODO: controllare qui se il client è autenticato/registrato
+                    // e permettere solo i comandi ammessi prima della registratione
+                    ACommand *commandHandler = dispatch(cmd);
+                    if (commandHandler)
+                    {
+                        commandHandler->execute(clientIt->second, cmd.params);
+                        delete commandHandler;
+                    }
+                    else
+                    {
+                        sendToClient(*clientIt->second, ERR_UNKNOWNCOMMAND(clientIt->second->getNickname(), cmd.command) + "\r\n");
+                    }
+                }
             }
             else
                 break;
@@ -207,9 +225,6 @@ bool Server::findClient(std::string value)
     for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
         if (it->second->getNickname() == value)
-            return true;
-
-        if (it->second->getUsername() == value)
             return true;
     }
     return false;

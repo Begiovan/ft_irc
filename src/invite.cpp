@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Invite::Invite(Server &server, bool isAuth) : ACommand(server, isAuth){}
+Invite::Invite(Server &server) : ACommand(server){}
 Invite::~Invite(){}
 
 // sintax INVITE nickname channel
@@ -11,7 +11,6 @@ void Invite::execute(Client *client, std::vector<std::string> params){
 		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "INVITE")+ "\r\n");
 		return;
 	}
-	
 	Client *target = _server->returnClient(params[0]);
 	if (target == NULL)
 	{
@@ -37,12 +36,6 @@ void Invite::execute(Client *client, std::vector<std::string> params){
 	if (chan->isMember(target))
 	{
 		_server->sendToClient(*client, ERR_USERONCHANNEL(client->getNickname(), params[1]));
-		return;
-	}
-
-	if(chan->full())
-	{
-		_server->sendToClient(*client, ERR_CHANNELISFULL(client->getNickname(), params[1]) + "\r\n");
 		return;
 	}
 	chan->inviteUser(*target);
