@@ -44,7 +44,8 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 		_server->sendToClient(*client, ERR_NOSUCHCHANNEL(client->getNickname(), params[0]) + "\r\n");
 		return;
 	}
-	if (!chan->isMember(client)){
+	if (!chan->isMember(client))
+	{
 		_server->sendToClient(*client, ERR_NOTONCHANNEL(client->getNickname(), params[0]) + "\r\n");
 		return;
 	}
@@ -59,10 +60,13 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 		_server->sendToClient(*client, ERR_CHANOPRIVSNEEDED(client->getNickname(), params[0]) + "\r\n");
 		return;
 	}
+
+	bool changed = false;
 	bool enable = true;
 	size_t numArgs = 2;
 	std::string mode = params[1];
-	for (size_t i = 0; i < mode.size(); i++){
+	for (size_t i = 0; i < mode.size(); i++)
+	{
 		switch (mode[i])
 		{
 			case '+':
@@ -73,9 +77,11 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 				continue;
 			case 'i':
 				chan->setInviteOnly(enable);
+				changed = true;
 				break;
 			case 't':
 				chan->setTopicRestricted(enable);
+				changed = true;
 				break;
 			case 'o':
 				if (params.size() <= numArgs)
@@ -99,6 +105,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 						chan->addOperator(*target);
 					else
 						chan->removeOperator(*target);
+					changed = true;
 				}
 				numArgs++;
 				break;
@@ -115,6 +122,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 				}
 				else
 					chan->clearKey();
+				changed = true;
 				break;
 			case 'l':
 				if (enable)
@@ -135,10 +143,13 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 				}
 				else
 					chan->clearUserLimit();
+				changed = true;
 				break;
 			default:
 				_server->sendToClient(*client, ERR_UNKNOWNCOMMAND(client->getNickname(), "MODE") + "\r\n");
 				return;
 		}
 	}
+	if (changed)
+		_server->broadcast(*chan, RPL_MODE(client->getNickname(), params[0], params[1], "") + "\r\n");
 }
