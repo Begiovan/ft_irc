@@ -9,7 +9,8 @@ SRCS = src/main.cpp \
 		src/server.cpp \
 		src/channel.cpp \
 		src/client.cpp \
-		src/parser.cpp
+		src/parser.cpp \
+		src/mode.cpp
 
 
 OBJS = $(SRCS:.cpp=.o)
