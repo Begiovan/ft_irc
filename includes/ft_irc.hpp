@@ -9,5 +9,8 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string>
 #include "parser.hpp"
 #include "irc_response.hpp"
+
+bool isPositiveInteger(const std::string &value);
