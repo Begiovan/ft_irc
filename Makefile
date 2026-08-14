@@ -10,6 +10,10 @@ SRCS = src/main.cpp \
 		src/channel.cpp \
 		src/client.cpp \
 		src/parser.cpp \
+		src/join.cpp \
+		src/invite.cpp \
+		src/kick.cpp \
+		src/topic.cpp \
 		src/mode.cpp
 
 

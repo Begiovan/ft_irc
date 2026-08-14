@@ -6,7 +6,6 @@ Join::~Join(){}
 // sintax: JOIN channel key (optional)
 
 void Join::execute(Client *client, std::vector<std::string> params){
-
     if (params.size() < 1){
 		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "JOIN")+ "\r\n");
 		return;
@@ -19,13 +18,15 @@ void Join::execute(Client *client, std::vector<std::string> params){
         return;
 	}
     Channel::JoinResult res;
-    if (params.size() == 1)
-        res = chan->canJoin(*client, NULL);
-    else
+    if (params.size() == 1) {
+        res = chan->canJoin(*client, "");
+    }
+    else {
         res = chan->canJoin(*client, params[1]);
+    }
 	if (res != Channel::JOIN_OK){
 		std::string err;
-		        switch (res)
+		switch (res)
         {
         case Channel::JOIN_ERR_INVITE_ONLY:
             err = ERR_INVITEONLYCHAN(client->getNickname(), params[0]);
@@ -47,11 +48,12 @@ void Join::execute(Client *client, std::vector<std::string> params){
 		return;
 	}
 	chan->addMember(*client);
-    if (chan->isInvited(*client))
+    if (chan->isInvited(*client)) {
         chan->removeInvite(*client);
-	_server->broadcast(*chan,  RPL_JOIN(client->getNickname(), params[0]) + "\r\n" );
+    }
+	_server->broadcast(*chan, RPL_JOIN(client->getNickname(), params[0]) + "\r\n");
 	client->addChannel(chan);
-	    if (chan->getTopic().empty())
+    if (chan->getTopic().empty())
         _server->sendToClient(*client, RPL_NOTOPIC(client->getNickname(), params[0]) + "\r\n");
     else
         _server->sendToClient(*client, RPL_TOPIC(client->getNickname(), params[0], chan->getTopic()) + "\r\n");
@@ -68,5 +70,4 @@ void Join::execute(Client *client, std::vector<std::string> params){
     }
     _server->sendToClient(*client, RPL_NAMREPLY(client->getNickname(), params[0], users) + "\r\n");
     _server->sendToClient(*client, RPL_ENDOFNAMES(client->getNickname(), params[0]) + "\r\n");
-	
 }

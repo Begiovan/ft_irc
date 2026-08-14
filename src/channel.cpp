@@ -69,6 +69,27 @@ const std::string& Channel::getName() const {
 const std::set<const Client*> &Channel::getMembers() const{
     return(_members);
 }
+
+const std::string& Channel::getTopic() const {
+    return _topic;
+}
+
+bool Channel::topicRes() const {
+    return _topicRestricted;
+}
+
+bool Channel::hasKey() const {
+    return !_key.empty();
+}
+
+bool Channel::inviteRes() const {
+    return _inviteOnly;
+}
+
+bool Channel::isInvited(const Client& client) const {
+    return _invited.find(client.getFd()) != _invited.end();
+}
+
     // TOPIC 
 void Channel::setTopic(const std::string& topic) {
     _topic = topic;

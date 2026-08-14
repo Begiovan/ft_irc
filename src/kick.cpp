@@ -47,4 +47,5 @@ void Kick::execute(Client *client, std::vector<std::string> params){
 	chan->removeInvite(*target);
 	chan->removeMember(*target);
 	target->removeChannel(chan);
+	_server->removeEmptyChan(chan);
 }
