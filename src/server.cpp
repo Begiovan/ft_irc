@@ -95,16 +95,22 @@ void Server::acceptClient()
     this->_fds.push_back(makePollFd(acc));
 }
 
-ACommand *Server::dispatch(Command cmd)
+ACommand *Server::dispatch(Command cmd, bool isAuth)
 {
-    if (cmd.command == "KICK")
-        return new Kick(*this);
-    if (cmd.command == "INVITE")
-        return new Invite(*this);
-    if (cmd.command == "TOPIC")
-        return new Topic(*this);
-    if (cmd.command == "JOIN")
-        return new Join(*this);
+    if (isAuth)
+    {
+        if (cmd.command == "KICK")
+            return new Kick(*this);
+        if (cmd.command == "INVITE")
+            return new Invite(*this);
+        if (cmd.command == "TOPIC")
+            return new Topic(*this);
+        if (cmd.command == "JOIN")
+            return new Join(*this);
+        if (cmd.command == "MODE")
+            return new Mode(*this);
+    }
+
     return NULL;
 }
 
@@ -133,9 +139,8 @@ int Server::receiveClient(int i)
                 std::map<int, Client *>::iterator clientIt = _clients.find(_fds[i].fd);
                 if (clientIt != _clients.end())
                 {
-                    // TODO: controllare qui se il client è autenticato/registrato
-                    // e permettere solo i comandi ammessi prima della registratione
-                    ACommand *commandHandler = dispatch(cmd);
+                    bool isAuth = clientIt->second->isRegistered(); // TODO da verificare
+                    ACommand *commandHandler = dispatch(cmd, isAuth);
                     if (commandHandler)
                     {
                         commandHandler->execute(clientIt->second, cmd.params);
@@ -230,8 +235,9 @@ bool Server::findClient(std::string value)
     return false;
 }
 
-Client *Server::returnClient(std::string value){
-        for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+Client *Server::returnClient(std::string value)
+{
+    for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
     {
         if (it->second->getNickname() == value)
             return it->second;
@@ -255,6 +261,19 @@ Channel *Server::createChannel(const std::string &name)
 
     _channels.insert(std::make_pair(name, channel));
     return channel;
+}
+
+void    Server::removeEmptyChan(Channel *channel){
+    if (!channel->empty() || !channel)
+        return;
+    for (std::map<std::string, Channel *>::iterator it = _channels.begin(); it != _channels.end(); it++){
+        if( it->second == channel)
+        {
+            delete channel;
+            _channels.erase(it);
+            return;
+        }
+    }
 }
 
 void Server::sendToClient(Client &client, const std::string &message)
@@ -286,4 +305,3 @@ void Server::broadcast(const Channel &channel, const std::string &message)
     for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); it++)
         sendToClient(const_cast<Client &>(**it), message);
 }
-

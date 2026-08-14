@@ -5,6 +5,7 @@
 #include <map>
 #include <string.h>
 #include "irc_response.hpp"
+#include "ACommand.hpp"
 
 class ACommand;
 class Client;
@@ -34,6 +35,7 @@ public:
     Client *returnClient(std::string value);
     Channel *findChannel(const std::string &name);
     Channel *createChannel(const std::string &name);
+    void    removeEmptyChan(Channel *channel);
 
     // MESSAGGI
     void sendToClient(Client &client, const std::string &message); // TO DO
@@ -41,6 +43,6 @@ public:
     void flushClient(int fd);
 
     // COMANDI
-    ACommand *dispatch(Command cmd);
+    ACommand *dispatch(Command cmd, bool isAuth);
 
 };
