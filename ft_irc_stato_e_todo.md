@@ -11,84 +11,9 @@
 
 ---
 
-# 1. Stato attuale del progetto
-
-## 1.1 Vista generale
-
-```text
-                              ft_irc
-                                 |
-        +------------------------+------------------------+
-        |                        |                        |
-        v                        v                        v
-     main.cpp               Server                 Modello del dominio
-        |                      |                          |
-        |                      |               +----------+----------+
-        |                      |               |                     |
-        |                      |               v                     v
-        |                      |            Client               Channel
-        |                      |               ^                     ^
-        |                      |               |                     |
-        |                      +---------------+---------------------+
-        |
-        +--> Server(port, password)
-                    |
-                    +--> setupSocket()
-                    +--> run()
-                    +--> acceptClient()
-                    +--> reciveClient()
-                    +--> disconnectClient()
-
-
-Bozza separata:
-
-funzioni_mode.cpp
-    |
-    +--> handleTopic()   [bozza]
-    +--> handleKick()    [bozza]
 ```
 
----
-
-## 1.2 Flusso di rete attuale
-
-```text
-main()
-  |
-  +--> crea Server(port, password)
-          |
-          +--> setupSocket()
-          |      |
-          |      +--> socket()
-          |      +--> setsockopt()
-          |      +--> fcntl(O_NONBLOCK)
-          |      +--> bind()
-          |      +--> listen()
-          |
-          +--> inserisce il serverSocket nei pollfd
-          |
-          +--> run()
-                  |
-                  +--> poll()
-                          |
-                          +--> evento sul serverSocket
-                          |       |
-                          |       +--> acceptClient()
-                          |               |
-                          |               +--> accept()
-                          |               +--> socket non bloccante
-                          |               +--> inserisce il nuovo fd nei pollfd
-                          |
-                          +--> evento su un client
-                                  |
-                                  +--> reciveClient()
-                                          |
-                                          +--> recv()
-                                          +--> stampa i byte ricevuti
-                                          +--> disconnectClient() se necessario
-```
-
-## 1.3 Classe `Client`
+## 1 Classe `Client`
 
 ```text
 Client
@@ -123,7 +48,7 @@ Client
 [OK]  isRegistered() dovrebbe essere const
 [OK]  setBuffer() in realtà fa append: nome poco intuitivo
 [OK]  getter stringa restituiscono copie invece di const reference
-[FIX]  manca un metodo per estrarre solo un comando completo dal buffer
+[OK]  manca un metodo per estrarre solo un comando completo dal buffer
 ```
 
 ### Flusso previsto del buffer
@@ -184,7 +109,7 @@ Channel
 [OK]   modalità i, t, k, o, l abbozzate
 [OK]   primo membro promosso automaticamente operatore
 [OK]   controllo base per accesso con invite, key e limit
-[PARZ] funzioni restituiscono spesso bool/void, senza codici errore IRC
+[OK] funzioni restituiscono spesso bool/void, senza codici errore IRC
 [OK] relazione Client <-> Channel non viene ancora sincronizzata
 [OK]  copy constructor e operator= non copiano membri/operatori/invitati
 [FIX]  uso misto di Client* e fd rende la struttura poco uniforme
@@ -192,56 +117,6 @@ Channel
 [OK]  addMember() aggiunge il membro al Channel ma non il Channel al Client
 [OK]  removeMember() rimuove dal Channel ma non dal Client
 [FIX]  dopo la rimozione dell'ultimo operatore manca una politica di promozione
-```
-
----
-
-# 2. Architettura verso cui portare il progetto
-
-```text
-                              main()
-                                 |
-                                 v
-                    Server(port, password)
-                                 |
-                              run()
-                                 |
-               +-----------------+-----------------+
-               |                                   |
-               v                                   v
-          Networking                           Stato server
-               |                                   |
-     +---------+---------+              +----------+----------+
-     |         |         |              |                     |
-     v         v         v              v                     v
-  accept()   recv()    send()      map<int, Client>   map<string, Channel>
-     |         |
-     |         +--> Client::_buffer
-     |                 |
-     |                 +--> estrazione righe IRC complete
-     |                              |
-     +--> Client(fd)                 v
-                              Parser / Command
-                                      |
-                                      v
-                                CommandHandler
-                                      |
-                   +------------------+------------------+
-                   |                  |                  |
-                   v                  v                  v
-                 Client             Channel           Server
-             registrazione       membri/mode       lookup/broadcast
-```
-
-Separazione delle responsabilità:
-
-```text
-Server         = rete, ownership, lookup, ciclo poll, invio e disconnessioni
-Client         = stato della singola connessione e registrazione
-Channel        = stato e regole interne del canale
-Parser         = testo IRC -> comando + parametri
-CommandHandler = validazione ed esecuzione dei comandi IRC
-Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 ```
 
 ---
@@ -257,9 +132,9 @@ Replies        = costruzione delle risposte numeriche e dei messaggi IRC
 ```
 
 - [OK] Verificare numero degli argomenti.
-- [TODO] Validare la porta:
+- [OK] Validare la porta:
   - solo numerica;
-  - OK - nel range valido;
+  - nel range valido;
   - conversione sicura senza overflow.
 - [OK] Conservare la password del server.
 - [OK] Creare una sola istanza di `Server`.
@@ -339,16 +214,16 @@ std::map<std::string, Channel> _channels;
 
 ### Invio dati
 
-- [TODO] Creare una funzione centralizzata, per esempio:
+- [OK] Creare una funzione centralizzata, per esempio:
 
 ```cpp
 void sendToClient(Client& client, const std::string& message);
 ```
 
 - [TODO] Gestire invii parziali di `send()`.
-- [TODO] Terminare correttamente i messaggi con `\r\n`.
+- [PARZ] Terminare correttamente i messaggi con `\r\n`.
 - [TODO] Non usare `std::cout` come risposta al client IRC.
-- [TODO] Implementare broadcast a tutti i membri di un canale.
+- [OK] Implementare broadcast a tutti i membri di un canale.
 
 ### Lookup e ownership
 
@@ -356,7 +231,7 @@ void sendToClient(Client& client, const std::string& message);
 - [OK] Cercare un client per nickname.
 - [TODO] Verificare unicità dei nickname.
 - [OK] Cercare un canale per nome.
-- [TODO] Creare un canale al primo `JOIN` se non esiste.
+- [OK] Creare un canale al primo `JOIN` se non esiste.
 - [TODO] Eliminare un canale quando non ha più membri.
 
 ### Disconnessione
@@ -423,9 +298,9 @@ void sendToClient(Client& client, const std::string& message);
   - tutti `Client*`, oppure
   - membri `Client*` e lookup coerente per fd.
 - [OK] Aggiungere `isMember()`.
-- [TODO] Impedire duplicati durante `JOIN`.
+- [OK] Impedire duplicati durante `JOIN`.
 - [OK] Aggiornare anche il `Client` durante add/remove.
-- [TODO] Rimuovere un utente da membri, operatori e invitati durante `PART/KICK/QUIT`.
+- [PARZ] Rimuovere un utente da membri, operatori e invitati durante `PART/KICK/QUIT`.
 - [OK] Stabilire cosa succede se non restano operatori ma il canale è ancora popolato.
 - [TODO] Eliminare il canale dal server quando diventa vuoto.
 
@@ -443,7 +318,7 @@ void sendToClient(Client& client, const std::string& message);
 - [OK] Permettere lettura del topic.
 - [OK] Permettere modifica rispettando `+t`.
 - [OK] Distinguere topic assente da topic vuoto, se necessario per le risposte.
-- [TODO] Inviare il topic aggiornato a tutti i membri.
+- [OK] Inviare il topic aggiornato a tutti i membri.
 
 ### Modalità obbligatorie
 
@@ -451,37 +326,37 @@ void sendToClient(Client& client, const std::string& message);
   - attivazione;
   - disattivazione;
   - controllo invito in `JOIN`.
-- [TODO] `t` — topic riservato agli operatori:
+- [OK] `t` — topic riservato agli operatori:
   - attivazione;
   - disattivazione;
   - controllo in `TOPIC`.
-- [TODO] `k` — chiave del canale:
+- [OK] `k` — chiave del canale:
   - impostazione;
   - rimozione;
   - confronto durante `JOIN`.
-- [TODO] `o` — privilegio operatore:
+- [OK] `o` — privilegio operatore:
   - promozione di un membro;
   - rimozione del privilegio;
   - rifiuto se il target non è nel canale.
-- [TODO] `l` — limite utenti:
+- [OK] `l` — limite utenti:
   - impostazione con parametro numerico valido;
   - rimozione;
   - controllo durante `JOIN`.
-- [TODO] Produrre una rappresentazione corrente delle mode per le risposte a `MODE`.
-- [TODO] Non lasciare alla classe `Channel` il compito di inviare errori o messaggi di protocollo.
+- [OK] Produrre una rappresentazione corrente delle mode per le risposte a `MODE`.
+- [OK] Non lasciare alla classe `Channel` il compito di inviare errori o messaggi di protocollo.
 
 ### Inviti
 
-- [TODO] Aggiungere un utente alla lista invitati con `INVITE`.
-- [TODO] Controllare che chi invita abbia i permessi richiesti.
-- [TODO] Consumare/rimuovere l'invito dopo il `JOIN`, secondo il comportamento scelto.
+- [OK] Aggiungere un utente alla lista invitati con `INVITE`.
+- [OK] Controllare che chi invita abbia i permessi richiesti.
+- [OK] Consumare/rimuovere l'invito dopo il `JOIN`, secondo il comportamento scelto.
 - [TODO] Pulire gli inviti quando un client si disconnette.
 
 ---
 
 ## 3.5 Parser IRC
 
-- [TODO] Creare una rappresentazione del comando, per esempio:
+- [OK] Creare una rappresentazione del comando, per esempio:
 
 ```cpp
 struct Command
@@ -494,12 +369,12 @@ struct Command
 
 - [TODO] Separare una riga completa dal buffer.
 - [TODO] Rimuovere `\r\n` dalla riga prima del parsing.
-- [TODO] Separare il nome del comando dai parametri.
-- [TODO] Normalizzare il nome del comando in maiuscolo.
-- [TODO] Gestire il parametro trailing introdotto da `:`.
-- [TODO] Gestire spazi multipli senza generare parametri vuoti inutili.
-- [TODO] Rilevare comando vuoto o malformato.
-- [TODO] Non eseguire direttamente la logica applicativa dentro il parser.
+- [OK] Separare il nome del comando dai parametri.
+- [KO] Normalizzare il nome del comando in maiuscolo.
+- [OK] Gestire il parametro trailing introdotto da `:`.
+- [OK] Gestire spazi multipli senza generare parametri vuoti inutili.
+- [OK] Rilevare comando vuoto o malformato.
+- [OK] Non eseguire direttamente la logica applicativa dentro il parser.
 
 Esempio:
 
@@ -517,7 +392,7 @@ Output:
 
 ## 3.6 Dispatcher / Command Handler
 
-- [TODO] Creare un punto centrale che riceva:
+- [OK] Creare un punto centrale che riceva:
 
 ```cpp
 Client& sender
@@ -527,9 +402,9 @@ Command command
 - [TODO] Associare ogni nome comando alla relativa funzione.
 - [TODO] Verificare quali comandi sono consentiti prima della registrazione.
 - [TODO] Verificare numero minimo/massimo dei parametri.
-- [TODO] Delegare a `Server`, `Client` e `Channel` senza duplicare ownership.
-- [TODO] Costruire e inviare risposte numeriche corrette.
-- [TODO] Non inserire tutta la logica in una sola funzione enorme.
+- [OK] Delegare a `Server`, `Client` e `Channel` senza duplicare ownership.
+- [OK] Costruire e inviare risposte numeriche corrette.
+- [OK] Non inserire tutta la logica in una sola funzione enorme.
 
 ---
 
@@ -596,11 +471,11 @@ Command command
 
 ### `INVITE`
 
-- [ ] Verificare target e canale.
-- [ ] Verificare appartenenza e permessi dell'invitante.
-- [ ] Verificare che il target non sia già nel canale.
-- [ ] Salvare l'invito.
-- [ ] Inviare conferma e messaggio al target.
+- [OK] Verificare target e canale.
+- [OK] Verificare appartenenza e permessi dell'invitante.
+- [OK] Verificare che il target non sia già nel canale.
+- [OK] Salvare l'invito.
+- [OK] Inviare conferma e messaggio al target.
 
 ### `KICK`
 
@@ -614,13 +489,13 @@ Command command
 
 ### `MODE`
 
-- [ ] Senza modifiche: mostrare le mode correnti del canale.
-- [ ] Parsare sequenze `+` e `-`.
-- [ ] Gestire i parametri richiesti da `k`, `o`, `l`.
-- [ ] Verificare che chi modifica sia operatore.
-- [ ] Applicare `i`, `t`, `k`, `o`, `l`.
-- [ ] Inviare la modifica a tutti i membri.
-- [ ] Generare errori corretti per mode sconosciute o parametri mancanti.
+- [OK] Senza modifiche: mostrare le mode correnti del canale.
+- [OK] Parsare sequenze `+` e `-`.
+- [OK] Gestire i parametri richiesti da `k`, `o`, `l`.
+- [OK] Verificare che chi modifica sia operatore.
+- [OK] Applicare `i`, `t`, `k`, `o`, `l`.
+- [OK] Inviare la modifica a tutti i membri.
+- [OK] Generare errori corretti per mode sconosciute o parametri mancanti.
 
 ---
 
@@ -691,9 +566,8 @@ Command command
   - `re`.
 - [OK] Compilare con lo standard richiesto dal subject.
 - [OK] Aggiungere warning flags richieste.
-- [ ] Separare header e sorgenti in cartelle coerenti.
+- [OK] Separare header e sorgenti in cartelle coerenti.
 - [ ] Rimuovere o integrare i prototipi temporanei quando `Server` sarà pronto.
-- [ ] Correggere `funzioni_mode.cpp` oppure sostituirlo con veri handler.
 - [ ] Evitare include circolari usando forward declaration dove bastano puntatori/reference.
 - [ ] Verificare che ogni header abbia include guard.
 - [ ] Non lasciare funzioni non dichiarate o dichiarazioni non implementate.
@@ -736,57 +610,3 @@ Command command
 - [ ] Nessuna perdita di memoria.
 
 ---
-
-# 4. Ordine di implementazione consigliato
-
-```text
-1. Creare Server
-        |
-2. Spostare dentro Server il networking già esistente
-        |
-3. Creare Client(fd) durante accept()
-        |
-4. Collegare recv() al buffer del Client
-        |
-5. Estrarre righe complete terminate da \r\n
-        |
-6. Implementare Parser e struttura Command
-        |
-7. Implementare PASS, NICK, USER e welcome
-        |
-8. Implementare lookup Client/Channel e send helpers
-        |
-9. Implementare JOIN e PART
-        |
-10. Implementare PRIVMSG e NOTICE
-        |
-11. Implementare TOPIC, INVITE e KICK
-        |
-12. Implementare MODE i, t, k, o, l
-        |
-13. Implementare QUIT e cleanup completo
-        |
-14. Completare numerici, errori e test
-```
-
----
-
-# 5. Prossimo obiettivo concreto
-
-Il prossimo passo non dovrebbe essere aggiungere altra logica alle funzioni globali di `socket(2).cpp`.
-
-Il passo consigliato è:
-
-```text
-[PROSSIMO STEP]
-
-Collegare il networking agli oggetti Client
-        |
-        +--> aggiungere map<int, Client> _clients
-        +--> creare Client(fd) dentro acceptClient()
-        +--> cercare il Client tramite fd
-        +--> appendBuffer() dopo recv()
-        +--> estrarre le righe terminate da \r\n
-```
-
-Una volta completato questo passaggio, il prototipo di rete diventerà la base reale del progetto e sarà possibile collegare correttamente buffer, parser e comandi IRC.
