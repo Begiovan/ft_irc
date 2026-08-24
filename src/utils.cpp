@@ -22,3 +22,28 @@ bool isPositiveInteger(const std::string &value)
     }
     return true;
 }
+
+bool isValidNickname(const std::string &nick)
+{
+    if (nick.empty())
+        return false;
+    if (nick.find(' ') != std::string::npos)
+        return false;
+    if (nick.size() > 9)
+        return false;
+    char primo = nick[0];
+    bool primoValido = isalpha(primo) || primo == '[' || primo == ']' || primo == '\\' ||
+                        primo == '`' || primo == '^' || primo == '{' || primo == '}' || primo == '-';
+    if (!primoValido)
+        return false;
+    for (size_t i = 1; i < nick.size(); i++)
+    {
+        char c = nick[i];
+        bool valido = isalnum(c) || c == '[' || c == ']' || c == '\\' ||
+                    c == '`' || c == '^' || c == '{' || c == '}' || c == '-';
+        if (!valido)
+            return false;
+    }
+
+    return true;
+}

@@ -29,6 +29,8 @@ public:
     Server(int port, const std::string &password);
     ~Server();
 
+    const std::string &getPassword() const;
+    
     void setupSocket(int port);
     void run();
     bool findClient(std::string value);

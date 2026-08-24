@@ -20,12 +20,7 @@ const std::string &Client::getUsername(){
 }
 
 void Client::setUsername(std::string username){
-	if (_registrationStatus & USER_OK)
-		_username = username;
-	else
-		{
-			std::cout << "error" << std::endl;
-		}
+    _username = username;
 }
 
 const std::string &Client::getNickname(){

@@ -19,6 +19,27 @@ public:
     virtual void execute(Client *client, std::vector<std::string> args) = 0;
 };
 
+class Pass : public ACommand {
+    public:
+        Pass(Server &server);
+        ~Pass();
+        void execute(Client *client, std::vector<std::string> params);
+};
+
+class Nick : public ACommand {
+    public:
+        Nick(Server &server);
+        ~Nick();
+        void execute(Client *client, std::vector<std::string> params);
+};
+
+class User : public ACommand {
+    public:
+        User(Server &server);
+        ~User();
+        void execute(Client *client, std::vector<std::string> params);
+};
+
 class Kick : public ACommand {
     public:
         Kick(Server &server);

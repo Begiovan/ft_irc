@@ -10,6 +10,7 @@
 #define ERR_PASSWDMISMATCH(source)                      "464 " + source + " :Password is incorrect"
 #define ERR_NONICKNAMEGIVEN(source)                     "431 " + source + " :Nickname not given"
 #define ERR_NICKNAMEINUSE(source)                       "433 " + source + " " + source  + " :Nickname is already in use"
+#define ERR_ERRONEUSNICKNAME(source, nickname)          "432 " + source + " " + nickname + " :Erroneous nickname"
 
 #define ERR_UNKNOWNCOMMAND(source, command)             "421 " + source + " " + command + " :Unknown command"
 #define ERR_NEEDMOREPARAMS(source, command)             "461 " + source + " " + command + " :Not enough parameters"

@@ -14,6 +14,11 @@ Server::~Server()
     std::cout << "Destructor called" << std::endl;
 }
 
+const std::string &Server::getPassword() const
+{
+    return _password;
+}
+
 void Server::setupSocket(int _port)
 {
     this->_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
@@ -109,6 +114,17 @@ ACommand *Server::dispatch(Command cmd, bool isAuth)
             return new Join(*this);
         if (cmd.command == "MODE")
             return new Mode(*this);
+        if (cmd.command == "NICK")
+            return new Nick(*this);
+    }
+    else
+    {
+        if (cmd.command == "PASS")
+            return new Pass(*this);
+        if (cmd.command == "NICK")
+            return new Nick(*this);
+        if (cmd.command == "USER")
+            return new User(*this);
     }
 
     return NULL;
