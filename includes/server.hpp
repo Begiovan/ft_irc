@@ -45,6 +45,6 @@ private:
     void flushClient(int fd);
 
     // COMANDI
-    ACommand *dispatch(Command cmd, bool isAuth);
+    ACommand *dispatch(Command cmd, bool isAuth, Client *client);
 
 };
