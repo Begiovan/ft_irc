@@ -15,6 +15,8 @@ void Join::execute(Client *client, std::vector<std::string> params){
 		chan = _server->createChannel(params[0]);
 		chan->addMember(*client);
 		chan->addOperator(*client);
+        client->addChannel(chan);
+        _server->sendToClient(*client, RPL_JOIN(client->getNickname(), chan->getName()));
         return;
 	}
     Channel::JoinResult res;

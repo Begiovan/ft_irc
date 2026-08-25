@@ -610,3 +610,6 @@ Command command
 - [ ] Nessuna perdita di memoria.
 
 ---
+
+cambiare errore se comando mentre user non ha completato la registrazione
+cambiare messaggio join already on chan 
