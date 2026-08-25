@@ -9,7 +9,7 @@
 #define ERR_ALREADYREGISTERED(source)                   std::string(":ircserv 462 ") + source + " :You may not register"
 #define ERR_PASSWDMISMATCH(source)                      std::string(":ircserv 464 ") + source + " :Password is incorrect"
 #define ERR_NONICKNAMEGIVEN(source)                     std::string(":ircserv 431 ") + source + " :Nickname not given"
-#define ERR_NICKNAMEINUSE(source)                       std::string(":ircserv 433 ") + source + " " + source  + " :Nickname is already in use"
+#define ERR_NICKNAMEINUSE(source, nickname)             std::string(":ircserv 433 ") + source + " " + nickname  + " :Nickname is already in use"
 #define ERR_ERRONEUSNICKNAME(source, nickname)          std::string(":ircserv 432 ") + source + " " + nickname + " :Erroneous nickname"
 
 #define ERR_UNKNOWNCOMMAND(source, command)             std::string(":ircserv 421 ") + source + " " + command + " :Unknown command"
@@ -21,7 +21,7 @@
 #define ERR_BADCHANNELKEY(source, channel)              std::string(":ircserv 475 ") + source + " " + channel + " :Cannot join channel (+k)"
 #define ERR_CHANNELISFULL(source, channel)              std::string(":ircserv 471 ") + source + " " + channel + " :Cannot join channel (+l)"
 #define ERR_INVITEONLYCHAN(source, channel)             std::string(":ircserv 473 ") + source + " " + channel + " :Cannot join channel (+i)"
-#define ERR_USERONCHANNEL(source, channel)              std::string(":ircserv 443 ") + source + " " + channel + " :is already on channel"
+#define ERR_USERONCHANNEL(source, target, channel)      std::string(":ircserv 443 ") + source + " " + target + " " + channel + " :is already on channel"
 #define ERR_CANNOTSENDTOCHAN(source, channel)           std::string(":ircserv 404 ") + source + " " + channel + " :Cannot send to channel"
 #define ERR_CHANOPRIVSNEEDED(source, channel)           std::string(":ircserv 482 ") + source + " " + channel + " :You're not channel operator"
 
@@ -36,7 +36,8 @@
 #define RPL_ENDOFNAMES(source, channel)                 std::string(":ircserv 366 ") + source + " " + channel + " :End of /NAMES list."
 #define RPL_NOTOPIC(source, channel)                    std::string(":ircserv 331 ") + source + " " + channel + " :No topic set."
 #define RPL_TOPIC(source, channel, topic)               std::string(":ircserv 332 ") + source + " " + channel + " :" + topic
-#define RPL_INVITING(source, target, channel)           std::string(":ircserv 341 ") + source + " " + target + " " + channel
+#define RPL_INVITING(source, target, channel)           std::string(":ircserv 341 ") + source + " " + channel + " " + target
+
 
 /* Command Responses */
 

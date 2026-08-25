@@ -38,7 +38,6 @@ void Join::execute(Client *client, std::vector<std::string> params){
 				err = ERR_CHANNELISFULL(client->getNickname(), params[0]);
 				break;
 			case Channel::JOIN_ERR_ALREADY_IN:
-				err = ERR_USERONCHANNEL(client->getNickname(), params[0]);
 				break;
 			default:
 				err = ERR_UNKNOWNCOMMAND(client->getNickname(), "JOIN");
