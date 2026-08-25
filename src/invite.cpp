@@ -40,6 +40,6 @@ void Invite::execute(Client *client, std::vector<std::string> params){
 	}
 	chan->inviteUser(*target);
 	_server->sendToClient(*client, RPL_INVITING(client->getNickname(), target->getNickname(), params[1]) + "\r\n");
-	_server->sendToClient(*target, RPL_INVITE(client->getNickname(), target->getNickname(), params[1]) + "\r\n");
+	_server->sendToClient(*target, RPL_INVITE(client->getNickname(), client->getUsername(), target->getNickname(), params[1]) + "\r\n");
 	return;
 }

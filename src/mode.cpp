@@ -53,7 +53,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 	if (params.size() == 1)
 	{
 		std::string modes = getModes(*chan);
-		_server->sendToClient(*client, RPL_MODE(client->getNickname(), params[0], modes, "") + "\r\n");
+		_server->sendToClient(*client, RPL_MODE(client->getNickname(), client->getUsername(), params[0], modes, "") + "\r\n");
 		return;
 	}
 	if (!chan->isOperator(*client))
@@ -152,5 +152,5 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 		}
 	}
 	if (changed)
-		_server->broadcast(*chan, RPL_MODE(client->getNickname(), params[0], params[1], "") + "\r\n");
+		_server->broadcast(*chan, RPL_MODE(client->getNickname(), client->getUsername(), params[0], params[1], "") + "\r\n");
 }

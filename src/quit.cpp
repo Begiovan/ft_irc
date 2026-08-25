@@ -13,7 +13,7 @@ void Quit::execute(Client *client, std::vector<std::string> params){
     std::set<const Channel*> channelsCopy = client->getChannels();
     for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
     {
-        _server->broadcast(**chIt, RPL_QUIT(client->getNickname(), message) + "\r\n");
+        _server->broadcast(**chIt, RPL_QUIT(client->getNickname(), client->getUsername(), message) + "\r\n");
     }
 
     _server->disconnectClient(client->getFd());

@@ -22,7 +22,7 @@ void Privmsg::execute(Client *client, std::vector<std::string> params){
             _server->sendToClient(*client, ERR_CANNOTSENDTOCHAN("*", params[0]) + "\r\n");
             return;
         }
-        _server->broadcast(*chan, RPL_PRIVMSG(client->getNickname(), params[0], params[1]) + "\r\n", client);
+        _server->broadcast(*chan, RPL_PRIVMSG(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n", client);
     }
     else
     {
@@ -35,7 +35,7 @@ void Privmsg::execute(Client *client, std::vector<std::string> params){
         }
         else
         {
-            _server->sendToClient(*target, RPL_PRIVMSG(client->getNickname(), params[0], params[1]) + "\r\n");
+            _server->sendToClient(*target, RPL_PRIVMSG(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n");
         }
     }
 

@@ -14,13 +14,13 @@ void Notice::execute(Client *client, std::vector<std::string> params){
             return;
         if (!chan->isMember(client))
             return;
-        _server->broadcast(*chan, RPL_NOTICE(client->getNickname(), params[0], params[1]) + "\r\n", client);
+        _server->broadcast(*chan, RPL_NOTICE(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n", client);
     }
     else
     {
         Client *target = _server->returnClient(params[0]);
         if (!target)
             return;
-        _server->sendToClient(*target, RPL_NOTICE(client->getNickname(), params[0], params[1]) + "\r\n");
+        _server->sendToClient(*target, RPL_NOTICE(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n");
     }
 }

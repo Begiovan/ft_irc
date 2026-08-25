@@ -100,29 +100,29 @@ void Server::acceptClient()
     this->_fds.push_back(makePollFd(acc));
 }
 
-ACommand *Server::dispatch(Command cmd, bool isAuth)
+ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
 {
     if (isAuth)
     {
-        if (cmd.command == "QUIT")
+        if (isAuth && cmd.command == "QUIT")
             return new Quit(*this);
-        if (cmd.command == "PING")
+        if (isAuth && cmd.command == "PING")
             return new Ping(*this);
-        if (cmd.command == "KICK")
+        if (isAuth && cmd.command == "KICK")
             return new Kick(*this);
-        if (cmd.command == "INVITE")
+        if (isAuth && cmd.command == "INVITE")
             return new Invite(*this);
-        if (cmd.command == "TOPIC")
+        if (isAuth && cmd.command == "TOPIC")
             return new Topic(*this);
-        if (cmd.command == "JOIN")
+        if (isAuth && cmd.command == "JOIN")
             return new Join(*this);
-        if (cmd.command == "MODE")
+        if (isAuth && cmd.command == "MODE")
             return new Mode(*this);
-        if (cmd.command == "NICK")
+        if (isAuth && cmd.command == "NICK")
             return new Nick(*this);
-        if (cmd.command == "PRIVMSG")
+        if (isAuth && cmd.command == "PRIVMSG")
             return new Privmsg(*this);
-        if (cmd.command == "NOTICE")
+        if (isAuth && cmd.command == "NOTICE")
             return new Notice(*this);
     }
     else
@@ -137,6 +137,8 @@ ACommand *Server::dispatch(Command cmd, bool isAuth)
             return new Nick(*this);
         if (cmd.command == "USER")
             return new User(*this);
+        else
+            sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
     }
 
     return NULL;
@@ -167,20 +169,12 @@ int Server::receiveClient(int i)
 
                 if (!commandLine.empty() && commandLine[commandLine.size() - 1] == '\r')
                     commandLine.erase(commandLine.size() - 1);
-
-                //DEBUG
-                std::cout<<"comando in chiaro: "<<commandLine<<std::endl;
-                std::cout << "riga ricevuta (" << commandLine.size() << " caratteri): [";
-                for (size_t k = 0; k < commandLine.size(); k++)
-                    std::cout << (int)(unsigned char)commandLine[k] << " ";
-                std::cout << "]" << std::endl;
-                //FINE DEBUG
                 Command cmd = parseCommand(commandLine);
                 std::map<int, Client *>::iterator clientIt = _clients.find(_fds[i].fd);
                 if (clientIt != _clients.end())
                 {
                     bool isAuth = clientIt->second->isRegistered();
-                    ACommand *commandHandler = dispatch(cmd, isAuth);
+                    ACommand *commandHandler = dispatch(cmd, isAuth, clientIt->second);
                     if (commandHandler)
                     {
                         commandHandler->execute(clientIt->second, cmd.params);
