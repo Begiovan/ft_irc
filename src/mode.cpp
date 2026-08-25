@@ -1,5 +1,6 @@
 #include "ACommand.hpp"
 #include <sstream>
+#include <cstdlib>
 
 Mode::Mode(Server &server) : ACommand(server){}
 Mode::~Mode(){}
@@ -137,7 +138,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 						_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
 						return;
 					}
-					int limit = std::atoi(params[numArgs].c_str());
+					int limit = atoi(params[numArgs].c_str());
 					chan->setUserLimit(limit);
 					numArgs++;
 				}

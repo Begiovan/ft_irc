@@ -40,6 +40,6 @@ Command parseCommand(const std::string &line){
             }
         }
     }
-
+    
     return cmd;
 }

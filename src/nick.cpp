@@ -17,11 +17,13 @@ void Nick::execute(Client *client, std::vector<std::string> params){
         {
             client->setNickname(params[0]);
             client->setRegistrationStatus(Client::NICK_OK);
+            if (client->isRegistered())
+                _server->sendToClient(*client, RPL_WELCOME(client->getNickname()) + "\r\n");
         }
     }
     else
-{
-    _server->sendToClient(*client, ERR_ERRONEUSNICKNAME("*", params[0]) + "\r\n");
-    return;
-}
+    {
+        _server->sendToClient(*client, ERR_ERRONEUSNICKNAME("*", params[0]) + "\r\n");
+        return;
+    }
 }

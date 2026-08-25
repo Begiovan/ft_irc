@@ -12,6 +12,8 @@ void Pass::execute(Client *client, std::vector<std::string> params){
     if (_server->getPassword() == params[0])
     {
         client->setRegistrationStatus(Client::PASS_OK);
+        if (client->isRegistered())
+            _server->sendToClient(*client, RPL_WELCOME(client->getNickname()) + "\r\n");
     }
     else
     {

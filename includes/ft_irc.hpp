@@ -14,3 +14,4 @@
 #include "irc_response.hpp"
 
 bool isPositiveInteger(const std::string &value);
+bool isValidNickname(const std::string &nick);

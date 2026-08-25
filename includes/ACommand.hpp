@@ -19,24 +19,53 @@ public:
     virtual void execute(Client *client, std::vector<std::string> args) = 0;
 };
 
+class Ping : public ACommand {
+    public:
+        Ping(Server &server);
+        ~Ping();
+        void execute(Client *client, std::vector<std::string> params);
+};
+
+
+class Quit : public ACommand {
+    public:
+    Quit(Server &server);
+    ~Quit();
+    void execute(Client *client, std::vector<std::string> params);
+};
+
 class Pass : public ACommand {
     public:
-        Pass(Server &server);
-        ~Pass();
-        void execute(Client *client, std::vector<std::string> params);
+    Pass(Server &server);
+    ~Pass();
+    void execute(Client *client, std::vector<std::string> params);
 };
 
 class Nick : public ACommand {
     public:
-        Nick(Server &server);
-        ~Nick();
-        void execute(Client *client, std::vector<std::string> params);
+    Nick(Server &server);
+    ~Nick();
+    void execute(Client *client, std::vector<std::string> params);
 };
 
 class User : public ACommand {
     public:
-        User(Server &server);
-        ~User();
+    User(Server &server);
+    ~User();
+    void execute(Client *client, std::vector<std::string> params);
+};
+
+class Privmsg : public ACommand {
+    public:
+        Privmsg(Server &server);
+        ~Privmsg();
+        void execute(Client *client, std::vector<std::string> params);
+};
+
+class Notice : public ACommand {
+    public:
+        Notice(Server &server);
+        ~Notice();
         void execute(Client *client, std::vector<std::string> params);
 };
 

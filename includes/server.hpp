@@ -23,14 +23,14 @@ private:
     pollfd makePollFd(int fd);
     void acceptClient();
     int receiveClient(int i);
-    void disconnectClient(int fd);
-
-public:
+    
+    public:
     Server(int port, const std::string &password);
     ~Server();
-
+    
     const std::string &getPassword() const;
     
+    void disconnectClient(int fd);
     void setupSocket(int port);
     void run();
     bool findClient(std::string value);
@@ -41,7 +41,7 @@ public:
 
     // MESSAGGI
     void sendToClient(Client &client, const std::string &message); // TO DO
-    void broadcast(const Channel &channel, const std::string &message);
+    void broadcast(const Channel &channel, const std::string &message, const Client *exclude = NULL);
     void flushClient(int fd);
 
     // COMANDI

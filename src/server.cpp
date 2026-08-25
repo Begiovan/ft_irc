@@ -104,6 +104,10 @@ ACommand *Server::dispatch(Command cmd, bool isAuth)
 {
     if (isAuth)
     {
+        if (cmd.command == "QUIT")
+            return new Quit(*this);
+        if (cmd.command == "PING")
+            return new Ping(*this);
         if (cmd.command == "KICK")
             return new Kick(*this);
         if (cmd.command == "INVITE")
@@ -116,9 +120,17 @@ ACommand *Server::dispatch(Command cmd, bool isAuth)
             return new Mode(*this);
         if (cmd.command == "NICK")
             return new Nick(*this);
+        if (cmd.command == "PRIVMSG")
+            return new Privmsg(*this);
+        if (cmd.command == "NOTICE")
+            return new Notice(*this);
     }
     else
     {
+        if (cmd.command == "QUIT")
+            return new Quit(*this);
+        if (cmd.command == "PING")
+            return new Ping(*this);
         if (cmd.command == "PASS")
             return new Pass(*this);
         if (cmd.command == "NICK")
@@ -132,6 +144,7 @@ ACommand *Server::dispatch(Command cmd, bool isAuth)
 
 int Server::receiveClient(int i)
 {
+    bool disconnected = false;
     char buffer[1024];
     ssize_t bytes = recv(this->_fds[i].fd, buffer, sizeof(buffer) - 1, 0);
     if (bytes <= 0)
@@ -151,16 +164,33 @@ int Server::receiveClient(int i)
             {
                 std::string commandLine = it->second->getBuffer().substr(0, pos);
                 it->second->getBuffer().erase(0, pos + 1);
+
+                if (!commandLine.empty() && commandLine[commandLine.size() - 1] == '\r')
+                    commandLine.erase(commandLine.size() - 1);
+
+                //DEBUG
+                std::cout<<"comando in chiaro: "<<commandLine<<std::endl;
+                std::cout << "riga ricevuta (" << commandLine.size() << " caratteri): [";
+                for (size_t k = 0; k < commandLine.size(); k++)
+                    std::cout << (int)(unsigned char)commandLine[k] << " ";
+                std::cout << "]" << std::endl;
+                //FINE DEBUG
                 Command cmd = parseCommand(commandLine);
                 std::map<int, Client *>::iterator clientIt = _clients.find(_fds[i].fd);
                 if (clientIt != _clients.end())
                 {
-                    bool isAuth = clientIt->second->isRegistered(); // TODO da verificare
+                    bool isAuth = clientIt->second->isRegistered();
                     ACommand *commandHandler = dispatch(cmd, isAuth);
                     if (commandHandler)
                     {
                         commandHandler->execute(clientIt->second, cmd.params);
                         delete commandHandler;
+
+                        if (_clients.find(_fds[i].fd) == _clients.end())
+                        {
+                            disconnected = true;
+                            break;
+                        }
                     }
                     else
                     {
@@ -174,7 +204,7 @@ int Server::receiveClient(int i)
     }
     else
         std::cout << "client non trovato o errato" << std::endl;
-    return 0;
+    return disconnected ? -1 : 0;
 }
 
 void Server::disconnectClient(int fd)
@@ -190,6 +220,13 @@ void Server::disconnectClient(int fd)
             std::map<int, Client *>::iterator it = _clients.find(fd);
             if (it != _clients.end())
             {
+                std::set<const Channel*> channelsCopy = it->second->getChannels();
+                for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
+                {
+                    Channel *chan = const_cast<Channel*>(*chIt);
+                    chan->removeMember(*it->second);
+                    removeEmptyChan(chan);
+                }
                 delete (it->second);
                 _clients.erase(it);
             }
@@ -315,9 +352,13 @@ void Server::flushClient(int fd)
     }
 }
 
-void Server::broadcast(const Channel &channel, const std::string &message)
+void Server::broadcast(const Channel &channel, const std::string &message, const Client *exclude)
 {
     const std::set<const Client *> &members = channel.getMembers();
     for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); it++)
+    {
+        if (*it == exclude)
+            continue;
         sendToClient(const_cast<Client &>(**it), message);
+    }
 }

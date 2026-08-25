@@ -14,7 +14,14 @@ SRCS = src/main.cpp \
 		src/invite.cpp \
 		src/kick.cpp \
 		src/topic.cpp \
-		src/mode.cpp
+		src/mode.cpp \
+		src/user.cpp \
+		src/pass.cpp \
+		src/nick.cpp \
+		src/ping.cpp \
+		src/quit.cpp \
+		src/notice.cpp \
+		src/privmsg.cpp
 
 
 OBJS = $(SRCS:.cpp=.o)
