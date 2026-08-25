@@ -27,6 +27,7 @@
 
 #define ERR_NOSUCHNICK(source, nickname)                std::string(":ircserv 401 ") + source + " " + nickname + " :No such nick/channel"
 #define ERR_USERNOTINCHANNEL(source, nickname, channel) std::string(":ircserv 441 ") + source + " " + nickname + " " + channel + " :They aren't on that channel"
+#define ERR_UNKNOWNMODE(source, mode, channel)			std::string(":ircserv 472 ") + source + " " + mode + " :is unknown mode char to me for " + channel
 
 
 /* Numeric Responses */

@@ -147,7 +147,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 				changed = true;
 				break;
 			default:
-				_server->sendToClient(*client, ERR_UNKNOWNCOMMAND(client->getNickname(), "MODE") + "\r\n");
+				_server->sendToClient(*client, ERR_UNKNOWNMODE(client->getNickname(), mode[i], params[0]) + "\r\n");
 				return;
 		}
 	}
