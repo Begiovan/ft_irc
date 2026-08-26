@@ -39,11 +39,11 @@
 #define RPL_TOPIC(source, channel, topic)               std::string(":ircserv 332 ") + source + " " + channel + " :" + topic
 #define RPL_INVITING(source, target, channel)           std::string(":ircserv 341 ") + source + " " + channel + " " + target
 
-
 /* Command Responses */
 
-#define RPL_JOIN(source, user, channel)                 std::string(":") + source + "!" + user + "@ircserv JOIN :" + channel
-#define RPL_PART(source, user, channel)                 std::string(":") + source + "!" + user + "@ircserv PART :" + channel
+#define RPL_NICK(oldnick, user, newnick)                std::string(":") + oldnick + "!" + user + "@ircserv NICK :" + newnick
+#define RPL_JOIN(source, user, channel)                 std::string(":") + source + "!" + user + "@ircserv JOIN " + channel
+#define RPL_PART(source, user, channel)                 std::string(":") + source + "!" + user + "@ircserv PART " + channel
 #define RPL_PING(source, token)                         std::string(":") + source + " PONG :" + token
 #define RPL_PRIVMSG(source, user, target, message)      std::string(":") + source + "!" + user + "@ircserv PRIVMSG " + target + " :" + message
 #define RPL_NOTICE(source, user, target, message)       std::string(":") + source + "!" + user + "@ircserv NOTICE " + target + " :" + message
