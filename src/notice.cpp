@@ -5,8 +5,10 @@ Notice::~Notice(){}
 
 void Notice::execute(Client *client, std::vector<std::string> params){
     if (params.size() < 2)
+    {
+        _server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "NOTICE")+ "\r\n");
         return;
-
+    }
     if (params[0][0] == '#')
     {
         Channel *chan = _server->findChannel(params[0]);
