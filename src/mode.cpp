@@ -106,7 +106,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 						chan->addOperator(*target);
 					else
 						chan->removeOperator(*target);
-					changed = true;
+					_server->broadcast(*chan, RPL_MODE(client->getNickname(), client->getUsername(), params[0], params[1], target->getNickname()) + "\r\n");
 				}
 				numArgs++;
 				break;
