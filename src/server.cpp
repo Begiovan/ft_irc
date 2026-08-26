@@ -4,7 +4,6 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 {
     std::cout << "server creato" << std::endl
               << "porta usata: " << _port << std::endl;
-    std::cout << "the password is: " << password << std::endl;
     Server::setupSocket(_port);
     _fds.push_back(makePollFd(_serverSocket));
 }
