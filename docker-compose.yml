@@ -11,3 +11,17 @@ services:
     environment:
       IRC_PORT: "${IRC_PORT:-6667}"
       IRC_PASS: "${IRC_PASS:?Set IRC_PASS in .env}"
+
+  ngrok:
+    image: ngrok/ngrok:latest
+    container_name: ft_irc_ngrok
+    restart: unless-stopped
+    depends_on:
+      - ft-irc
+    command:
+      - tcp
+      - ft-irc:${IRC_PORT:-6667}
+      - --region=eu
+      - --log=stdout
+    environment:
+      NGROK_AUTHTOKEN: "${NGROK_AUTHTOKEN:?Set NGROK_AUTHTOKEN in .env}"
