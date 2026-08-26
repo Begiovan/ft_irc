@@ -204,7 +204,7 @@ int Server::receiveClient(int i)
     return disconnected ? -1 : 0;
 }
 
-void Server::disconnectClient(int fd)
+void Server::disconnectClient(int fd, const std::string &reason)
 {
     close(fd);
     size_t i = 0;
@@ -221,6 +221,10 @@ void Server::disconnectClient(int fd)
                 for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
                 {
                     Channel *chan = const_cast<Channel*>(*chIt);
+                    broadcast(*chan, RPL_QUIT(it->second->getNickname(),
+                                               it->second->getUsername(),
+                                               reason) + "\r\n",
+                              it->second);
                     chan->removeMember(*it->second);
                     removeEmptyChan(chan);
                 }
