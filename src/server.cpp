@@ -103,6 +103,8 @@ ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
 {
     if (isAuth)
     {
+        if (isAuth && cmd.command == "CAP")
+            return new Cap(*this);
         if (isAuth && cmd.command == "QUIT")
             return new Quit(*this);
         if (isAuth && cmd.command == "PING")
@@ -126,6 +128,8 @@ ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
     }
     else
     {
+        if (cmd.command == "CAP")
+            return new Cap(*this);
         if (cmd.command == "QUIT")
             return new Quit(*this);
         if (cmd.command == "PING")

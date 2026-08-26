@@ -26,6 +26,13 @@ class Ping : public ACommand {
         void execute(Client *client, std::vector<std::string> params);
 };
 
+class Cap : public ACommand {
+    public:
+        Cap(Server &server);
+        ~Cap();
+        void execute(Client *client, std::vector<std::string> params);
+};
+
 
 class Quit : public ACommand {
     public:
