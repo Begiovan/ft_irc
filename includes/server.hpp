@@ -30,7 +30,7 @@ private:
     
     const std::string &getPassword() const;
     
-    void disconnectClient(int fd);
+    void disconnectClient(int fd, const std::string &reason = "Connection closed");
     void setupSocket(int port);
     void run();
     bool findClient(std::string value);
