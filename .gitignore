@@ -1,6 +1,10 @@
 # CPP
 .o
 .out
+ircserv
+
+# Local secrets/config
+.env
 
 # VSCODE
 .vscode/*
