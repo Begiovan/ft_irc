@@ -9,7 +9,6 @@ No external IRC libraries. Just raw sockets, `poll()`, and a lot of RFC reading.
 [![C++](https://img.shields.io/badge/C%2B%2B-98-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](https://en.wikipedia.org/wiki/C%2B%2B98)
 [![42](https://img.shields.io/badge/42-project-000000?style=for-the-badge&logo=42&logoColor=white)](https://42.fr)
 [![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey?style=for-the-badge)](#)
-[![License: MIT](https://img.shields.io/badge/license-MIT-green?style=for-the-badge)](#licenza)
 
 </div>
 
