@@ -133,7 +133,6 @@ ft_irc/
 | `MODE <channel> [+/-modes] [args]` | Gestisce modalità canale (`i`, `t`, `k`, `l`, `o`) | Sì |
 | `PING <token>` | Keep-alive, risponde con `PONG` | Sì |
 | `QUIT [:message]` | Disconnette il client dal server | Sì |
-| `CAP LS / REQ` | Negoziazione capability (compatibilità client) | No |
 
 ### Modalità canale (MODE)
 
