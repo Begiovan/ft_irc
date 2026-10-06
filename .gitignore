@@ -1,10 +1,11 @@
 # CPP
-.o
-.out
+**/*.o
+**/*.out
 ircserv
 
 # Local secrets/config
 .env
+compile_commands.json
 
 # VSCODE
 .vscode/*

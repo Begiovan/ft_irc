@@ -1,4 +1,5 @@
 CXX = c++
+RM = rm -f
 CPPFLAGS = -Iincludes
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
@@ -28,6 +29,9 @@ OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
 
+valgrind: all
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME)
+
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $(NAME) $(OBJS)
 
@@ -35,10 +39,10 @@ $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS)
+	$(RM) $(OBJS)
 
 fclean: clean
-	rm -f $(NAME)
+	$(RM) $(NAME)
 
 re: fclean all
 
