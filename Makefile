@@ -3,6 +3,9 @@ RM = rm -f
 CPPFLAGS = -Iincludes
 CXXFLAGS = -Wall -Wextra -Werror -std=c++98
 
+PORT ?= 4242
+PASS ?= password
+
 NAME = ircserv
 
 SRCS = src/main.cpp \
@@ -29,8 +32,11 @@ OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
 
+run:
+	./$(NAME) $(PORT) $(PASS)
+
 valgrind: all
-	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME)
+	valgrind --leak-check=full --show-leak-kinds=all --track-origins=yes ./$(NAME) $(PORT) $(PASS)
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $(NAME) $(OBJS)
