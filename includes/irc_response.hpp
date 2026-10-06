@@ -1,5 +1,4 @@
-#ifndef IRC_RESPONSE_HPP
-#define IRC_RESPONSE_HPP
+#pragma once
 
 #include <string>
 
@@ -51,5 +50,3 @@
 #define RPL_KICK(source, user, channel, target, reason) std::string(":") + source + "!" + user + "@ircserv KICK " + channel + " " + target + " :" + reason
 #define RPL_MODE(source, user, channel, modes, args)    std::string(":") + source + "!" + user + "@ircserv MODE " + channel + " " + modes + " " + args
 #define RPL_INVITE(source, user, target, channel)		std::string(":") + source + "!" + user + "@ircserv INVITE " + target + " :" + channel
-
-#endif

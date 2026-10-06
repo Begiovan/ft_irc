@@ -1,9 +1,11 @@
 #pragma once
+
+#include <map>
+#include <string.h>
+
 #include "ft_irc.hpp"
 #include "channel.hpp"
 #include "client.hpp"
-#include <map>
-#include <string.h>
 #include "irc_response.hpp"
 #include "ACommand.hpp"
 

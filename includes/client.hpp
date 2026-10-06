@@ -1,10 +1,8 @@
-#ifndef CLIENT_HPP
-#define CLIENT_HPP
+#pragma once
 
 #include <string>
 #include <set>
 #include <iostream>
-
 
 class Channel;
 
@@ -60,5 +58,3 @@ class Client {
 		bool isRegistered() const;
 
 };
-
-#endif
