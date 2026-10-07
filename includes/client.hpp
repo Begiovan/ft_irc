@@ -9,8 +9,6 @@ class Channel;
 class Client {
 
 	private:
-
-
 		int _fd;
 		int _registrationStatus;
 		std::string _username;
@@ -31,30 +29,31 @@ class Client {
 		Client(int fd);
 		~Client();
 
-		int getFd() const;
-		void setFd(int fd);
+		int		getFd() const;
+		void	setFd(int fd);
 
-		const std::string &getUsername();
-		void setUsername(std::string username);
+		const std::string	&getUsername();
+		void				setUsername(std::string username);
 
-		const std::string &getNickname();
-		void setNickname(std::string nickname);
+		const std::string	&getNickname();
+		void				setNickname(std::string nickname);
 
-		void addChannel(const Channel *chan) ;
-		void removeChannel(const Channel *chan) ;
-		const std::set<const Channel*>& getChannels() const;
-		bool isInChannel(const Channel *channel);
+		void					addChannel(const Channel *chan) ;
+		void					removeChannel(const Channel *chan) ;
+		const std::set
+			<const Channel*>	&getChannels() const;
+		bool					isInChannel(const Channel *channel);
 
-		void appendBuffer(std::string message);
-		std::string &getBuffer();
-		void clearBuffer();
+		void		appendBuffer(std::string message);
+		std::string	&getBuffer();
+		void		clearBuffer();
 
-		void appendSendBuffer(std::string message);
+		void		appendSendBuffer(std::string message);
 		std::string &getSendBuffer();
-		void clearSendBuffer();
+		void		clearSendBuffer();
 
-		int getRegistrationStatus() const;
-		void setRegistrationStatus(RegistrationFlag flag);
-		bool isRegistered() const;
+		int		getRegistrationStatus() const;
+		void	setRegistrationStatus(RegistrationFlag flag);
+		bool	isRegistered() const;
 
 };

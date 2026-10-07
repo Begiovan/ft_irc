@@ -20,6 +20,7 @@ const std::string &Server::getPassword() const
 
 void Server::setupSocket(int _port)
 {
+	// Open socket fd
     this->_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
     if (this->_serverSocket == -1)
     {
@@ -28,6 +29,7 @@ void Server::setupSocket(int _port)
         throw std::runtime_error("socket failed");
     }
 
+	// Initialize and fill sockaddr_in struct
     sockaddr_in serverAddress;
     memset(&serverAddress, 0, sizeof(serverAddress));
     serverAddress.sin_family = AF_INET;
@@ -35,6 +37,7 @@ void Server::setupSocket(int _port)
     serverAddress.sin_addr.s_addr = htonl(INADDR_ANY);
 
     int opt = 1;
+	// Avoid 'Address already in use' on restart: ignore leftover TIME_WAIT on the port
     if (setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
     {
         std::cout << "errore di setsockopt" << std::endl;
@@ -43,6 +46,7 @@ void Server::setupSocket(int _port)
         throw std::runtime_error("setsockopt failed");
     }
 
+	// Set the socket's fd as non blocking (??) Can this even makes sense?
     if (fcntl(this->_serverSocket, F_SETFL, O_NONBLOCK) == -1)
     {
         std::cout << "errore di fcntl" << std::endl;
@@ -51,6 +55,7 @@ void Server::setupSocket(int _port)
         throw std::runtime_error("fcntl failed");
     }
 
+	// Assigning a name to the server socket
     if (bind(this->_serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
     {
         std::cout << "errore di bind" << std::endl;

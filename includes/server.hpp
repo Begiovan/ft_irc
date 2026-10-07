@@ -14,39 +14,44 @@ class Client;
 class Channel;
 
 class Server {
-private:
-    int _serverSocket;
-    int _port;
-    std::string _password;
-    std::vector<pollfd> _fds;
-    std::map<int, Client*> _clients;
-    std::map<std::string, Channel*> _channels;
 
-    pollfd makePollFd(int fd);
-    void acceptClient();
-    int receiveClient(int i);
-    
-    public:
-    Server(int port, const std::string &password);
-    ~Server();
-    
-    const std::string &getPassword() const;
-    
-    void disconnectClient(int fd, const std::string &reason = "Connection closed");
-    void setupSocket(int port);
-    void run();
-    bool findClient(std::string value);
-    Client *returnClient(std::string value);
-    Channel *findChannel(const std::string &name);
-    Channel *createChannel(const std::string &name);
-    void    removeEmptyChan(Channel *channel);
+	private:
 
-    // MESSAGGI
-    void sendToClient(Client &client, const std::string &message); // TO DO
-    void broadcast(const Channel &channel, const std::string &message, const Client *exclude = NULL);
-    void flushClient(int fd);
+	int							_serverSocket;
+	int							_port;
+	std::string					_password;
+	std::vector<pollfd>			_fds;
+	std::map<int, Client*>		_clients;
+	std::map
+		<std::string, Channel*>	_channels;
 
-    // COMANDI
-    ACommand *dispatch(Command cmd, bool isAuth, Client *client);
+	pollfd	makePollFd(int fd);
+	void	acceptClient();
+	int		receiveClient(int i);
+	void	setupSocket(int port);
+	void	flushClient(int fd);
+
+	public:
+
+	Server(int port, const std::string &password);
+	~Server();
+	
+	const std::string &getPassword() const;
+	
+	void	disconnectClient(int fd, const std::string &reason = "Connection closed");
+	void	run();
+	bool	findClient(std::string value);
+	Client	*returnClient(std::string value);
+	Channel *findChannel(const std::string &name);
+	Channel *createChannel(const std::string &name);
+	void	removeEmptyChan(Channel *channel);
+
+	// MESSAGGI
+	void	sendToClient(Client &client, const std::string &message); // TO DO
+	void	broadcast(const Channel &channel,
+			const std::string &message, const Client *exclude = NULL);
+
+	// COMANDI
+	ACommand	*dispatch(Command cmd, bool isAuth, Client *client);
 
 };
