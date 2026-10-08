@@ -1,3 +1,16 @@
+# 8/10
+
+## Server Class
+
+### Header
+ - Added comments of change proposal
+     - _fds variable can be ranemae as _sockets variable 
+     - makePollFd() method can become static
+
+### Implementation
+ - Changed the first and second for(;;) in run() method, extensively documented inline
+ - Changed receiveClient() method to have receive the fd as parameter, not the index
+
 # 7/10
 
 ## Style

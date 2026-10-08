@@ -20,14 +20,14 @@ class Server {
 	int							_serverSocket;
 	int							_port;
 	std::string					_password;
-	std::vector<pollfd>			_fds;
+	std::vector<pollfd>			_fds; // _sockets; -> Name proposal
 	std::map<int, Client*>		_clients;
 	std::map
 		<std::string, Channel*>	_channels;
 
-	pollfd	makePollFd(int fd);
+	pollfd	makePollFd(int fd); // Can be static
 	void	acceptClient();
-	int		receiveClient(int i);
+	int		receiveClient(int fd);
 	void	setupSocket(int port);
 	void	flushClient(int fd);
 
