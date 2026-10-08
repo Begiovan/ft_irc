@@ -18,6 +18,15 @@ const std::string &Server::getPassword() const
 	return _password;
 }
 
+Client*	Server::getClientByFd(int fd)
+{
+	std::map<int, Client*>::iterator it = _clients.find(fd);
+
+	Client	*client = (it != _clients.end()) ? it->second : NULL;
+
+	return client;
+}
+
 void Server::setupSocket(int _port)
 {
 	// Open socket fd
@@ -148,62 +157,56 @@ ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
 	return NULL;
 }
 
-// Rewrite to have has parameter the _fds iterator (or pointer) instead of the index
 int Server::receiveClient(int fd)
 {
-	bool disconnected = false;
-	char buffer[1024];
+	char	buffer[1024];
 	ssize_t bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
+
 	if (bytes <= 0)
 	{
-		Server::disconnectClient(fd);
+		disconnectClient(fd);
 		return -1;
 	}
-	std::string recived(buffer, bytes);
-	std::map<int, Client *>::iterator it = _clients.find(fd);
-	if (it != _clients.end())
+
+	Client	*client = getClientByFd(fd);
+	if (!client)
 	{
-		it->second->appendBuffer(recived);
-		while (true)
-		{
-			size_t pos = it->second->getBuffer().find('\n');
-			if (pos != std::string::npos)
-			{
-				std::string commandLine = it->second->getBuffer().substr(0, pos);
-				it->second->getBuffer().erase(0, pos + 1);
-
-				if (!commandLine.empty() && commandLine[commandLine.size() - 1] == '\r')
-					commandLine.erase(commandLine.size() - 1);
-				Command cmd = parseCommand(commandLine);
-				std::map<int, Client *>::iterator clientIt = _clients.find(fd);
-				if (clientIt != _clients.end())
-				{
-					bool isAuth = clientIt->second->isRegistered();
-					ACommand *commandHandler = dispatch(cmd, isAuth, clientIt->second);
-					if (commandHandler)
-					{
-						commandHandler->execute(clientIt->second, cmd.params);
-						delete commandHandler;
-
-						if (_clients.find(fd) == _clients.end())
-						{
-							disconnected = true;
-							break;
-						}
-					}
-					else
-					{
-						sendToClient(*clientIt->second, ERR_UNKNOWNCOMMAND(clientIt->second->getNickname(), cmd.command) + "\r\n");
-					}
-				}
-			}
-			else
-				break;
-		}
-	}
-	else
 		std::cout << "client non trovato o errato" << std::endl;
-	return disconnected ? -1 : 0;
+		return 0;
+	}
+
+	std::string	received(buffer, bytes);
+	client->appendBuffer(received);
+	while (true)
+	{
+		// Normalize command's line
+		size_t pos = client->getBuffer().find('\n');
+		if (pos == std::string::npos)
+			break;
+		std::string cmdLine = client->getBuffer().substr(0, pos);
+		client->getBuffer().erase(0, pos + 1);
+		if (!cmdLine.empty() && cmdLine[cmdLine.size() - 1] == '\r')
+			cmdLine.erase(cmdLine.size() - 1);
+
+		// Get correct command Handler
+		Command		cmd = parseCommand(cmdLine);
+		bool		isAuth = client->isRegistered();
+		ACommand	*commandHandler = dispatch(cmd, isAuth, client);
+
+		if (!commandHandler)
+		{
+			sendToClient(*client,
+					ERR_UNKNOWNCOMMAND(client->getNickname(), cmd.command) + "\r\n");
+			continue;
+		}
+
+		commandHandler->execute(client, cmd.params);
+		delete commandHandler;
+
+		if (!getClientByFd(fd))
+			return -1; // disconnected
+	}
+	return 0;
 }
 
 void Server::disconnectClient(int fd, const std::string &reason)
@@ -243,12 +246,10 @@ void Server::run()
 	while (true)
 	{
 		typedef std::vector<pollfd>::iterator		fds_it;
-		typedef std::map<int, Client *>::iterator	clients_it;
 
 		for (fds_it socket = _fds.begin(); socket != _fds.end(); ++socket)
 		{
-			clients_it	it = _clients.find(socket->fd);
-			Client*		client = (it != _clients.end()) ? it->second : NULL;
+			Client	*client = getClientByFd(socket->fd);
 
 			if (client)
 			{
@@ -304,7 +305,7 @@ void Server::run()
 				else
 				{
 					if (Server::receiveClient(socket->fd) < 0)
-						std::advance(socket, -1);
+						--socket;
 				}
 			}
 			if (socket->revents & POLLOUT)

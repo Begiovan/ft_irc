@@ -30,6 +30,7 @@ class Server {
 	int		receiveClient(int fd);
 	void	setupSocket(int port);
 	void	flushClient(int fd);
+	Client	*getClientByFd(int fd);
 
 	public:
 
