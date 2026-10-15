@@ -1,5 +1,8 @@
 #include "server.hpp"
 
+/*
+ * Creates the listening socket and registers the server fd for the poll loop.
+ */
 Server::Server(int port, const std::string &password) : _port(port), _password(password)
 {
 	std::cout << "server creato" << std::endl
@@ -27,6 +30,10 @@ Client*	Server::getClientByFd(int fd)
 	return client;
 }
 
+/*
+ * Opens a TCP socket, enables address reuse, makes it non-blocking,
+ * and starts listening for incoming client connections.
+ */
 void Server::setupSocket(int _port)
 {
 	// Open socket fd
@@ -91,8 +98,9 @@ pollfd Server::makePollFd(int fd)
 
 void Server::acceptClient()
 {
-	sockaddr_in addr;
-	socklen_t addrLen = sizeof(addr);
+	sockaddr_in	addr;
+	socklen_t	addrLen = sizeof(addr);
+
 	int acc;
 	acc = accept(this->_serverSocket, (sockaddr *)&addr, &addrLen);
 	if (acc == -1)
@@ -101,81 +109,96 @@ void Server::acceptClient()
 		perror("accept");
 		return;
 	}
-	if (fcntl(acc, F_SETFL, O_NONBLOCK) == -1)
+
+	int fcn;
+	fcn = fcntl(acc, F_SETFL, O_NONBLOCK);
+	if (fcn == -1)
 	{
 		std::cout << "errore di fcntl" << std::endl;
 		perror("fcntl");
 		close(acc);
 		return;
 	}
-	Client *newClient = new Client(acc);
-	_clients.insert(std::pair<int, Client *>(acc, newClient));
-	this->_fds.push_back(makePollFd(acc));
+
+	std::pair<int, Client *>	newClient(acc, new Client(acc));
+	pollfd						newSocket = makePollFd(acc);
+
+	_clients.insert(newClient);
+	_fds.push_back(newSocket);
 }
 
+/*
+ * Routes each parsed IRC command to the matching handler.
+ * The auth state decides which commands are allowed before registration.
+ */
 ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
 {
+	// Commands valid both authenticated or not
+	if (cmd.command == "QUIT")
+		return new Quit(*this);
+	if (cmd.command == "PING")
+		return new Ping(*this);
+	if (cmd.command == "NICK")
+		return new Nick(*this);
+
 	if (isAuth)
 	{
-		if (isAuth && cmd.command == "QUIT")
-			return new Quit(*this);
-		if (isAuth && cmd.command == "PING")
-			return new Ping(*this);
-		if (isAuth && cmd.command == "KICK")
+		if (cmd.command == "KICK")
 			return new Kick(*this);
-		if (isAuth && cmd.command == "INVITE")
+		if (cmd.command == "INVITE")
 			return new Invite(*this);
-		if (isAuth && cmd.command == "TOPIC")
+		if (cmd.command == "TOPIC")
 			return new Topic(*this);
-		if (isAuth && cmd.command == "JOIN")
+		if (cmd.command == "JOIN")
 			return new Join(*this);
-		if (isAuth && cmd.command == "MODE")
+		if (cmd.command == "MODE")
 			return new Mode(*this);
-		if (isAuth && cmd.command == "NICK")
-			return new Nick(*this);
-		if (isAuth && cmd.command == "PRIVMSG")
+		if (cmd.command == "PRIVMSG")
 			return new Privmsg(*this);
-		if (isAuth && cmd.command == "NOTICE")
+		if (cmd.command == "NOTICE")
 			return new Notice(*this);
 	}
 	else
 	{
-		if (cmd.command == "QUIT")
-			return new Quit(*this);
-		if (cmd.command == "PING")
-			return new Ping(*this);
 		if (cmd.command == "PASS")
 			return new Pass(*this);
-		if (cmd.command == "NICK")
-			return new Nick(*this);
 		if (cmd.command == "USER")
 			return new User(*this);
+		// TODO This can leads to erroneus behaviour: send ERR_NOTREGISTERED, return NULL -> send ERR_UNKNOWNCOMMAND
 		else
 			sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
 	}
-
 	return NULL;
 }
 
+/*
+ * Reads data from one client and processes complete IRC lines from the
+ * buffer until nothing more can be parsed.
+ */
 int Server::receiveClient(int fd)
 {
-	char	buffer[1024];
-	ssize_t bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 
+	bool	disconnected = false;
+	char	buffer[1024];
+	ssize_t	bytes;
+
+	bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 	if (bytes <= 0)
 	{
-		disconnectClient(fd);
+		Server::disconnectClient(fd);
 		return -1;
 	}
 
-	Client	*client = getClientByFd(fd);
+	std::string	received(buffer, bytes);
+	Client		*client = getClientByFd(fd);
+
 	if (!client)
 	{
 		std::cout << "client non trovato o errato" << std::endl;
 		return 0;
 	}
 
-	std::string	received(buffer, bytes);
+	// Keep reading full command lines while they remain in the client's buffer.
 	client->appendBuffer(received);
 	while (true)
 	{
@@ -183,160 +206,116 @@ int Server::receiveClient(int fd)
 		size_t pos = client->getBuffer().find('\n');
 		if (pos == std::string::npos)
 			break;
-		std::string cmdLine = client->getBuffer().substr(0, pos);
+
+		std::string commandLine = client->getBuffer().substr(0, pos);
 		client->getBuffer().erase(0, pos + 1);
-		if (!cmdLine.empty() && cmdLine[cmdLine.size() - 1] == '\r')
-			cmdLine.erase(cmdLine.size() - 1);
+		if (!commandLine.empty() && commandLine[commandLine.size() - 1] == '\r')
+			commandLine.erase(commandLine.size() - 1);
 
 		// Get correct command Handler
-		Command		cmd = parseCommand(cmdLine);
+		Command		cmd = parseCommand(commandLine);
 		bool		isAuth = client->isRegistered();
 		ACommand	*commandHandler = dispatch(cmd, isAuth, client);
 
-		if (!commandHandler)
+		if (commandHandler)
 		{
-			sendToClient(*client,
-					ERR_UNKNOWNCOMMAND(client->getNickname(), cmd.command) + "\r\n");
-			continue;
+			commandHandler->execute(client, cmd.params);
+			delete commandHandler;
+
+			if (_clients.find(fd) == _clients.end())
+			{
+				disconnected = true;
+				break;
+			}
 		}
-
-		commandHandler->execute(client, cmd.params);
-		delete commandHandler;
-
-		if (!getClientByFd(fd))
-			return -1; // disconnected
+		else
+			sendToClient(*client, ERR_UNKNOWNCOMMAND(client->getNickname(), cmd.command) + "\r\n");
 	}
-	return 0;
+
+	return disconnected ? -1 : 0;
 }
 
 void Server::disconnectClient(int fd, const std::string &reason)
 {
+	// Close client's fd and erase it from sockets vector
 	close(fd);
-	size_t i = 0;
-	while (i < _fds.size())
-		if (fd != Server::_fds[i].fd)
+	size_t	i = 0;
+	while (i < _fds.size() && fd != _fds[i].fd)
 			i++;
-		else
+	_fds.erase(_fds.begin() + i);
+
+	// Erase client from clients map and channels
+	std::map<int, Client *>::iterator it = _clients.find(fd);
+	if (it != _clients.end())
+	{
+		Client						*client = it->second;
+		std::set<const Channel*>	channelsCopy = client->getChannels();
+		for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
 		{
-			_fds.erase(_fds.begin() + i);
-			std::map<int, Client *>::iterator it = _clients.find(fd);
-			if (it != _clients.end())
-			{
-				std::set<const Channel*> channelsCopy = it->second->getChannels();
-				for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
-				{
-					Channel *chan = const_cast<Channel*>(*chIt);
-					broadcast(*chan, RPL_QUIT(it->second->getNickname(),
-											   it->second->getUsername(),
-											   reason) + "\r\n",
-							  it->second);
-					chan->removeMember(*it->second);
-					removeEmptyChan(chan);
-				}
-				delete (it->second);
-				_clients.erase(it);
-			}
-			std::cout << "client [" << i << "] disconnesso" << std::endl;
-			break;
+			Channel *chan = const_cast<Channel*>(*chIt);
+			broadcast(*chan,
+					RPL_QUIT(client->getNickname(),
+								client->getUsername(),
+								reason) + "\r\n",
+					  client);
+			chan->removeMember(*client);
+			removeEmptyChan(chan);
 		}
+		delete (client);
+		_clients.erase(it);
+	}
+	std::cout << "client [" << i << "] disconnesso" << std::endl;
 }
 
+/*
+ * Main server loop: poll every fd, accept new connections, read incoming
+ * commands, and flush any queued data to clients.
+ */
 void Server::run()
 {
 	while (true)
 	{
-		typedef std::vector<pollfd>::iterator		fds_it;
-
-		for (fds_it socket = _fds.begin(); socket != _fds.end(); ++socket)
+		// If a client already has data queued, keep the fd monitored for both reads and writes.
+		for (size_t j = 0; j < _fds.size(); j++)
 		{
-			Client	*client = getClientByFd(socket->fd);
-
-			if (client)
+			if (_fds[j].fd != _serverSocket)
 			{
-				if (client->getSendBuffer().empty())
-					socket->events = POLLIN;
-				else
-					socket->events = POLLIN | POLLOUT;
+				std::map<int, Client *>::iterator it = _clients.find(_fds[j].fd);
+				if (it != _clients.end())
+				{
+					if (it->second->getSendBuffer().empty())
+						_fds[j].events = POLLIN;
+					else
+						_fds[j].events = POLLIN | POLLOUT;
+				}
 			}
 		}
-
-		/* I have changed the following for(;;) with the above.
-		 *
-		 * I've omitted the _serverSocket check cuz
-		 * the server's fd isn't present in the map,
-		 * so the find() call will return end() iterator.
-		 *
-		 * I also moved the index-based logic with a more cpplish
-		 * iterator-based logic.
-		 *
-		 * I've, in last, added the variable Client* client,
-		 * just for semantic coherency. It can be removed, and
-		 * can be used simply the iterator, how you want.
-		 *
-		 * * * *
-		 *
-		 * for (size_t j = 0; j < _fds.size(); j++)
-		 * {
-		 *	   if (_fds[j].fd != _serverSocket)
-		 *	   {
-		 *		   clients_it it = _clients.find(_fds[j].fd);
-		 *		   if (it != _clients.end())
-		 *		   {
-		 *			   if (it->second->getSendBuffer().empty())
-		 *				   _fds[j].events = POLLIN;
-		 *			   else
-		 *				   _fds[j].events = POLLIN | POLLOUT;
-		 *		   }
-		 *	   }
-		 * }
-		 * */
-
 		poll(&_fds[0], _fds.size(), -1);
 
-		for (fds_it socket = _fds.begin(); socket != _fds.end(); std::advance(socket, 1))
+		// Handle every fd that became ready after the previous poll call.
+		// POLLIN means there is data to read or a new connection to accept,
+		// while POLLOUT means the socket is ready to send queued output.
+		for (size_t i = 0; i < _fds.size(); i++)
 		{
-			if (socket->revents & POLLIN)
+			if (_fds[i].revents & POLLIN)
 			{
-				if (socket->fd == _serverSocket)
+				if (_fds[i].fd == _serverSocket)
 				{
 					Server::acceptClient();
+					// TODO change the cout: it prints even in case of error
 					std::cout << "Client connesso" << std::endl;
 				}
 				else
 				{
-					if (Server::receiveClient(socket->fd) < 0)
-						--socket;
+					if (Server::receiveClient(_fds[i].fd) < 0)
+						i--;
 				}
 			}
-			if (socket->revents & POLLOUT)
+			if (_fds[i].revents & POLLOUT)
 			{
-				Server::flushClient(socket->fd);
+				Server::flushClient(_fds[i].fd);
 			}
 		}
-
-		/* I've changed this for(;;) with the above
-		 *
-		 * for (size_t i = 0; i < _fds.size(); i++)
-		 * {
-		 * 	if (_fds[i].revents & POLLIN)
-		 * 	{
-		 * 		if (_fds[i].fd == _serverSocket)
-		 * 		{
-		 * 			Server::acceptClient();
-		 * 			std::cout << "Client connesso" << std::endl;
-		 * 		}
-		 * 		else
-		 * 		{
-		 * 			if (Server::receiveClient(_fds[i].fd) < 0)
-		 * 				i--;
-		 * 		}
-		 * 	}
-		 * 	if (_fds[i].revents & POLLOUT)
-		 * 	{
-		 * 		Server::flushClient(_fds[i].fd);
-		 * 	}
-		 * }
-		 * */
 	}
 }
 
@@ -370,6 +349,9 @@ Channel *Server::findChannel(const std::string &name)
 	return it->second;
 }
 
+/*
+ * Creates and registers a new IRC channel in the server's channel map.
+ */
 Channel *Server::createChannel(const std::string &name)
 {
 	Channel *channel = new Channel(name);
