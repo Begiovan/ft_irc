@@ -21,6 +21,15 @@ const std::string &Server::getPassword() const
 	return _password;
 }
 
+Client*	Server::getClientByFd(int fd)
+{
+	std::map<int, Client*>::iterator it = _clients.find(fd);
+
+	Client	*client = (it != _clients.end()) ? it->second : NULL;
+
+	return client;
+}
+
 /*
  * Opens a TCP socket, enables address reuse, makes it non-blocking,
  * and starts listening for incoming client connections.
@@ -124,45 +133,42 @@ void Server::acceptClient()
  */
 ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
 {
+
+	// Commands valid both authenticated or not
+	if (cmd.command == "QUIT")
+		return new Quit(*this);
+	if (cmd.command == "PING")
+		return new Ping(*this);
+	if (cmd.command == "NICK")
+		return new Nick(*this);
+
 	if (isAuth)
 	{
-		if (isAuth && cmd.command == "QUIT")
-			return new Quit(*this);
-		if (isAuth && cmd.command == "PING")
-			return new Ping(*this);
-		if (isAuth && cmd.command == "KICK")
+		if (cmd.command == "KICK")
 			return new Kick(*this);
-		if (isAuth && cmd.command == "INVITE")
+		if (cmd.command == "INVITE")
 			return new Invite(*this);
-		if (isAuth && cmd.command == "TOPIC")
+		if (cmd.command == "TOPIC")
 			return new Topic(*this);
-		if (isAuth && cmd.command == "JOIN")
+		if (cmd.command == "JOIN")
 			return new Join(*this);
-		if (isAuth && cmd.command == "MODE")
+		if (cmd.command == "MODE")
 			return new Mode(*this);
-		if (isAuth && cmd.command == "NICK")
-			return new Nick(*this);
-		if (isAuth && cmd.command == "PRIVMSG")
+		if (cmd.command == "PRIVMSG")
 			return new Privmsg(*this);
-		if (isAuth && cmd.command == "NOTICE")
+		if (cmd.command == "NOTICE")
 			return new Notice(*this);
 	}
 	else
 	{
-		if (cmd.command == "QUIT")
-			return new Quit(*this);
-		if (cmd.command == "PING")
-			return new Ping(*this);
 		if (cmd.command == "PASS")
 			return new Pass(*this);
-		if (cmd.command == "NICK")
-			return new Nick(*this);
 		if (cmd.command == "USER")
 			return new User(*this);
+		// TODO This can leads to erroneus behaviour: send ERR_NOTREGISTERED, return NULL -> send ERR_UNKNOWNCOMMAND
 		else
 			sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
 	}
-
 	return NULL;
 }
 
@@ -172,7 +178,6 @@ ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
  */
 int Server::receiveClient(int fd)
 {
-	typedef std::map<int, Client *>::iterator client_it;
 
 	bool	disconnected = false;
 	char	buffer[1024];
@@ -186,8 +191,7 @@ int Server::receiveClient(int fd)
 	}
 
 	std::string	received(buffer, bytes);
-	client_it	it = _clients.find(fd);
-	Client		*client = (it != _clients.end()) ? it->second : NULL;
+	Client		*client = getClientByFd(fd);
 
 	if (!client)
 	{
@@ -226,45 +230,42 @@ int Server::receiveClient(int fd)
 			}
 		}
 		else
-		{
 			sendToClient(*client, ERR_UNKNOWNCOMMAND(client->getNickname(), cmd.command) + "\r\n");
-		}
 	}
-
 
 	return disconnected ? -1 : 0;
 }
 
 void Server::disconnectClient(int fd, const std::string &reason)
 {
+	// Close client's fd and erase it from sockets vector
 	close(fd);
-	size_t i = 0;
-	while (i < _fds.size())
-		if (fd != Server::_fds[i].fd)
+	size_t	i = 0;
+	while (i < _fds.size() && fd != _fds[i].fd)
 			i++;
-		else
+	_fds.erase(_fds.begin() + i);
+
+	// Erase client from clients map and channels
+	std::map<int, Client *>::iterator it = _clients.find(fd);
+	if (it != _clients.end())
+	{
+		Client						*client = it->second;
+		std::set<const Channel*>	channelsCopy = client->getChannels();
+		for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
 		{
-			_fds.erase(_fds.begin() + i);
-			std::map<int, Client *>::iterator it = _clients.find(fd);
-			if (it != _clients.end())
-			{
-				std::set<const Channel*> channelsCopy = it->second->getChannels();
-				for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
-				{
-					Channel *chan = const_cast<Channel*>(*chIt);
-					broadcast(*chan, RPL_QUIT(it->second->getNickname(),
-											   it->second->getUsername(),
-											   reason) + "\r\n",
-							  it->second);
-					chan->removeMember(*it->second);
-					removeEmptyChan(chan);
-				}
-				delete (it->second);
-				_clients.erase(it);
-			}
-			std::cout << "client [" << i << "] disconnesso" << std::endl;
-			break;
+			Channel *chan = const_cast<Channel*>(*chIt);
+			broadcast(*chan,
+					RPL_QUIT(client->getNickname(),
+								client->getUsername(),
+								reason) + "\r\n",
+					  client);
+			chan->removeMember(*client);
+			removeEmptyChan(chan);
 		}
+		delete (client);
+		_clients.erase(it);
+	}
+	std::cout << "client [" << i << "] disconnesso" << std::endl;
 }
 
 /*
