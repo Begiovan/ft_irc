@@ -32,7 +32,7 @@ OBJS = $(SRCS:.cpp=.o)
 
 all: $(NAME)
 
-run:
+run: all
 	./$(NAME) $(PORT) $(PASS)
 
 valgrind: all
