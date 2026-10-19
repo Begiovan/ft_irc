@@ -2,6 +2,24 @@
 #include <climits>
 #include <cctype>
 
+std::string toLowerString(const std::string &value)
+{
+    std::string lowered = value;
+    for (std::string::iterator it = lowered.begin(); it != lowered.end(); ++it)
+    {
+        unsigned char c = static_cast<unsigned char>(*it);
+        if (c == '[' || c == '{')
+            *it = '[';
+        else if (c == ']' || c == '}')
+            *it = ']';
+        else if (c == '\\' || c == '|')
+            *it = '\\';
+        else
+            *it = static_cast<char>(std::tolower(c));
+    }
+    return lowered;
+}
+
 bool isPositiveInteger(const std::string &value)
 {
     if (value.empty())
@@ -31,17 +49,19 @@ bool isValidNickname(const std::string &nick)
         return false;
     if (nick.size() > 9)
         return false;
-    char primo = nick[0];
-    bool primoValido = isalpha(primo) || primo == '[' || primo == ']' || primo == '\\' ||
-                        primo == '`' || primo == '^' || primo == '{' || primo == '}' || primo == '-';
-    if (!primoValido)
+    char first = nick[0];
+    bool isFirstValid = isalpha(first) || first == '[' || first == ']' || first == '\\' ||
+                        first == '`' || first == '^' || first == '{' || first == '}' ||
+                        first == '|' || first == '_';
+    if (!isFirstValid)
         return false;
     for (size_t i = 1; i < nick.size(); i++)
     {
         char c = nick[i];
-        bool valido = isalnum(c) || c == '[' || c == ']' || c == '\\' ||
-                    c == '`' || c == '^' || c == '{' || c == '}' || c == '-';
-        if (!valido)
+        bool valid = isalnum(c) || c == '[' || c == ']' || c == '\\' ||
+                    c == '`' || c == '^' || c == '{' || c == '}' ||
+                    c == '|' || c == '_' || c == '-';
+        if (!valid)
             return false;
     }
 

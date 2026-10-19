@@ -1,5 +1,15 @@
 # 19/10
 
+## NickName
+
+- Adjusted rules to fit IRC specs
+    - Nicknames are now case-insensitive
+    - Set special case rules
+        - `{` uppercase of `[`
+        - `}` uppercase of `]`
+        - `|` uppercase of `\`
+    - other adjustments to fit the BNF spec
+
 ## Commands
 - Modified USER and NICK commands
     - Now they will fail with '464 ERR_PASSWDMISMATCH' if no PASS command was given before

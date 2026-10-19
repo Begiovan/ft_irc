@@ -16,3 +16,4 @@
 
 bool isPositiveInteger(const std::string &value);
 bool isValidNickname(const std::string &nick);
+std::string toLowerString(const std::string &value);
