@@ -1,3 +1,10 @@
+# 19/10
+
+## Commands
+- Modified USER and NICK commands
+    - Now they will fail with '464 ERR_PASSWDMISMATCH' if no PASS command was given before
+        - From [RFC 2812, section 3.1](https://www.rfc-editor.org/info/rfc2812/#section-3.1): A "PASS" command [..] MUST precede the latter of the NICK/USER combination
+
 # 15/10
 
 ## Server class

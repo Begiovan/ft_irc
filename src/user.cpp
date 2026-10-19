@@ -14,7 +14,7 @@ void User::execute(Client *client, std::vector<std::string> params){
         _server->sendToClient(*client, ERR_ALREADYREGISTERED("*") + "\r\n");
         return;
     }
-    else
+    else if (client->getRegistrationStatus() & Client::PASS_OK)
     {
         client->setUsername(params[0]);
         client->setRegistrationStatus(Client::USER_OK);
@@ -22,5 +22,9 @@ void User::execute(Client *client, std::vector<std::string> params){
         if (client->isRegistered())
             _server->sendToClient(*client, RPL_WELCOME(client->getNickname()) + "\r\n");
     }
-
+    else
+    {
+        _server->sendToClient(*client, ERR_PASSWDMISMATCH("*") + "\r\n");
+        return;
+    }
 }

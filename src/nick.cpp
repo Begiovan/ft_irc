@@ -12,6 +12,12 @@ void Nick::execute(Client *client, std::vector<std::string> params)
         return;
     }
 
+    if (!(client->getRegistrationStatus() & Client::PASS_OK))
+    {
+        _server->sendToClient(*client, ERR_PASSWDMISMATCH("*") + "\r\n");
+        return;
+    }
+
     if (!isValidNickname(params[0]))
     {
         _server->sendToClient(*client,

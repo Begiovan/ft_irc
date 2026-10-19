@@ -141,7 +141,17 @@ ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
 	if (cmd.command == "NICK")
 		return new Nick(*this);
 
-	if (isAuth)
+	if (!isAuth)
+	{
+		if (cmd.command == "PASS")
+			return new Pass(*this);
+		if (cmd.command == "USER")
+			return new User(*this);
+		// TODO This can leads to erroneus behaviour: send ERR_NOTREGISTERED, return NULL -> send ERR_UNKNOWNCOMMAND
+		else
+			sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
+	}
+	else if (isAuth)
 	{
 		if (cmd.command == "KICK")
 			return new Kick(*this);
@@ -157,16 +167,6 @@ ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
 			return new Privmsg(*this);
 		if (cmd.command == "NOTICE")
 			return new Notice(*this);
-	}
-	else
-	{
-		if (cmd.command == "PASS")
-			return new Pass(*this);
-		if (cmd.command == "USER")
-			return new User(*this);
-		// TODO This can leads to erroneus behaviour: send ERR_NOTREGISTERED, return NULL -> send ERR_UNKNOWNCOMMAND
-		else
-			sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
 	}
 	return NULL;
 }
