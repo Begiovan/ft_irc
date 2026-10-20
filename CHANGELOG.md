@@ -1,5 +1,9 @@
 # 19/10
 
+## Channels
+
+- Now channels names must start with # or &
+
 ## NickName
 
 - Adjusted rules to fit IRC specs

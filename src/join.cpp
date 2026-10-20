@@ -14,6 +14,10 @@ void Join::execute(Client *client, std::vector<std::string> params){
 	bool newChannel = false;
 
 	if(!chan){
+		if (params[0][0] != '#' && params[0][0] != '&'){
+			_server->sendToClient(*client, ERR_NOSUCHCHANNEL(client->getNickname(), params[0]) + "\r\n");
+			return;
+		}
 		chan = _server->createChannel(params[0]);
 		newChannel = true;
 	}
