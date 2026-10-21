@@ -5,7 +5,7 @@ Topic::~Topic(){}
 
 // sintax : TOPIC channel -> mostra il topic
 // topic channel :topic -> imposta nuovo topic
-// topic channe : -> rimuove il topic impostandolo come stringa vuota
+// topic channel : -> rimuove il topic impostandolo come stringa vuota
 
 void Topic::execute(Client *client, std::vector<std::string> params){
 	if (params.size() < 1){

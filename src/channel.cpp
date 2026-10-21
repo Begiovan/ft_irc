@@ -30,6 +30,7 @@ void Channel::removeOperator(const Client& client) {
     _operators.erase(client.getFd());
 }
 
+// TODO Don't we must empty also _operators set?
 bool Channel::empty() const {
     return _members.empty();
 }
@@ -55,9 +56,11 @@ Channel::JoinResult Channel::canJoin(const Client& other, const std::string& key
 }
 
 bool Channel::canChangeTopic(const Client& client) const {
-    if (!_topicRestricted && isMember(&client))
-        return true;
-    return isOperator(client);
+
+	if (_topicRestricted)
+		return isOperator(client);
+	else
+		return isMember(&client);
 }
 
 // Getters

@@ -48,6 +48,7 @@ public:
 	};
 	
 	bool		empty() const;
+	// TODO Can we pass a reference to client, and then de-reference it in the body? It would be more coherent in the code
 	bool		isMember(const Client *client) const;
 	bool		isOperator(const Client& client) const;
 	JoinResult	canJoin(const Client& other, const std::string& key) const;

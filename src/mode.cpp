@@ -62,10 +62,12 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 		return;
 	}
 
-	bool changed = false;
-	bool enable = true;
-	size_t numArgs = 2;
-	std::string mode = params[1];
+	bool		changed = false;
+	bool		enable = true;
+	size_t		numArgs = 2;
+	std::string	mode = params[1];
+
+	// TODO In this way we accept only one mode at time
 	for (size_t i = 0; i < mode.size(); i++)
 	{
 		switch (mode[i])
