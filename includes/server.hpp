@@ -24,6 +24,7 @@ class Server {
 	std::map<int, Client*>		_clients;
 	std::map
 		<std::string, Channel*>	_channels;
+	Client						*_bot;
 
 	pollfd	makePollFd(int fd); // Can be static
 	void	acceptClient();
@@ -31,6 +32,9 @@ class Server {
 	void	setupSocket(int port);
 	void	flushClient(int fd);
 	Client	*getClientByFd(int fd);
+	std::string	buildChannelListMessage() const;
+	void	createBot();
+	bool	channelHasRealUsers(const Channel *channel) const;
 
 	public:
 
@@ -46,6 +50,8 @@ class Server {
 	Channel *findChannel(const std::string &name);
 	Channel *createChannel(const std::string &name);
 	void	removeEmptyChan(Channel *channel);
+	Client	*getBot() const;
+	void	botOnMessage(Client *from, const std::string &target, const std::string &message);
 
 	// MESSAGGI
 	void	sendToClient(Client &client, const std::string &message); // TO DO

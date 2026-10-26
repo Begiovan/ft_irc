@@ -8,6 +8,8 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 	std::cout << "server creato" << std::endl
 			  << "porta usata: " << _port << std::endl;
 	Server::setupSocket(_port);
+	_bot = NULL;
+	createBot();
 	_fds.push_back(makePollFd(_serverSocket));
 }
 
@@ -21,6 +23,11 @@ const std::string &Server::getPassword() const
 	return _password;
 }
 
+Client *Server::getBot() const
+{
+	return _bot;
+}
+
 Client*	Server::getClientByFd(int fd)
 {
 	std::map<int, Client*>::iterator it = _clients.find(fd);
@@ -28,6 +35,66 @@ Client*	Server::getClientByFd(int fd)
 	Client	*client = (it != _clients.end()) ? it->second : NULL;
 
 	return client;
+}
+
+void Server::createBot()
+{
+	_bot = new Client(-1);
+	_bot->setBot(true);
+	_bot->setNickname("chanbot");
+	_bot->setUsername("chanbot");
+	_bot->setRegistrationStatus(Client::PASS_OK);
+	_bot->setRegistrationStatus(Client::NICK_OK);
+	_bot->setRegistrationStatus(Client::USER_OK);
+	_clients.insert(std::make_pair(_bot->getFd(), _bot));
+}
+
+bool Server::channelHasRealUsers(const Channel *channel) const
+{
+	if (!channel)
+		return false;
+
+	const std::set<const Client *> &members = channel->getMembers();
+	for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
+	{
+		if (!(*it)->isBot())
+			return true;
+	}
+	return false;
+}
+
+std::string Server::buildChannelListMessage() const
+{
+	if (_channels.empty())
+		return "No channels available.";
+
+	std::string list = "Channels: ";
+	for (std::map<std::string, Channel *>::const_iterator it = _channels.begin(); it != _channels.end(); ++it)
+	{
+		if (it != _channels.begin())
+			list += ", ";
+		list += it->first;
+	}
+	return list;
+}
+
+void Server::botOnMessage(Client *from, const std::string &target, const std::string &message)
+{
+	if (!from || !_bot)
+		return;
+	if (message.empty() || message[0] != '!')
+		return;
+
+	if (message == "!channels")
+	{
+		sendToClient(*from,
+			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, buildChannelListMessage()) + "\r\n");
+		return;
+	}
+
+	sendToClient(*from,
+		RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target,
+			"Sorry @" + from->getNickname() + ", i don't speak your language") + "\r\n");
 }
 
 /*
@@ -98,6 +165,7 @@ pollfd Server::makePollFd(int fd)
 
 void Server::acceptClient()
 {
+	// This variable is unused (!?)
 	sockaddr_in	addr;
 	socklen_t	addrLen = sizeof(addr);
 
@@ -359,12 +427,26 @@ Channel *Server::createChannel(const std::string &name)
 	Channel *channel = new Channel(name);
 
 	_channels.insert(std::make_pair(name, channel));
+	if (_bot)
+	{
+		channel->addMember(*_bot);
+		_bot->addChannel(channel);
+	}
 	return channel;
 }
 
 void	Server::removeEmptyChan(Channel *channel){
-	if (!channel->empty() || !channel)
+	if (!channel)
 		return;
+	if (channelHasRealUsers(channel))
+		return;
+
+	if (_bot && channel->isMember(_bot))
+	{
+		channel->removeMember(*_bot);
+		_bot->removeChannel(channel);
+	}
+
 	for (std::map<std::string, Channel *>::iterator it = _channels.begin(); it != _channels.end(); it++){
 		if( it->second == channel)
 		{
