@@ -91,10 +91,23 @@ void Server::botOnMessage(Client *from, const std::string &target, const std::st
 			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, buildChannelListMessage()) + "\r\n");
 		return;
 	}
+	if (message == "!help")
+	{
+		sendToClient(*from,
+			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, "Aviable commands for this bot: !channel, !help\n" +
+				"Server command: /kick, /invite, /topic, /mode") + "\r\n");
+		return;
+	}
+	if (message == "!whoami")
+	{
+		sendToClient(*from,
+			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, ) + "\r\n");
+		return;
+	}
 
 	sendToClient(*from,
 		RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target,
-			"Sorry @" + from->getNickname() + ", i don't speak your language") + "\r\n");
+			"Sorry @" + from->getNickname() + ", i don't speak your language." + "Aviable commands for this bot: !channel, !help") + "\r\n");
 }
 
 /*
