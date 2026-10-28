@@ -34,10 +34,10 @@ OBJS = $(SRCS:.cpp=.o)
 all: $(NAME)
 
 run: all
-	./$(NAME) $(PORT) $(PASS)
+	@./$(NAME) $(PORT) $(PASS)
 
 valgrind: all
-	valgrind $(VALGRIND_FLAGS) ./$(NAME) $(PORT) $(PASS)
+	@valgrind $(VALGRIND_FLAGS) ./$(NAME) $(PORT) $(PASS)
 
 $(NAME): $(OBJS)
 	$(CXX) $(CXXFLAGS) $(CPPFLAGS) -o $(NAME) $(OBJS)
