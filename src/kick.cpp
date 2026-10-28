@@ -3,7 +3,7 @@
 Kick::Kick(Server &server) : ACommand(server){}
 Kick::~Kick(){}
 
-// sintax: KICK channel target: message (optional)
+// syntax: KICK channel target: message (optional)
 
 void Kick::execute(Client *client, std::vector<std::string> params){
 	

@@ -3,7 +3,7 @@
 Invite::Invite(Server &server) : ACommand(server){}
 Invite::~Invite(){}
 
-// sintax INVITE nickname channel
+// syntax: INVITE nickname channel
 
 void Invite::execute(Client *client, std::vector<std::string> params){
 	if (params.size() < 2)

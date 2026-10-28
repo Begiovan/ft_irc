@@ -3,7 +3,7 @@
 Join::Join(Server &server) : ACommand(server){}
 Join::~Join(){}
 
-// sintax: JOIN channel key (optional)
+// syntax: JOIN channel key (optional)
 
 void Join::execute(Client *client, std::vector<std::string> params){
     if (params.size() < 1){

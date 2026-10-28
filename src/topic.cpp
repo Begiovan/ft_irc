@@ -3,9 +3,9 @@
 Topic::Topic(Server &server) : ACommand(server){}
 Topic::~Topic(){}
 
-// sintax : TOPIC channel -> mostra il topic
-// topic channel :topic -> imposta nuovo topic
-// topic channel : -> rimuove il topic impostandolo come stringa vuota
+// syntax: TOPIC channel -> shows the current topic
+// topic channel :topic -> sets a new topic
+// topic channel : -> clears the topic by setting it to an empty string
 
 void Topic::execute(Client *client, std::vector<std::string> params){
 	if (params.size() < 1){

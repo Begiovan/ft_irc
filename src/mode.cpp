@@ -5,9 +5,9 @@
 Mode::Mode(Server &server) : ACommand(server){}
 Mode::~Mode(){}
 
-// sintax MODE channel -> restituisce i mode attivi sul canale
-// MODE channel +/- lettera valore -> setup su quella lettera del valore
-// MODE channel piu lettere ->setup diverse lettere
+// syntax: MODE channel -> shows the active modes on the channel
+// MODE channel +/- letter value -> sets or clears a mode value
+// MODE channel +letters -> configures multiple mode flags
 
 static std::string getModes(Channel &channel){
 	std::string mode;

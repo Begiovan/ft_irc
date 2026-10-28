@@ -7,8 +7,8 @@ extern volatile __sig_atomic_t g_stopRequested;
  */
 Server::Server(int port, const std::string &password) : _port(port), _password(password)
 {
-	std::cout << "server creato" << std::endl
-			  << "porta usata: " << _port << std::endl;
+	std::cout << "server created" << std::endl
+			  << "port used: " << _port << std::endl;
 	Server::setupSocket(_port);
 	_bot = NULL;
 	createBot();
@@ -141,7 +141,7 @@ void Server::setupSocket(int _port)
 	this->_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
 	if (this->_serverSocket == -1)
 	{
-		std::cout << "errore di creazione socket" << std::endl;
+		std::cout << "socket creation error" << std::endl;
 		perror("socket");
 		throw std::runtime_error("socket failed");
 	}
@@ -157,7 +157,7 @@ void Server::setupSocket(int _port)
 	// Avoid 'Address already in use' on restart: ignore leftover TIME_WAIT on the port
 	if (setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
 	{
-		std::cout << "errore di setsockopt" << std::endl;
+		std::cout << "setsockopt error" << std::endl;
 		perror("setsockopt");
 		close(this->_serverSocket);
 		throw std::runtime_error("setsockopt failed");
@@ -166,7 +166,7 @@ void Server::setupSocket(int _port)
 	// Set the socket's fd as non blocking (??) Can this even makes sense?
 	if (fcntl(this->_serverSocket, F_SETFL, O_NONBLOCK) == -1)
 	{
-		std::cout << "errore di fcntl" << std::endl;
+		std::cout << "fcntl error" << std::endl;
 		perror("fcntl");
 		close(this->_serverSocket);
 		throw std::runtime_error("fcntl failed");
@@ -175,14 +175,14 @@ void Server::setupSocket(int _port)
 	// Assigning a name to the server socket
 	if (bind(this->_serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 	{
-		std::cout << "errore di bind" << std::endl;
+		std::cout << "bind error" << std::endl;
 		close(this->_serverSocket);
 		throw std::runtime_error("bind failed");
 	}
 
 	if (listen(this->_serverSocket, 5) == -1)
 	{
-		std::cout << "errore di listen" << std::endl;
+		std::cout << "listen error" << std::endl;
 		close(this->_serverSocket);
 		throw std::runtime_error("listen failed");
 	}
@@ -207,7 +207,7 @@ void Server::acceptClient()
 	acc = accept(this->_serverSocket, (sockaddr *)&addr, &addrLen);
 	if (acc == -1)
 	{
-		std::cout << "errore di accept" << std::endl;
+		std::cout << "accept error" << std::endl;
 		perror("accept");
 		return;
 	}
@@ -216,7 +216,7 @@ void Server::acceptClient()
 	fcn = fcntl(acc, F_SETFL, O_NONBLOCK);
 	if (fcn == -1)
 	{
-		std::cout << "errore di fcntl" << std::endl;
+		std::cout << "fcntl error" << std::endl;
 		perror("fcntl");
 		close(acc);
 		return;
@@ -366,7 +366,7 @@ void Server::disconnectClient(int fd, const std::string &reason)
 		delete (client);
 		_clients.erase(it);
 	}
-	std::cout << "client [" << i << "] disconnesso" << std::endl;
+	std::cout << "client [" << i << "] disconnected" << std::endl;
 }
 
 /*
@@ -405,7 +405,7 @@ void Server::run()
 				{
 					Server::acceptClient();
 					// TODO change the cout: it prints even in case of error
-					std::cout << "Client connesso" << std::endl;
+					std::cout << "Client connected" << std::endl;
 				}
 				else
 				{

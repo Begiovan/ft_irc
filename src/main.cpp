@@ -27,13 +27,13 @@ int main(int argc, char **argv)
 
 		if (!isPositiveInteger(argv[1]))
 		{
-			std::cerr << "Errore: porta non valida" << std::endl;
+			std::cerr << "Error: invalid port" << std::endl;
 			return 1;
 		}
 		port = std::atoi(argv[1]);
 		if (port <= 1024)
 		{
-			std::cerr << "inserire una porta con valore > 1024" << std::endl;
+			std::cerr << "Please enter a port value greater than 1024" << std::endl;
 			return 1;
 		}
 		password = argv[2];
@@ -44,7 +44,7 @@ int main(int argc, char **argv)
 		} 
 		catch (const std::exception &e)
 		{
-			std::cerr << "Errore: " << e.what() << std::endl;
+			std::cerr << "Error: " << e.what() << std::endl;
 			return 1;
 		}
 	}
