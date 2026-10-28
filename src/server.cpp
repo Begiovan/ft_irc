@@ -1,5 +1,7 @@
 #include "server.hpp"
 
+extern volatile __sig_atomic_t g_stopRequested;
+
 /*
  * Creates the listening socket and registers the server fd for the poll loop.
  */
@@ -15,7 +17,21 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 
 Server::~Server()
 {
-	std::cout << "Destructor called" << std::endl;
+	for (std::map<std::string, Channel *>::iterator it = _channels.begin(); it != _channels.end(); ++it)
+		delete it->second;
+	_channels.clear();
+
+	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+	{
+		if (it->first >= 0)
+			close(it->first);
+		delete it->second;
+	}
+	_clients.clear();
+
+	if (_serverSocket >= 0)
+		close(_serverSocket);
+	_fds.clear();
 }
 
 const std::string &Server::getPassword() const
@@ -359,7 +375,7 @@ void Server::disconnectClient(int fd, const std::string &reason)
  */
 void Server::run()
 {
-	while (true)
+	while (!g_stopRequested)
 	{
 		// If a client already has data queued, keep the fd monitored for both reads and writes.
 		for (size_t j = 0; j < _fds.size(); j++)
