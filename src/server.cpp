@@ -80,6 +80,11 @@ std::string Server::buildChannelListMessage() const
 
 void Server::botOnMessage(Client *from, const std::string &target, const std::string &message)
 {
+	time_t now = time(NULL);
+    struct tm *t = gmtime(&now);
+	char buf[80];
+	strftime(buf, sizeof(buf), "%a %d %b %Y %I:%M:%S %p", t);
+
 	if (!from || !_bot)
 		return;
 	if (message.empty() || message[0] != '!')
@@ -98,10 +103,10 @@ void Server::botOnMessage(Client *from, const std::string &target, const std::st
 				"Server command: /kick, /invite, /topic, /mode") + "\r\n");
 		return;
 	}
-	if (message == "!whoami")
+	if (message == "!date")
 	{
 		sendToClient(*from,
-			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, ) + "\r\n");
+			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, std::string(buf) + " UTC") + "\r\n");
 		return;
 	}
 
