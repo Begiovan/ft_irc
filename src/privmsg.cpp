@@ -9,7 +9,7 @@ void Privmsg::execute(Client *client, std::vector<std::string> params){
         return;
     }
 
-    if (params[0][0] == '#')
+    if (params[0][0] == '#' || params[0][0] == '&')
     {
         Channel *chan = _server->findChannel(params[0]);
         if (!chan)
@@ -23,6 +23,9 @@ void Privmsg::execute(Client *client, std::vector<std::string> params){
             return;
         }
         _server->broadcast(*chan, RPL_PRIVMSG(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n", client);
+        Client *bot = _server->getBot();
+        if (bot && chan->isMember(bot))
+            _server->botOnMessage(client, params[0], params[1]);
     }
     else
     {
@@ -35,7 +38,10 @@ void Privmsg::execute(Client *client, std::vector<std::string> params){
         }
         else
         {
-            _server->sendToClient(*target, RPL_PRIVMSG(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n");
+            if (target->isBot())
+                _server->botOnMessage(client, client->getNickname(), params[1]);
+            else
+                _server->sendToClient(*target, RPL_PRIVMSG(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n");
         }
     }
 

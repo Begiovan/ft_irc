@@ -3,6 +3,7 @@
 Client::Client(int fd){
 	_fd = fd;
 	_registrationStatus = 0;
+	_isBot = false;
 }
 
 Client::~Client(){}
@@ -73,6 +74,14 @@ bool Client::isRegistered() const {
 
 bool Client::isInChannel(const Channel *channel){
 	return (_channels.find(channel) != _channels.end());
+}
+
+bool Client::isBot() const{
+	return _isBot;
+}
+
+void Client::setBot(bool isBot){
+	_isBot = isBot;
 }
 
 void Client::appendSendBuffer(std::string message){

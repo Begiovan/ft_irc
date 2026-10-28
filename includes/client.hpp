@@ -9,13 +9,14 @@ class Channel;
 class Client {
 
 	private:
-		int _fd;
-		int _registrationStatus;
-		std::string _username;
-		std::string _nickname;
-		std::string _buffer; //recv()
-		std::string _sendBuffer; //send()
-		std::set<const Channel*> _channels;
+		int							_fd;
+		int							_registrationStatus;
+		std::string					_username;
+		std::string					_nickname;
+		std::string 				_buffer;		//recv()
+		std::string 				_sendBuffer;	//send()
+		std::set<const Channel*>	_channels;
+		bool						_isBot;
 
 
 	public:
@@ -43,6 +44,8 @@ class Client {
 		const std::set
 			<const Channel*>	&getChannels() const;
 		bool					isInChannel(const Channel *channel);
+		bool					isBot() const;
+		void					setBot(bool isBot);
 
 		void		appendBuffer(std::string message);
 		std::string	&getBuffer();
