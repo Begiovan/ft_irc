@@ -3,13 +3,31 @@
 > Obiettivo: eliminare la ridondanza **senza cambiare la logica** del programma.
 > L'idea di fondo è spostare in pochi punti comuni ciò che oggi è ripetuto in ogni comando:
 > invio delle risposte, controlli di validazione, ingresso/uscita dai canali, notifiche.
-> Molti bug della todo list (sezione B) spariscono "gratis" come effetto collaterale.
+> Molti bug della todo list spariscono "gratis" come effetto collaterale.
 
-Legenda priorità: 🔴 bug visibile/crash · 🟠 non conforme al protocollo · 🟢 pulizia/refactor
+Legenda priorità: 🔴 bug che si vede o rompe qualcosa · 🟠 comportamento sbagliato rispetto al protocollo IRC · 🟢 refactor e pulizia, che non cambiano il comportamento.
+Ogni voce riporta tra parentesi la tematica di origine (Robustezza, Parser, Registrazione, Canali, Modello dati, Risposte IRC, Header e build, main, Pulizia).
 
 ---
 
 ## A. Orientamento del refactor
+
+### In sintesi
+
+La ridondanza nasce dal fatto che ogni comando riscrive a mano tre cose che dovrebbero stare in un posto solo.
+
+1. **Come si manda una risposta.** Oggi ogni chiamata aggiunge `"\r\n"` a mano e sceglie da sé `"*"` o il nick. Se lo fanno `sendToClient`, `Client::nickOrStar()` e `Client::prefix()` (che produce `nick!user@host`), spariscono diversi bug: INVITE senza `\r\n`, JOIN che manda una riga vuota, TOPIC senza prefisso.
+2. **Come si valida una richiesta.** Quasi tutti i comandi ripetono la stessa catena: parametri sufficienti, canale esistente, utente membro, utente operatore. Spostata in pochi helper di `ACommand` (`needParams`, `needChannel`, `needMember`, `needOperator`, `needNick`), che mandano l'errore e ritornano false, KICK, INVITE, TOPIC e MODE si accorciano di circa metà. Lo stesso vale per `dispatch`: al posto delle due catene di `if` basta una mappa di comandi creata una volta sola. Così si risolvono anche il doppio errore per chi non è registrato e i comandi in minuscolo.
+3. **Cosa succede nel modello.** Entrare o uscire da un canale, avvisare chi condivide un canale con te e completare la registrazione sono sequenze copiate in più file. Le differenze tra le copie sono proprio i bug: il QUIT duplicato, il KICK ridondante, il WELCOME scritto tre volte. Diventano funzioni di `Server` come `joinChannel`, `partChannel`, `broadcastToNeighbours` e `tryCompleteRegistration`.
+
+Gli altri due punti chiave:
+
+- **Modello dati.** Oggi `Channel` salva i membri come puntatori ma operatori e invitati come fd. Usando `Client*` ovunque spariscono i `const_cast` e anche il bug degli inviti ereditati da un nuovo client che riceve lo stesso fd.
+- **Disconnessioni.** Con lo schema "mark & sweep" il client viene solo segnato come da disconnettere e chiuso a fine giro di `poll`. Questo elimina il `i--` in `run()`, il QUIT che perde i messaggi in coda e la disconnessione brusca che non avvisa i canali.
+
+Prima di tutto c'è lo **step 0**: uno script di test con `nc` da rilanciare dopo ogni step. È l'unico modo per verificare che la logica non sia cambiata.
+
+Gli step 1-3 toccano soprattutto i comandi, gli step 4-6 soprattutto `Server`, quindi due persone del gruppo possono lavorarci in parallelo. Ogni step si può chiudere in un commit a sé.
 
 ### Da dove nasce la ridondanza
 
@@ -61,6 +79,10 @@ Senza test, "non cambiare la logica" è impossibile da verificare.
 - [ ] Salvare l'output di oggi come riferimento e rilanciarlo dopo ogni step.
       Le differenze devono essere solo quelle volute (bug corretti).
 
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Pulizia e repository)* 🟢 Mancano dei test anche minimi, per esempio uno script `nc` con le sequenze di registrazione, JOIN, MODE e KICK, da rilanciare dopo il refactor.
+
 ### Step 1 — Un solo punto di uscita per i messaggi
 
 **Problema:** `"\r\n"` aggiunto a mano ovunque (già dimenticato in INVITE), sorgente
@@ -74,8 +96,17 @@ incoerente (`"*"` vs nick), `"ircserv"` e `"@ircserv"` scritti nelle macro.
       prendono un solo parametro `prefix` invece di `(source, user)`.
 - [ ] `#define SERVER_NAME "ircserv"` in un solo punto.
 
-*Risolve:* INVITE senza CRLF, JOIN che manda una riga vuota, TOPIC senza prefisso,
-sorgente incoerente in PRIVMSG/PASS/NICK, `ERR_NICKNAMEINUSE` malformato.
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Registrazione)* 🟠 `ERR_NICKNAMEINUSE` usa `getNickname()`, che prima della registrazione è vuoto, e la riga esce malformata. Va usato `*`.
+- [ ] *(Canali e comandi di canale)* 🔴 **JOIN su un canale in cui sei già** (`join.cpp:40`): il messaggio d'errore resta vuoto e al client arriva solo `"\r\n"`.
+- [ ] *(Canali e comandi di canale)* 🔴 **INVITE, `ERR_USERONCHANNEL` senza `"\r\n"`** (`invite.cpp:38`): il messaggio si attacca al successivo.
+- [ ] *(Canali e comandi di canale)* 🟠 Il broadcast di TOPIC non ha il prefisso `nick!user@host`, a differenza degli altri messaggi. Conviene creare una macro `RPL_TOPICCHANGE`.
+- [ ] *(Risposte IRC)* 🟢 **`"\r\n"` aggiunto a mano in ogni chiamata**, ed è già stato dimenticato una volta (INVITE). Conviene che lo aggiunga `sendToClient`, oppure un helper `reply()`.
+- [ ] *(Risposte IRC)* 🟢 Il nick sorgente nelle risposte non è coerente: a volte `"*"`, a volte `getNickname()` (vedi PRIVMSG e PASS). Serve un helper `nickOrStar(client)`.
+- [ ] *(Risposte IRC)* 🟢 Il nome del server `ircserv` è scritto dentro ogni macro. Si può raccogliere in una costante, oppure passare dalle macro a funzioni inline.
+- [ ] *(Risposte IRC)* 🟠 PONG dovrebbe essere `:ircserv PONG ircserv :token`.
+- [ ] *(Risposte IRC)* 🟢 `RPL_MODE` con argomento vuoto lascia uno spazio in coda alla riga.
 
 ### Step 2 — Helper di validazione in `ACommand`
 
@@ -113,6 +144,11 @@ void Kick::execute(Client &c, const std::vector<std::string> &p) {
 *Effetto:* KICK, INVITE, TOPIC, MODE, PRIVMSG, NOTICE, JOIN si accorciano di metà
 e i messaggi d'errore diventano coerenti per costruzione.
 
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Registrazione)* 🟠 `USER` controlla un solo parametro, ma il protocollo ne richiede 4. Il realname viene ignorato. *(completato nello Step 5)*
+- [ ] *(Modello dati)* 🟢 Molti metodi ricevono `std::string` per valore (`setNickname`, `appendBuffer`, `findClient`…) e `execute` riceve un `vector` per valore. Meglio passare `const &`. *(completato nello Step 5)*
+
 ### Step 3 — Registro dei comandi al posto di `dispatch`
 
 **Problema:** due catene di `if` quasi identiche, `isAuth &&` ridondante,
@@ -132,9 +168,13 @@ altrimenti                  -> cmd->execute(...)
 
 - [ ] Il nome del comando va convertito in maiuscolo nel parser.
 
-*Risolve:* doppio errore 451+421, comandi case-sensitive, righe vuote,
-PASS/USER dopo la registrazione (saranno sempre raggiungibili e
-risponderanno 462 grazie ai loro controlli interni).
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Parser e dispatch dei comandi)* 🔴 **Errore doppio per i client non registrati.** `dispatch` invia già `ERR_NOTREGISTERED` e ritorna `NULL`, poi `receiveClient` aggiunge anche `ERR_UNKNOWNCOMMAND`.
+- [ ] *(Parser e dispatch dei comandi)* 🟠 I comandi sono case-sensitive: `join` non viene riconosciuto.
+- [ ] *(Parser e dispatch dei comandi)* 🟠 Una riga vuota riceve `ERR_UNKNOWNCOMMAND`; andrebbe ignorata in silenzio.
+- [ ] *(Parser e dispatch dei comandi)* 🟠 `PASS` e `USER` dopo la registrazione rispondono "unknown command" invece di `462 ERR_ALREADYREGISTERED`, perché non compaiono nella lista dei comandi per utenti autenticati.
+- [ ] *(Parser e dispatch dei comandi)* 🟢 `dispatch` contiene due liste quasi uguali e un `isAuth &&` ripetuto. Si può sostituire con una `std::map<std::string, ACommand*>` creata una volta nel costruttore, più un set dei comandi ammessi prima della registrazione. Si elimina anche il `new`/`delete` a ogni riga.
 
 ### Step 4 — Operazioni di dominio condivise in `Server`
 
@@ -154,8 +194,14 @@ risponderanno 462 grazie ai loro controlli interni).
 - [ ] `Client *getClientByNick(const std::string&)` al posto di `findClient` + `returnClient`
       (confronto case-insensitive).
 
-*Risolve:* QUIT duplicato a chi condivide più canali, KICK ridondante,
-nick case-sensitive, codice WELCOME triplicato.
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Robustezza del server)* 🟢 `removeEmptyChan`: il controllo `!channel` arriva dopo che il puntatore è già stato usato (`channel->empty()`). Inoltre cerca il canale con un ciclo invece di usare `_channels.erase(name)`.
+- [ ] *(Registrazione)* 🟠 Il controllo del nick è case-sensitive: `Sus` e `sus` possono coesistere. Inoltre `NICK` con il proprio nick attuale risponde "already in use".
+- [ ] *(Registrazione)* 🟢 Il blocco "se ora è registrato manda `RPL_WELCOME`" è ripetuto in pass, nick e user. Si può estrarre in `Server::tryCompleteRegistration(Client*)`.
+- [ ] *(Canali e comandi di canale)* 🟠 QUIT manda il messaggio una volta per ogni canale: chi condivide due canali con te lo riceve due volte. NICK invece raccoglie i destinatari in un set, ed è il pattern giusto da riusare.
+- [ ] *(Canali e comandi di canale)* 🟢 KICK chiama `removeOperator` e `removeInvite` prima di `removeMember`, che fa già entrambe le cose.
+- [ ] *(Modello dati)* 🟢 `findClient` e `returnClient` sono duplicati: ne basta uno solo, `Client* getClientByNick(const std::string&)`. In più si può valutare una mappa nick → Client.
 
 ### Step 5 — Modello dati coerente (togliere i `const_cast`)
 
@@ -168,7 +214,14 @@ nick case-sensitive, codice WELCOME triplicato.
       rinominare `topicRes()`/`inviteRes()` → `isTopicRestricted()`/`isInviteOnly()`.
 - [ ] Aggiungere `_hostname` e `_realname` al `Client`.
 
-*Risolve:* inviti "ereditati" da un nuovo client con lo stesso fd.
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Canali e comandi di canale)* 🔴 **Inviti e operatori sono salvati per fd.** Se un utente invitato si disconnette senza essere mai entrato, il prossimo client che riceve lo stesso fd eredita l'invito. Conviene usare `Client*` come per `_members` (vedi sezione 5).
+- [ ] *(Canali e comandi di canale)* 🟢 `Channel::setUserLimit` stampa su `cout`. Il modello non dovrebbe fare I/O: meglio che ritorni un `bool`.
+- [ ] *(Modello dati)* 🟢 **Puntatori `const` usati ovunque e poi forzati con `const_cast`.** `Channel` tiene `set<const Client*>`, `Client` tiene `set<const Channel*>`, e così servono `const_cast` in broadcast, nick, join e disconnect. Si risolve salvando `Client*` e `Channel*` non const e rendendo const i getter (`getNickname()`, `getUsername()`, `isInChannel()`).
+- [ ] *(Modello dati)* 🟢 `Channel` usa una rappresentazione mista: i membri sono puntatori, operatori e invitati sono fd. Conviene uniformare tutto a `Client*`.
+- [ ] *(Modello dati)* 🟢 Il codice morto (`setFd`, `clearBuffer`, `clearSendBuffer`) è da togliere o da usare. I nomi `topicRes()` e `inviteRes()` sono poco chiari: meglio `isTopicRestricted()` e `isInviteOnly()`.
+- [ ] *(Modello dati)* 🟢 Mancano hostname e realname nel `Client`: oggi l'host `@ircserv` è scritto a mano nelle macro.
 
 ### Step 6 — Loop di rete più semplice e sicuro
 
@@ -188,8 +241,18 @@ sull'indice sbagliato, `QUIT` chiude il fd mentre il comando è ancora in esecuz
 - [ ] La disconnessione brusca passa dalla stessa funzione di QUIT
       (`broadcastToNeighbours` + `partChannel` su tutti i canali).
 
-*Risolve:* crash da SIGPIPE, indice sbagliato dopo una disconnessione,
-busy loop su POLLHUP, QUIT che perde i messaggi in coda, leak alla chiusura.
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Robustezza del server)* 🔴 **SIGPIPE non gestito.** Se un client chiude la connessione mentre ha dati in coda, `send()` genera SIGPIPE e il server si chiude. Va ignorato con `signal(SIGPIPE, SIG_IGN)` nel `main`, oppure con `SO_NOSIGPIPE` sul socket (su macOS).
+- [ ] *(Robustezza del server)* 🔴 **`run()`, indice sbagliato dopo una disconnessione** (`server.cpp:266-272`). Dopo `i--`, il controllo `POLLOUT` successivo usa `_fds[i]`, cioè il fd precedente. Basta un `continue` dopo `i--`.
+- [ ] *(Robustezza del server)* 🔴 **`POLLHUP`/`POLLERR` non gestiti.** Se `revents` contiene solo `POLLHUP`, il client non viene mai rimosso e `poll` continua a ritornare subito (busy loop).
+- [ ] *(Robustezza del server)* 🟠 Il valore di ritorno di `poll()` non è controllato (`-1`, `EINTR`).
+- [ ] *(Robustezza del server)* 🟠 `flushClient`: se `send` fallisce con un errore diverso da `EAGAIN` fa solo `perror`. Il client andrebbe disconnesso.
+- [ ] *(Robustezza del server)* 🟠 Nessun limite al buffer di input: un client che manda dati senza mai inviare `\n` fa crescere la memoria all'infinito. Il protocollo IRC fissa le righe a 512 byte, quindi conviene troncare o disconnettere.
+- [ ] *(Robustezza del server)* 🟠 `disconnectClient` (chiusura brusca, senza `QUIT`) toglie il client dai canali ma non avvisa gli altri membri con un messaggio `QUIT`.
+- [ ] *(Robustezza del server)* 🟠 `QUIT` chiude subito il fd: tutto quello che è ancora nel send buffer va perso.
+- [ ] *(Robustezza del server)* 🟢 `~Server()` non libera `_clients` e `_channels` e non chiude i socket. Manca anche uno shutdown pulito con SIGINT.
+- [ ] *(Parser e dispatch dei comandi)* 🟢 `receiveClient` cerca il client due volte (`it` e `clientIt`). Conviene estrarre `processLine(Client*, line)`.
 
 ### Step 7 — Header e build
 
@@ -198,6 +261,14 @@ busy loop su POLLHUP, QUIT che perde i messaggi in coda, leak alla chiusura.
 - [ ] Uniformare a include guard (oggi misto con `#pragma once`).
 - [ ] Makefile: `-MMD -MP` + `-include $(OBJS:.o=.d)`, oggetti in `obj/`.
 - [ ] `.gitignore`: `.o` → `*.o` (oggi ignora solo un file chiamato esattamente `.o`), aggiungere `*.d`.
+
+**Voci della todo list risolte da questo step:**
+
+- [ ] *(Header e build)* 🟢 Include circolari: `server.hpp` include `ACommand.hpp`, che include `server.hpp`; `parser.hpp` e `ft_irc.hpp` si includono a vicenda. Basta usare forward declaration negli header e spostare gli include nei `.cpp`.
+- [ ] *(Header e build)* 🟢 Lo stile delle protezioni degli header è misto: `#pragma once` in alcuni file, include guard in altri. Meglio uniformare con le include guard.
+- [ ] *(Header e build)* 🟢 `ft_irc.hpp` è un header "contenitore" che include tutto: conviene ridurlo.
+- [ ] *(Header e build)* 🟢 Il Makefile non tiene traccia delle dipendenze dagli header: se modifichi un `.hpp`, i `.o` non vengono ricompilati. Si risolve con `-MMD -MP` e `-include $(OBJS:.o=.d)`, eventualmente mettendo gli oggetti in una cartella `obj/`.
+- [ ] *(Header e build)* 🟢 Nel `.gitignore` c'è `.o` invece di `*.o`: ignora solo un file chiamato esattamente `.o`, quindi i file oggetto non vengono ignorati. Per ora nel repo non ne sono finiti.
 
 ### Ordine e dipendenze
 
@@ -217,83 +288,35 @@ due persone possono lavorarci in parallelo.
 
 ---
 
-## B. Todo list completa (dalla prima analisi)
+---
 
-Tra parentesi lo step del refactor che la risolve; "—" = fix puntuale.
+## B. Fix puntuali (fuori dal refactor)
 
-### 1. Robustezza del server
-- [ ] 🔴 SIGPIPE non gestito: client che chiude con dati in coda → server terminato (6)
-- [ ] 🔴 `run()`: dopo `i--` il controllo POLLOUT usa il fd sbagliato (`server.cpp:266-272`) (6)
-- [ ] 🔴 `POLLHUP`/`POLLERR` non gestiti → client mai rimosso, busy loop (6)
-- [ ] 🟠 ritorno di `poll()` non controllato (6)
-- [ ] 🟠 `flushClient`: errori diversi da EAGAIN → solo perror, client non disconnesso (6)
-- [ ] 🟠 nessun limite al buffer di input (512 byte) (6)
-- [ ] 🟠 disconnessione brusca: gli altri membri non ricevono QUIT (6)
-- [ ] 🟠 QUIT chiude subito il fd, il send buffer va perso (6)
-- [ ] 🟢 `~Server()` non libera client/canali né chiude i socket (6)
-- [ ] 🟢 `removeEmptyChan`: null check dopo la dereferenziazione, ricerca lineare (4)
+Correzioni che non dipendono dagli step: si possono fare in qualsiasi momento, anche prima del refactor.
 
-### 2. Parser e dispatch
-- [ ] 🔴 doppio errore 451 + 421 per i non registrati (3)
-- [ ] 🔴 `"JOIN "` crea un canale senza nome; `nline[0]` / `params[0][0]` su stringa vuota (parser)
-- [ ] 🟠 spazi multipli → parametri vuoti (parser)
-- [ ] 🟠 prefisso `:nick CMD` non gestito (parser)
-- [ ] 🟠 comandi case-sensitive (3)
-- [ ] 🟠 riga vuota → 421 invece di essere ignorata (3)
-- [ ] 🟠 PASS/USER dopo la registrazione → 421 invece di 462 (3)
-- [ ] 🟢 `dispatch` duplicato, `new`/`delete` per riga (3)
-- [ ] 🟢 `receiveClient` cerca il client due volte (6)
+- [ ] *(Parser e dispatch dei comandi)* 🔴 **Parser con righe vuote o spazi in fondo.** `"JOIN "` produce un parametro vuoto e crea un canale senza nome. `nline[0]` su una stringa vuota è comportamento indefinito, e lo stesso vale per `params[0][0]` in PRIVMSG e NOTICE.
+- [ ] *(Parser e dispatch dei comandi)* 🟠 Spazi multipli generano parametri vuoti.
+- [ ] *(Parser e dispatch dei comandi)* 🟠 Il prefisso iniziale (`:nick CMD ...`) non è gestito.
+- [ ] *(Registrazione)* 🔴 **`isValidNickname` rifiuta `_` e `|`.** Molti client, irssi compreso, aggiungono `_` quando il nick è occupato, e qui ricevono `432 ERR_ERRONEUSNICKNAME`. Il `-` invece non dovrebbe essere ammesso come primo carattere.
+- [ ] *(Registrazione)* 🟠 L'ordine non è imposto: NICK e USER sono accettati prima di PASS. Con la password sbagliata il client resta connesso e può riprovare all'infinito.
+- [ ] *(Canali e comandi di canale)* 🟠 JOIN non valida il nome del canale: `JOIN pippo` crea un canale senza `#`. Non supporta nemmeno le liste separate da virgola (`#a,#b chiave1,chiave2`).
+- [ ] *(Canali e comandi di canale)* 🟠 **MODE**: *(meglio farlo dopo lo Step 2, con gli helper di validazione)*
+  - con `+o` fa un broadcast subito, poi alla fine ne fa un altro con l'intera stringa `params[1]`, senza argomenti;
+  - se c'è un errore a metà, le modifiche precedenti restano applicate ma nessuno viene avvisato;
+  - `+l 0` stampa "invalid" su stdout ma fa comunque il broadcast come se fosse cambiato qualcosa;
+  - `MODE #canale` (interrogazione) dovrebbe rispondere con `324 RPL_CHANNELMODEIS`;
+  - `MODE <nick> +i`, che molti client inviano dopo la registrazione, riceve `ERR_NOSUCHCHANNEL`.
+- [ ] *(Canali e comandi di canale)* 🟠 INVITE richiede di essere operatore anche se il canale non è `+i`.
+- [ ] *(main e configurazione)* 🟠 Con un numero sbagliato di argomenti il programma esce con `0` senza nessun messaggio. Serve un messaggio d'uso e il ritorno `1`.
+- [ ] *(main e configurazione)* 🟠 La porta non ha limite superiore: `99999` passa il controllo e poi viene troncata da `htons`.
+- [ ] *(main e configurazione)* 🟢 `setupSocket(int _port)` ha un parametro con lo stesso nome del membro e lo nasconde. In più il backlog di `listen` è 5: meglio `SOMAXCONN`.
+- [ ] *(Pulizia e repository)* 🟢 I log sono misti tra italiano e inglese e spesso doppi (`cout` + `perror`). Anche il log di disconnessione stampa l'indice nel vettore invece del fd.
+- [ ] *(Pulizia e repository)* 🟢 Gli appunti (`domande.md`, `appunti.md`, `ft_irc_stato_e_todo.md`) sono nella root: si possono spostare in `docs/`. Anche `ft_irc_stato_e_todo.md` andrebbe aggiornato, perché alcune voci non corrispondono più al codice.
 
-### 3. Registrazione
-- [ ] 🔴 `isValidNickname` rifiuta `_` e `|`, accetta `-` come primo carattere (—)
-- [ ] 🟠 nick case-sensitive; NICK con il proprio nick → "already in use" (4)
-- [ ] 🟠 `ERR_NICKNAMEINUSE` con nick vuoto → riga malformata (1)
-- [ ] 🟠 USER: richiesti 4 parametri, realname ignorato (2, 5)
-- [ ] 🟠 password sbagliata: il client resta connesso e può riprovare all'infinito (—)
-- [ ] 🟢 blocco WELCOME triplicato in pass/nick/user (4)
+---
 
-### 4. Canali
-- [ ] 🔴 inviti/operatori salvati per fd → ereditati da un nuovo client con lo stesso fd (5)
-- [ ] 🔴 JOIN su canale in cui si è già → manda una riga vuota (1)
-- [ ] 🔴 INVITE: `ERR_USERONCHANNEL` senza `"\r\n"` (`invite.cpp:38`) (1)
-- [ ] 🟠 JOIN senza validazione del nome canale (`#`), niente liste con virgole (—)
-- [ ] 🟠 MODE: doppio broadcast su `+o`, broadcast senza argomenti, modifiche parziali
-      non notificate, `+l 0` notificato come cambiato, query senza 324,
-      `MODE <nick> +i` → 403 (—, dopo lo step 2)
-- [ ] 🟠 TOPIC: broadcast senza prefisso `nick!user@host` (1)
-- [ ] 🟠 INVITE richiede operatore anche se il canale non è +i (—)
-- [ ] 🟠 QUIT duplicato a chi condivide più canali (4)
-- [ ] 🟢 KICK: `removeOperator`/`removeInvite` ridondanti prima di `removeMember` (4)
-- [ ] 🟢 `Channel::setUserLimit` stampa su cout (5)
+## C. Ordine consigliato
 
-### 5. Modello dati
-- [ ] 🟢 `set<const Client*>` / `set<const Channel*>` + `const_cast` ovunque (5)
-- [ ] 🟢 membri come puntatori, operatori/invitati come fd (5)
-- [ ] 🟢 `findClient` / `returnClient` duplicati (4)
-- [ ] 🟢 stringhe e vector passati per valore (2, 5)
-- [ ] 🟢 metodi morti, nomi poco chiari (`topicRes`, `inviteRes`) (5)
-- [ ] 🟢 manca hostname/realname nel Client (5)
+Prima i 🔴: SIGPIPE e il ciclo di `run()` (Step 6), il parser e i caratteri del nick (sezione B) sono quelli che si vedono durante una valutazione. I 🔴 della sezione B si possono sistemare subito; quelli che stanno dentro uno step conviene affrontarli insieme allo step.
 
-### 6. Risposte IRC
-- [ ] 🟢 `"\r\n"` manuale in ogni chiamata (1)
-- [ ] 🟢 sorgente incoerente `"*"` / nick (1)
-- [ ] 🟢 `"ircserv"` hardcoded in ogni macro (1)
-- [ ] 🟠 PONG: formato corretto `:ircserv PONG ircserv :token` (1)
-- [ ] 🟢 `RPL_MODE` con args vuoto lascia uno spazio finale (1)
-
-### 7. Header e build
-- [ ] 🟢 include circolari (7)
-- [ ] 🟢 `#pragma once` misto a include guard (7)
-- [ ] 🟢 `ft_irc.hpp` header "contenitore" (7)
-- [ ] 🟢 Makefile senza dipendenze dagli header (7)
-- [ ] 🟢 `.gitignore`: `.o` invece di `*.o` (7)
-
-### 8. main e configurazione
-- [ ] 🟠 argc sbagliato → esce con 0 senza messaggio (—)
-- [ ] 🟠 porta senza limite superiore (> 65535) (—)
-- [ ] 🟢 `setupSocket(int _port)` nasconde il membro; backlog 5 → `SOMAXCONN` (—)
-
-### 9. Pulizia e repository
-- [ ] 🟢 log misti italiano/inglese, doppi (`cout` + `perror`), log disconnessione stampa l'indice e non il fd (—)
-- [ ] 🟢 appunti `.md` nella root → `docs/`; aggiornare `ft_irc_stato_e_todo.md` (—)
-- [ ] 🟢 nessun test automatico (0)
+Poi lo Step 5 (modello dati) e lo Step 1 (risposte IRC): uniformare i puntatori e aggiungere `"\r\n"` in automatico semplifica quasi tutti i comandi senza cambiarne la logica.
