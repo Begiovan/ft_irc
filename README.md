@@ -1,3 +1,8 @@
+# BRANCH DI REFACTOR
+Fare in questo branch i merge degli altri refactor SOLO A TEST SUPERATI
+
+
+
 <div align="center">
 
 # ft_irc
