@@ -1,71 +1,141 @@
-*This project has been created as part of the 42 curriculum by skayed, begiovan, rceschel*
+*This project was created as part of the 42 curriculum by skayed, begiovan, and rceschel.*
 
-# Descpription
-This project aims to build a minimal, but functional, IRC server, without the federation with other servers.
+## Description
+This project aims to build a minimal but functional IRC server without federation with other servers.
 
-# Instruction
+<!-- TOC -->
 
-## Build and run
+## Table of Contents
+- [Instructions](#instructions)
+  - [Build](#build)
+  - [Run](#run)
+  - [Other ways to build and run](#other-ways-to-build-and-run)
+  - [Connect to the server](#connect-to-the-server)
+  - [Features](#features)
+  - [Available commands](#available-commands)
+  - [Channel modes](#channel-modes)
+- [Technical overview](#technical-overview)
+  - [Server architecture](#server-architecture)
+  - [Technical details](#technical-details)
+  - [Known limitations](#known-limitations)
+- [Resources](#resources)
 
-#### Build
-Run `make` in the root of the project, you will compile the **ircserv** program.
+<!-- /TOC -->
 
-####  Execute
-Run `/path/to/ircserv <port> <password>` where `<port>` is the port where to connect to the server, and `<password>` is the password used to authenticate to the server.
 
-#### Other ways to build and run
-Another way to build and run the project is to use `make run` in the root of the project
+## Instructions
 
-In this way, you will build the `ircserv` executable and automatically run it with defauld overridable makefile's variable for `<port>` and `<password>`.
+### Build
+Run `make` in the project root to compile the **ircserv** program.
 
-To override the defualt values: `make run PORT=<port> PASS=<password>`
+### Run
+Run `/path/to/ircserv` `<port>` `<password>`, where `<port>` is the port used to connect to the server and `<password>` is the password required for authentication.
 
-You can also run `make valgrind`: it works at the same as `make run`, but runs the executable with **valgrind** to perform leaks check
+### Other ways to build and run
+Another way to build and run the project is to use `make run` in the project root.
 
-## Usage
+This will build the `ircserv` executable and automatically run it with the default overridable Makefile variables for `<port>` and `<password>`.
 
-#### Connect to the server
-Once the server started with `ircserv <port> <password>`, you can connect to the server with the client do you prefer.
-During develop and testing, our reference client has been **kvirc**.
+To override the default values: `make run PORT=<port> PASS=<password>`
 
-#### Features
+You can also run `make valgrind`: it behaves like `make run`, but executes the program with **valgrind** to check for leaks.
 
-Below here's a list of the implemented features, from user perspective.
+### Connect to the server
+Once the server is started with `ircserv <port> <password>`, you can connect with any IRC client you prefer.
+During development and testing, our reference client was **kvirc**.
 
-* You can authenticate, set a nickname, a username, join a channel, send and receive private messages.
-* All the messages sent from one client to a channel will be forwarded to every other client that joined the channel.
+### Features
+
+Below is a list of the available features from a user perspective.
+
+* You can authenticate, set a nickname and username, join a channel, and send and receive private messages.
+* All messages sent from one client to a channel are forwarded to every other client that has joined the channel.
 * You can have **operators** and regular users.
-* There are commands specific to **channel operators**
-	* KICK - Eject a client from the channel
-	* INVITE - Invite a client to a channel
-	* TOPIC - Change or view the channel topic
-	* MODE - Change the channel’s mode *(prefix '+' to set/give, '-' to remove/take)*:
-		* i: Set/remove Invite-only channel
-		* t: Set/remove the restrictions of the TOPIC command to channel operators
-		* k: Set/remove the channel key (password)
-		* o: Give/take channel operator privilege
-		* l: Set/remove the user limit to channel
-* You can transfer files (depending on the client) trought CTCP DCC SEND
-* A bot will be automatically added to every new channel, use `!help` in chat to have the list of aviable commands.
+* There are commands specific to **channel operators** (KICK, INVITE, TOPIC, MODE):
+* You can transfer files (depending on the client) via CTCP DCC SEND.
+* A bot is automatically added to every new channel; use `!help` in chat to see the list of available commands.
 
-#### Commands
+### Available commands
 
-Below here's a comprehensive list of available server's commands.
+| Command   | Parameters                                       | Description                                            | Requires auth |
+| --------- | ------------------------------------------------ | ------------------------------------------------------ | :-----------: |
+| `PING`    | `<token>`                                        | Checks that the client-server connection is alive      |               |
+| `QUIT`    | `[message]`                                      | Terminates the client's connection to the server       |               |
+| `PASS`    | `<password>`                                     | Provides the password for server authentication        |               |
+| `NICK`    | `<nickname>`                                     | Sets or changes the user's nickname                    |               |
+| `USER`    | `<username> <hostname> <servername> :<realname>` | Registers the user's username and real name            |               |
+| `PRIVMSG` | `<target> :<text>`                               | Sends a private message to a user or channel           |               |
+| `NOTICE`  | `<target> :<text>`                               | Sends an automated notice (expects no automatic reply) |               |
+| `KICK`    | `<channel> <user> [comment]`                     | Removes a user from a channel                          |               |
+| `JOIN`    | `<channel>[,channel*] [key]*`                    | Joins a channel                                        |               |
+| `TOPIC`   | `<channel> [topic]`                              | Views or sets a channel's topic                        |               |
+| `INVITE`  | `<nickname> <channel>`                           | Invites a user to join a channel                       |               |
+| `MODE`    | `<channel>`                                      | Changes user or channel modes (e.g. +o, +t)            |               |
 
-| Command | Description | Parameters |
-| --- | --- | --- |
-| **PING** | Checks that the client-server connection is alive | `<token>` |
-| **QUIT** | Terminates the client's connection to the server | `[message]` |
-| **PASS** | Provides the password for server authentication | `<password>` |
-| **NICK** | Sets or changes the user's nickname | `<nickname>` |
-| **USER** | Registers the user's username and real name | `<username> <hostname> <servername> :<realname>` |
-| **PRIVMSG** | Sends a private message to a user or channel | `<target> :<text>` |
-| **NOTICE** | Sends an automated notice (expects no automatic reply) | `<target> :<text>` |
-| **KICK** | Removes a user from a channel | `<channel> <user> [comment]` |
-| **JOIN** | Joins a channel | `<channel>[,channel*] [key]*` |
-| **TOPIC** | Views or sets a channel's topic | `<channel> [topic]` |
-| **INVITE** | Invites a user to join a channel | `<nickname> <channel>` |
-| **MODE** | Changes user or channel modes (e.g. +o, +t) | `<channel\|user> <mode> [arguments]` |
+### Channel modes
 
+| Flag | Effect                                                            |
+| :--: | ----------------------------------------------------------------- |
+| `i`  | Toggle Invite-only channel                                        |
+| `t`  | Toggle the restrictions of the TOPIC command to channel operators |
+| `k`  | Toggle the channel key (password)                                 |
+| `o`  | Give or revoke channel operator privileges to a user             |
+| `l`  | Toggle the user limit for the channel                              |
+
+## Technical overview !!! TO REVIEW
+
+### Server architecture
+
+The core of the server is a single event loop based on `poll(2)`:
+
+```
+Client TCP
+   |
+   v
+Server::acceptClient()
+   |
+   v
+poll() on every fd
+   |
+   +-- POLLIN  --> Server::receiveClient()
+   |                   |
+   |                   v
+   |               parseCommand()
+   |                   |
+   |                   v
+   |               Server::dispatch()
+   |                   |
+   |                   v
+   |               ACommand (Nick, Join, Privmsg, ...)
+   |                   |
+   |                   v
+   |               Client::appendSendBuffer()
+   |
+   +-- POLLOUT --> Server::flushClient()  --> send() to client
+```
+
+Main steps:
+
+1. Each loop updates the events to monitor (`POLLIN` is always watched, `POLLOUT` only when something needs to be sent).
+2. For each fd ready for reading, bytes are accumulated in a per-client buffer until a full line (`\n`) is found.
+3. The line is parsed into a `Command` object (command name + parameters).
+4. `Server::dispatch()` instantiates the concrete command (Command pattern via `ACommand`).
+5. Output is not written immediately with `send()`, but queued in a send buffer and flushed when the socket is ready for writing, avoiding blocking on slow clients.
+
+---
+
+### Technical details
+
+- **Non-blocking I/O**: all sockets (server and clients) are configured with `fcntl(fd, F_SETFL, O_NONBLOCK)`.
+- **A single `poll()`** monitors both the listening socket and all connected clients: no threads, no child processes.
+- **Message buffering**: both inbound and outbound buffering are used to handle TCP correctly when data does not arrive as a complete line in a single `recv()`.
+- **Command pattern**: each IRC command is a class derived from `ACommand`, instantiated dynamically in `Server::dispatch()` based on the received command name.
+- **Disconnection handling**: both explicit `QUIT` and unexpected disconnects (socket closure, client crash) correctly notify other channel members with a `QUIT` message while keeping channel state consistent.
+
+### Known limitations
+
+- Does not implement TLS/SSL (plain-text connections)
+- Does not implement all optional IRC commands (e.g. `WHOIS`, `LIST`, dedicated `PART`: a member leaves a channel only via `KICK` or `QUIT`)
+- Designed for a single process / single server, without server federation (`SERVER` / `CONNECT`)
 
 # Resources
