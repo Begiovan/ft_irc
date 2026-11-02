@@ -9,6 +9,20 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 {
 	std::cout << "server created" << std::endl
 			  << "port used: " << _port << std::endl;
+
+	_commands.insert(std::make_pair("QUIT", new Quit(*this)));
+	_commands.insert(std::make_pair("PING", new Ping(*this)));
+	_commands.insert(std::make_pair("NICK", new Nick(*this)));
+	_commands.insert(std::make_pair("PASS", new Pass(*this)));
+	_commands.insert(std::make_pair("USER", new User(*this)));
+	_commands.insert(std::make_pair("KICK", new Kick(*this)));
+	_commands.insert(std::make_pair("INVITE", new Invite(*this)));
+	_commands.insert(std::make_pair("TOPIC", new Topic(*this)));
+	_commands.insert(std::make_pair("JOIN", new Join(*this)));
+	_commands.insert(std::make_pair("MODE", new Mode(*this)));
+	_commands.insert(std::make_pair("PRIVMSG", new Privmsg(*this)));
+	_commands.insert(std::make_pair("NOTICE", new Notice(*this)));
+
 	Server::setupSocket(_port);
 	_bot = NULL;
 	createBot();
@@ -17,6 +31,10 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 
 Server::~Server()
 {
+	for (std::map<std::string, ACommand *>::iterator it = _commands.begin(); it != _commands.end(); ++it)
+		delete it->second;
+	_commands.clear();
+
 	for (std::map<std::string, Channel *>::iterator it = _channels.begin(); it != _channels.end(); ++it)
 		delete it->second;
 	_channels.clear();
@@ -233,43 +251,12 @@ void Server::acceptClient()
  * Routes each parsed IRC command to the matching handler.
  * The auth state decides which commands are allowed before registration.
  */
-ACommand *Server::dispatch(Command cmd, bool isAuth, Client *client)
+ACommand* Server::dispatch(string command)
 {
-	// Commands valid both authenticated or not
-	if (cmd.command == "QUIT")
-		return new Quit(*this);
-	if (cmd.command == "PING")
-		return new Ping(*this);
-	if (cmd.command == "NICK")
-		return new Nick(*this);
-
-	if (!isAuth)
-	{
-		if (cmd.command == "PASS")
-			return new Pass(*this);
-		if (cmd.command == "USER")
-			return new User(*this);
-		// TODO This can leads to erroneus behaviour: send ERR_NOTREGISTERED, return NULL -> send ERR_UNKNOWNCOMMAND
-		else
-			sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
-	}
-	else if (isAuth)
-	{
-		if (cmd.command == "KICK")
-			return new Kick(*this);
-		if (cmd.command == "INVITE")
-			return new Invite(*this);
-		if (cmd.command == "TOPIC")
-			return new Topic(*this);
-		if (cmd.command == "JOIN")
-			return new Join(*this);
-		if (cmd.command == "MODE")
-			return new Mode(*this);
-		if (cmd.command == "PRIVMSG")
-			return new Privmsg(*this);
-		if (cmd.command == "NOTICE")
-			return new Notice(*this);
-	}
+	std::map<string, ACommand*>::iterator it = _commands.find(command);
+	
+	if (it != _commands.end())
+		return it->second;
 	return NULL;
 }
 
@@ -316,22 +303,27 @@ int Server::receiveClient(int fd)
 
 		// Get correct command Handler
 		Command		cmd = parseCommand(commandLine);
-		bool		isAuth = client->isRegistered();
-		ACommand	*commandHandler = dispatch(cmd, isAuth, client);
+		ACommand	*commandHandler = dispatch(cmd.command);
 
-		if (commandHandler)
+		if (commandHandler == NULL)
 		{
-			commandHandler->execute(client, cmd.params);
-			delete commandHandler;
-
-			if (_clients.find(fd) == _clients.end())
-			{
-				disconnected = true;
-				break;
-			}
-		}
-		else
 			sendToClient(*client, ERR_UNKNOWNCOMMAND(client->getNickname(), cmd.command) + "\r\n");
+			continue;
+		}
+
+		else if (commandHandler->requiresRegistration() && !client->isRegistered())
+		{
+			sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
+			continue;
+		}
+		
+		commandHandler->execute(client, cmd.params);
+
+		if (_clients.find(fd) == _clients.end())
+		{
+			disconnected = true;
+			break;
+		}
 	}
 
 	return disconnected ? -1 : 0;

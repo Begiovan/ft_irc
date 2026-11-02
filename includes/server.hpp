@@ -9,6 +9,8 @@
 #include "irc_response.hpp"
 #include "ACommand.hpp"
 
+using std::string;
+
 class ACommand;
 class Client;
 class Channel;
@@ -17,14 +19,15 @@ class Server {
 
 	private:
 
-	int							_serverSocket;
-	int							_port;
-	std::string					_password;
-	std::vector<pollfd>			_fds; // _sockets; -> Name proposal
-	std::map<int, Client*>		_clients;
-	std::map
-		<std::string, Channel*>	_channels;
-	Client						*_bot;
+	int								_serverSocket;
+	int								_port;
+	string							_password;
+	std::vector<pollfd>				_fds; // _sockets; -> Name proposal
+	std::map <int, Client*>			_clients;
+	std::map <string, Channel*>		_channels;
+	std::map <string, ACommand*> 	_commands;
+	
+	Client							*_bot;
 
 	pollfd	makePollFd(int fd); // Can be static
 	void	acceptClient();
@@ -32,33 +35,33 @@ class Server {
 	void	setupSocket(int port);
 	void	flushClient(int fd);
 	Client	*getClientByFd(int fd);
-	std::string	buildChannelListMessage() const;
+	string	buildChannelListMessage() const;
 	void	createBot();
 	bool	channelHasRealUsers(const Channel *channel) const;
 
 	public:
 
-	Server(int port, const std::string &password);
+	Server(int port, const string &password);
 	~Server();
 	
-	const std::string &getPassword() const;
+	const string &getPassword() const;
 	
-	void	disconnectClient(int fd, const std::string &reason = "Connection closed");
+	void	disconnectClient(int fd, const string &reason = "Connection closed");
 	void	run();
-	bool	findClient(std::string value);
-	Client	*returnClient(std::string value);
-	Channel *findChannel(const std::string &name);
-	Channel *createChannel(const std::string &name);
+	bool	findClient(string value);
+	Client	*returnClient(string value);
+	Channel *findChannel(const string &name);
+	Channel *createChannel(const string &name);
 	void	removeEmptyChan(Channel *channel);
 	Client	*getBot() const;
-	void	botOnMessage(Client *from, const std::string &target, const std::string &message);
+	void	botOnMessage(Client *from, const string &target, const string &message);
 
 	// MESSAGGI
-	void	sendToClient(Client &client, const std::string &message); // TO DO
+	void	sendToClient(Client &client, const string &message); // TO DO
 	void	broadcast(const Channel &channel,
-			const std::string &message, const Client *exclude = NULL);
+			const string &message, const Client *exclude = NULL);
 
 	// COMANDI
-	ACommand	*dispatch(Command cmd, bool isAuth, Client *client);
+	ACommand	*dispatch(string command);
 
 };

@@ -1,5 +1,5 @@
-#ifndef ACOMMAND_HPP
-# define ACOMMAND_HPP
+#pragma once
+
 #include "ft_irc.hpp"
 #include "client.hpp"
 #include "server.hpp"
@@ -10,11 +10,18 @@ struct Command;
 
 class ACommand {
 protected:
-    Server *_server;
+    Server      *_server;
+    const bool   _registrationRequired;
 
 public:
-    explicit ACommand(Server &server) : _server(&server) {}
+    explicit ACommand(Server &server, bool registrationRequired = true) :
+        _server(&server), _registrationRequired(registrationRequired) {}
     virtual ~ACommand() {}
+
+    bool requiresRegistration()
+    {
+        return _registrationRequired;
+    }
 
     virtual void execute(Client *client, std::vector<std::string> args) = 0;
 };
@@ -107,5 +114,3 @@ class Mode : public ACommand {
     ~Mode();
     void execute(Client *client, std::vector<std::string> params);
 };
-
-#endif
