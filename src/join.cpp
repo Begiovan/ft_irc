@@ -66,14 +66,14 @@ void Join::execute(Client *client, std::vector<std::string> params){
         _server->sendToClient(*client, RPL_TOPIC(client->getNickname(), params[0], chan->getTopic()) + "\r\n");
 
     std::string users;
-    const std::set<const Client *> &members = chan->getMembers();
-    for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
+    const std::set<Client *> &members = chan->getMembers();
+    for (std::set<Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
     {
         if (!users.empty())
             users += ' ';
         if (chan->isOperator(**it))
             users += '@';
-        users += const_cast<Client *>(*it)->getNickname();
+        users += (*it)->getNickname();
     }
     _server->sendToClient(*client, RPL_NAMREPLY(client->getNickname(), params[0], users) + "\r\n");
     _server->sendToClient(*client, RPL_ENDOFNAMES(client->getNickname(), params[0]) + "\r\n");

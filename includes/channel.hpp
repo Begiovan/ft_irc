@@ -13,9 +13,9 @@ private:
 	std::string _topic;
 	std::string _key;
 
-	std::set<const Client*> _members;
-	std::set<int>			_operators;
-	std::set<int>			_invited;
+	std::set<Client*>		_members;
+	std::set<Client*>			_operators;
+	std::set<Client*>			_invited;
 
 	bool	_inviteOnly;
 	bool	_topicRestricted;
@@ -30,12 +30,12 @@ public:
 	void addMember(Client& client);
 	void removeMember(Client& client);
 
-	void inviteUser(const Client& client);
-	void removeInvite(const Client& client);
+	void inviteUser(Client& client);
+	void removeInvite(Client& client);
 
 	// OPERATOR
-	void addOperator(const Client& client);
-	void removeOperator(const Client& client);
+	void addOperator(Client& client);
+	void removeOperator(Client& client);
 	
 	// check user
 
@@ -49,33 +49,33 @@ public:
 	
 	bool		empty() const;
 	// TODO Can we pass a reference to client, and then de-reference it in the body? It would be more coherent in the code
-	bool		isMember(const Client *client) const;
-	bool		isOperator(const Client& client) const;
-	JoinResult	canJoin(const Client& other, const std::string& key) const;
-	bool		canChangeTopic(const Client& client) const;
+	bool		isMember(Client *client) const;
+	bool		isOperator(Client& client) const;
+	JoinResult	canJoin(Client& other, const std::string& key) const;
+	bool		canChangeTopic(Client& client) const;
 
 	// Getters
 
 	const std::string& getName() const;
-	const std::set<const Client*> &getMembers() const;
+	const std::set<Client*> &getMembers() const;
 
 	// TOPIC 
 
 	void				setTopic(const std::string& topic); // topic
 	void				setTopicRestricted(bool enabled); // mode
 	const std::string&	getTopic() const;
-	bool				topicRes() const;	
+	bool				isTopicRestricted() const;	
 
 	// USER LIMIT
 	void	clearUserLimit();
-	void	setUserLimit(int limit);
+	bool	setUserLimit(int limit);
 	int		getUserLimit() const;
 
 	// INVITE
 
 	void	setInviteOnly(bool enabled);
-	bool	isInvited(const Client& client) const;
-	bool	inviteRes() const;
+	bool	isInvited(Client& client) const;
+	bool	isInviteOnly() const;
 
 	// KEY
 	

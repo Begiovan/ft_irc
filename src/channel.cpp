@@ -10,43 +10,42 @@ void Channel::addMember(Client& client) {
 
 void Channel::removeMember(Client& client) {
     _members.erase(&client);
-    _operators.erase(client.getFd());
-    _invited.erase(client.getFd());
+    _operators.erase(&client);
+    _invited.erase(&client);
 }
 
-void Channel::inviteUser(const Client& client) {
-    _invited.insert(client.getFd());
+void Channel::inviteUser(Client& client) {
+    _invited.insert(&client);
 }
 
-void Channel::removeInvite(const Client& client) {
-    _invited.erase(client.getFd());
+void Channel::removeInvite(Client& client) {
+    _invited.erase(&client);
 }
 
-void Channel::addOperator(const Client& client) {
-    _operators.insert(client.getFd());
+void Channel::addOperator(Client& client) {
+    _operators.insert(&client);
 }
 
-void Channel::removeOperator(const Client& client) {
-    _operators.erase(client.getFd());
+void Channel::removeOperator(Client& client) {
+    _operators.erase(&client);
 }
 
-// TODO Don't we must empty also _operators set?
 bool Channel::empty() const {
     return _members.empty();
 }
 
-bool Channel::isMember(const Client *client) const {
+bool Channel::isMember(Client *client) const {
     return _members.find(client) != _members.end();
 }
 
-bool Channel::isOperator(const Client& client) const {
-    return _operators.find(client.getFd()) != _operators.end();
+bool Channel::isOperator(Client& client) const {
+    return _operators.find(&client) != _operators.end();
 }
 
-Channel::JoinResult Channel::canJoin(const Client& other, const std::string& key) const {
+Channel::JoinResult Channel::canJoin(Client& other, const std::string& key) const {
     if (isMember(&other))
         return JOIN_ERR_ALREADY_IN;
-    if (_inviteOnly && _invited.find(other.getFd()) == _invited.end())
+    if (_inviteOnly && _invited.find(&other) == _invited.end())
         return JOIN_ERR_INVITE_ONLY;
     if (!_key.empty() && key != _key)
         return JOIN_ERR_BAD_KEY;
@@ -55,7 +54,7 @@ Channel::JoinResult Channel::canJoin(const Client& other, const std::string& key
     return JOIN_OK;
 }
 
-bool Channel::canChangeTopic(const Client& client) const {
+bool Channel::canChangeTopic(Client& client) const {
 
 	if (_topicRestricted)
 		return isOperator(client);
@@ -69,7 +68,7 @@ const std::string& Channel::getName() const {
     return _name;
 }
 
-const std::set<const Client*> &Channel::getMembers() const{
+const std::set<Client*> &Channel::getMembers() const{
     return(_members);
 }
 
@@ -77,7 +76,7 @@ const std::string& Channel::getTopic() const {
     return _topic;
 }
 
-bool Channel::topicRes() const {
+bool Channel::isTopicRestricted() const {
     return _topicRestricted;
 }
 
@@ -85,12 +84,12 @@ bool Channel::hasKey() const {
     return !_key.empty();
 }
 
-bool Channel::inviteRes() const {
+bool Channel::isInviteOnly() const {
     return _inviteOnly;
 }
 
-bool Channel::isInvited(const Client& client) const {
-    return _invited.find(client.getFd()) != _invited.end();
+bool Channel::isInvited(Client& client) const {
+    return _invited.find(&client) != _invited.end();
 }
 
     // TOPIC 
@@ -106,11 +105,13 @@ void Channel::clearUserLimit() {
     _userLimit = -1;
 }
 
-void Channel::setUserLimit(int limit) {
+bool Channel::setUserLimit(int limit) {
     if (limit > 0)
+    {
         _userLimit = limit;
-    else
-        std::cout << "invalid User limit" << std::endl;
+        return true;
+    }
+        return false;
 }
 
 int Channel::getUserLimit() const{

@@ -12,11 +12,7 @@ int Client::getFd() const{
 	return(_fd);
 }
 
-void Client::setFd(int fd){
-	_fd = fd;
-}
-
-const std::string &Client::getUsername(){
+const std::string &Client::getUsername() const{
 	return _username;
 }
 
@@ -24,7 +20,7 @@ void Client::setUsername(std::string username){
     _username = username;
 }
 
-const std::string &Client::getNickname(){
+const std::string &Client::getNickname() const{
 	return _nickname;
 }
 
@@ -32,17 +28,17 @@ void Client::setNickname(std::string nickname){
 	_nickname = nickname;
 }
 
-void Client::addChannel(const Channel *chan){
+void Client::addChannel(Channel *chan){
 
 	_channels.insert(chan);
 }
 
-void Client::removeChannel(const Channel *chan) {
+void Client::removeChannel(Channel *chan) {
 
 	_channels.erase(chan);
 }
 
-const std::set<const Channel*>& Client::getChannels() const{
+const std::set<Channel*>& Client::getChannels() const{
 	return _channels;
 }
 
@@ -52,10 +48,6 @@ void Client::appendBuffer(std::string message){
 
 std::string &Client::getBuffer(){
 	return _buffer;
-}
-
-void Client::clearBuffer(){
-	_buffer.erase();
 }
 
 int Client::getRegistrationStatus() const{
@@ -72,7 +64,7 @@ bool Client::isRegistered() const {
         == (PASS_OK | NICK_OK | USER_OK);
 }
 
-bool Client::isInChannel(const Channel *channel){
+bool Client::isInChannel(Channel *channel) const{
 	return (_channels.find(channel) != _channels.end());
 }
 
@@ -89,7 +81,4 @@ void Client::appendSendBuffer(std::string message){
 }
 std::string &Client::getSendBuffer(){
 	return _sendBuffer;
-}
-void Client::clearSendBuffer(){
-	_sendBuffer.erase();
 }

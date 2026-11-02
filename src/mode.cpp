@@ -13,9 +13,9 @@ static std::string getModes(Channel &channel){
 	std::string mode;
 	std::string args;
 
-	if (channel.inviteRes())
+	if (channel.isInviteOnly())
 		mode += "i";
-	if (channel.topicRes())
+	if (channel.isTopicRestricted())
 		mode += "t";
 	if (channel.hasKey())
 		mode += "k";
@@ -141,7 +141,11 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 						return;
 					}
 					int limit = atoi(params[numArgs].c_str());
-					chan->setUserLimit(limit);
+					if(!chan->setUserLimit(limit))
+					{
+						_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
+						return;
+					}
 					numArgs++;
 				}
 				else

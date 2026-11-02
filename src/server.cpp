@@ -70,8 +70,8 @@ bool Server::channelHasRealUsers(const Channel *channel) const
 	if (!channel)
 		return false;
 
-	const std::set<const Client *> &members = channel->getMembers();
-	for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
+	const std::set<Client *> &members = channel->getMembers();
+	for (std::set<Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
 	{
 		if (!(*it)->isBot())
 			return true;
@@ -351,10 +351,10 @@ void Server::disconnectClient(int fd, const std::string &reason)
 	if (it != _clients.end())
 	{
 		Client						*client = it->second;
-		std::set<const Channel*>	channelsCopy = client->getChannels();
-		for (std::set<const Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
+		std::set<Channel*>	channelsCopy = client->getChannels();
+		for (std::set<Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
 		{
-			Channel *chan = const_cast<Channel*>(*chIt);
+			Channel *chan = *chIt;
 			broadcast(*chan,
 					RPL_QUIT(client->getNickname(),
 								client->getUsername(),
@@ -493,6 +493,9 @@ void	Server::removeEmptyChan(Channel *channel){
 
 void Server::sendToClient(Client &client, const std::string &message)
 {
+	// The bot has no socket: nothing would ever flush its send buffer
+	if (client.isBot())
+		return;
 	client.appendSendBuffer(message);
 }
 
@@ -516,11 +519,11 @@ void Server::flushClient(int fd)
 
 void Server::broadcast(const Channel &channel, const std::string &message, const Client *exclude)
 {
-	const std::set<const Client *> &members = channel.getMembers();
-	for (std::set<const Client *>::const_iterator it = members.begin(); it != members.end(); it++)
+	const std::set<Client *> &members = channel.getMembers();
+	for (std::set<Client *>::const_iterator it = members.begin(); it != members.end(); it++)
 	{
 		if (*it == exclude)
 			continue;
-		sendToClient(const_cast<Client &>(**it), message);
+		sendToClient(**it, message);
 	}
 }
