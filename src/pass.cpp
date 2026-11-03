@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Pass::Pass(Server &server) : ACommand(server, false){}
+Pass::Pass(Server &server) : ACommand(server, UNREGISTERED){}
 Pass::~Pass(){}
 
 void Pass::execute(Client *client, std::vector<std::string> params){

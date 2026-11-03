@@ -311,9 +311,15 @@ int Server::receiveClient(int fd)
 			continue;
 		}
 
-		else if (commandHandler->requiresRegistration() && !client->isRegistered())
+		else if (commandHandler->authRequirement() == REGISTERED && !client->isRegistered())
 		{
 			sendToClient(*client, ERR_NOTREGISTERED(client->getNickname()) + "\r\n");
+			continue;
+		}
+
+		else if (commandHandler->authRequirement() == UNREGISTERED && client->isRegistered())
+		{
+			sendToClient(*client, ERR_ALREADYREGISTERED(client->getNickname()) + "\r\n");
 			continue;
 		}
 		

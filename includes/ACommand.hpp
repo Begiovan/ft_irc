@@ -8,19 +8,27 @@ class Server;
 class Client;
 struct Command;
 
+typedef enum {
+		REGISTERED,
+		UNREGISTERED,
+		ANY
+} AuthRequirement;
+
 class ACommand {
 protected:
-    Server      *_server;
-    const bool   _registrationRequired;
+
+    Server					*_server;
+    const AuthRequirement   _authRequirement;
 
 public:
-    explicit ACommand(Server &server, bool registrationRequired = true) :
-        _server(&server), _registrationRequired(registrationRequired) {}
+
+
+    explicit ACommand(Server &server, AuthRequirement authRequirement = REGISTERED) : _server(&server), _authRequirement(authRequirement) {}
     virtual ~ACommand() {}
 
-    bool requiresRegistration()
+    AuthRequirement authRequirement()
     {
-        return _registrationRequired;
+        return _authRequirement;
     }
 
     virtual void execute(Client *client, std::vector<std::string> args) = 0;

@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-User::User(Server &server) : ACommand(server, false){}
+User::User(Server &server) : ACommand(server, UNREGISTERED){}
 User::~User(){}
 
 void User::execute(Client *client, std::vector<std::string> params){

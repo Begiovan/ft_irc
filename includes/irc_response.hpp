@@ -5,7 +5,7 @@
 /* Error Responses */
 
 #define ERR_NOTREGISTERED(source)                       std::string(":ircserv 451 ") + source + " :You have not registered"
-#define ERR_ALREADYREGISTERED(source)                   std::string(":ircserv 462 ") + source + " :You may not register"
+#define ERR_ALREADYREGISTERED(source)                   std::string(":ircserv 462 ") + source + " :You may not reregister"
 #define ERR_PASSWDMISMATCH(source)                      std::string(":ircserv 464 ") + source + " :Password is incorrect"
 #define ERR_NONICKNAMEGIVEN(source)                     std::string(":ircserv 431 ") + source + " :Nickname not given"
 #define ERR_NICKNAMEINUSE(source, nickname)             std::string(":ircserv 433 ") + source + " " + nickname  + " :Nickname is already in use"

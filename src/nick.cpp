@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Nick::Nick(Server &server) : ACommand(server, false){}
+Nick::Nick(Server &server) : ACommand(server, ANY){}
 Nick::~Nick(){}
 
 void Nick::execute(Client *client, std::vector<std::string> params)
