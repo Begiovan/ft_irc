@@ -170,11 +170,11 @@ altrimenti                  -> cmd->execute(...)
 
 **Voci della todo list risolte da questo step:**
 
-- [ ] *(Parser e dispatch dei comandi)* 🔴 **Errore doppio per i client non registrati.** `dispatch` invia già `ERR_NOTREGISTERED` e ritorna `NULL`, poi `receiveClient` aggiunge anche `ERR_UNKNOWNCOMMAND`.
-- [ ] *(Parser e dispatch dei comandi)* 🟠 I comandi sono case-sensitive: `join` non viene riconosciuto.
+- [x] *(Parser e dispatch dei comandi)* 🔴 **Errore doppio per i client non registrati.** `dispatch` invia già `ERR_NOTREGISTERED` e ritorna `NULL`, poi `receiveClient` aggiunge anche `ERR_UNKNOWNCOMMAND`.
+- [x] *(Parser e dispatch dei comandi)* 🟠 I comandi sono case-sensitive: `join` non viene riconosciuto.
 - [ ] *(Parser e dispatch dei comandi)* 🟠 Una riga vuota riceve `ERR_UNKNOWNCOMMAND`; andrebbe ignorata in silenzio.
-- [ ] *(Parser e dispatch dei comandi)* 🟠 `PASS` e `USER` dopo la registrazione rispondono "unknown command" invece di `462 ERR_ALREADYREGISTERED`, perché non compaiono nella lista dei comandi per utenti autenticati.
-- [ ] *(Parser e dispatch dei comandi)* 🟢 `dispatch` contiene due liste quasi uguali e un `isAuth &&` ripetuto. Si può sostituire con una `std::map<std::string, ACommand*>` creata una volta nel costruttore, più un set dei comandi ammessi prima della registrazione. Si elimina anche il `new`/`delete` a ogni riga.
+- [x] *(Parser e dispatch dei comandi)* 🟠 `PASS` e `USER` dopo la registrazione rispondono "unknown command" invece di `462 ERR_ALREADYREGISTERED`, perché non compaiono nella lista dei comandi per utenti autenticati.
+- [x] *(Parser e dispatch dei comandi)* 🟢 `dispatch` contiene due liste quasi uguali e un `isAuth &&` ripetuto. Si può sostituire con una `std::map<std::string, ACommand*>` creata una volta nel costruttore, più un set dei comandi ammessi prima della registrazione. Si elimina anche il `new`/`delete` a ogni riga.
 
 ### Step 4 — Operazioni di dominio condivise in `Server`
 
