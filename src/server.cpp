@@ -331,7 +331,10 @@ int Server::receiveClient(int fd)
 			}
 		}
 		else
+		{
 			sendToClient(*client, ERR_UNKNOWNCOMMAND(client->getNickname(), cmd.command) + "\r\n");
+	
+		}
 	}
 
 	return disconnected ? -1 : 0;
