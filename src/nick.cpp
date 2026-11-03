@@ -40,16 +40,16 @@ void Nick::execute(Client *client, std::vector<std::string> params)
 
     if (wasRegistered)
     {
-        std::set<const Client *> notifyClients;
+        std::set<Client *> notifyClients;
 
-        const std::set<const Channel *> &channels = client->getChannels();
+        const std::set<Channel *> &channels = client->getChannels();
 
-        for (std::set<const Channel *>::const_iterator it = channels.begin();
+        for (std::set<Channel *>::const_iterator it = channels.begin();
              it != channels.end(); ++it)
         {
-            const std::set<const Client *> &members = (*it)->getMembers();
+            const std::set<Client *> &members = (*it)->getMembers();
 
-            for (std::set<const Client *>::const_iterator member = members.begin();
+            for (std::set<Client *>::const_iterator member = members.begin();
                  member != members.end(); ++member)
             {
                 notifyClients.insert(*member);
@@ -58,11 +58,11 @@ void Nick::execute(Client *client, std::vector<std::string> params)
 
         notifyClients.insert(client);
 
-        for (std::set<const Client *>::const_iterator it = notifyClients.begin();
+        for (std::set<Client *>::const_iterator it = notifyClients.begin();
              it != notifyClients.end(); ++it)
         {
             _server->sendToClient(
-                const_cast<Client &>(**it),
+                **it,
                 RPL_NICK(oldNick,
                          client->getUsername(),
                          client->getNickname()) + "\r\n"

@@ -15,7 +15,7 @@ class Client {
 		std::string					_nickname;
 		std::string 				_buffer;		//recv()
 		std::string 				_sendBuffer;	//send()
-		std::set<const Channel*>	_channels;
+		std::set<Channel*>			_channels;
 		bool						_isBot;
 
 
@@ -31,29 +31,25 @@ class Client {
 		~Client();
 
 		int		getFd() const;
-		void	setFd(int fd);
 
-		const std::string	&getUsername();
+		const std::string	&getUsername() const;
 		void				setUsername(std::string username);
 
-		const std::string	&getNickname();
+		const std::string	&getNickname() const;
 		void				setNickname(std::string nickname);
 
-		void					addChannel(const Channel *chan) ;
-		void					removeChannel(const Channel *chan) ;
-		const std::set
-			<const Channel*>	&getChannels() const;
-		bool					isInChannel(const Channel *channel);
+		void					addChannel(Channel *chan) ;
+		void					removeChannel(Channel *chan) ;
+		const std::set<Channel*>	&getChannels() const;
+		bool					isInChannel(Channel *channel) const;
 		bool					isBot() const;
 		void					setBot(bool isBot);
 
 		void		appendBuffer(std::string message);
 		std::string	&getBuffer();
-		void		clearBuffer();
 
 		void		appendSendBuffer(std::string message);
 		std::string &getSendBuffer();
-		void		clearSendBuffer();
 
 		int		getRegistrationStatus() const;
 		void	setRegistrationStatus(RegistrationFlag flag);

@@ -92,7 +92,7 @@ incoerente (`"*"` vs nick), `"ircserv"` e `"@ircserv"` scritti nelle macro.
       Le macro in `irc_response.hpp` non lo contengono e i comandi non lo scrivono più.
 - [ ] `Client::nickOrStar()` → nick, oppure `"*"` se ancora vuoto.
       Usarlo come `source` in **tutte** le risposte numeriche.
-- [ ] `Client::prefix()` → `nick!user@host`. Le macro "Command Responses"
+- [ ] `Client::prefix()` → `nick!user@host`, dove `host` è la costante `SERVER_NAME` (resta fisso a `ircserv` come oggi: **nessun campo hostname nel `Client`**). Le macro "Command Responses"
       prendono un solo parametro `prefix` invece di `(source, user)`.
 - [ ] `#define SERVER_NAME "ircserv"` in un solo punto.
 
@@ -146,7 +146,7 @@ e i messaggi d'errore diventano coerenti per costruzione.
 
 **Voci della todo list risolte da questo step:**
 
-- [ ] *(Registrazione)* 🟠 `USER` controlla un solo parametro, ma il protocollo ne richiede 4. Il realname viene ignorato. *(completato nello Step 5)*
+- [ ] *(Registrazione)* 🟠 `USER` controlla un solo parametro, ma il protocollo ne richiede 4: con meno parametri va risposto `461 ERR_NEEDMOREPARAMS`. Il realname (4° parametro) non va salvato: non lo usa nessun comando richiesto dal subject.
 - [ ] *(Modello dati)* 🟢 Molti metodi ricevono `std::string` per valore (`setNickname`, `appendBuffer`, `findClient`…) e `execute` riceve un `vector` per valore. Meglio passare `const &`. *(completato nello Step 5)*
 
 ### Step 3 — Registro dei comandi al posto di `dispatch`
@@ -205,23 +205,22 @@ altrimenti                  -> cmd->execute(...)
 
 ### Step 5 — Modello dati coerente (togliere i `const_cast`)
 
-- [ ] `Channel`: `_members`, `_operators`, `_invited` tutti come `std::set<Client*>`
+- [OK] `Channel`: `_members`, `_operators`, `_invited` tutti come `std::set<Client*>`
       (oggi membri = puntatori, operatori/invitati = fd).
-- [ ] `Client`: `std::set<Channel*>`, getter `const` (`getNickname() const` ecc.).
-- [ ] Rimuovere ogni `const_cast` (broadcast, nick, join, disconnect).
-- [ ] `Channel` senza I/O: `setUserLimit` ritorna `bool` invece di stampare.
-- [ ] Rimuovere i metodi inutilizzati (`setFd`, `clearBuffer`, `clearSendBuffer`),
+- [OK] `Client`: `std::set<Channel*>`, getter `const` (`getNickname() const` ecc.).
+- [OK] Rimuovere ogni `const_cast` (broadcast, nick, join, disconnect).
+- [OK] `Channel` senza I/O: `setUserLimit` ritorna `bool` invece di stampare.
+- [OK] Rimuovere i metodi inutilizzati (`setFd`, `clearBuffer`, `clearSendBuffer`),
       rinominare `topicRes()`/`inviteRes()` → `isTopicRestricted()`/`isInviteOnly()`.
-- [ ] Aggiungere `_hostname` e `_realname` al `Client`.
 
 **Voci della todo list risolte da questo step:**
 
-- [ ] *(Canali e comandi di canale)* 🔴 **Inviti e operatori sono salvati per fd.** Se un utente invitato si disconnette senza essere mai entrato, il prossimo client che riceve lo stesso fd eredita l'invito. Conviene usare `Client*` come per `_members` (vedi sezione 5).
-- [ ] *(Canali e comandi di canale)* 🟢 `Channel::setUserLimit` stampa su `cout`. Il modello non dovrebbe fare I/O: meglio che ritorni un `bool`.
-- [ ] *(Modello dati)* 🟢 **Puntatori `const` usati ovunque e poi forzati con `const_cast`.** `Channel` tiene `set<const Client*>`, `Client` tiene `set<const Channel*>`, e così servono `const_cast` in broadcast, nick, join e disconnect. Si risolve salvando `Client*` e `Channel*` non const e rendendo const i getter (`getNickname()`, `getUsername()`, `isInChannel()`).
-- [ ] *(Modello dati)* 🟢 `Channel` usa una rappresentazione mista: i membri sono puntatori, operatori e invitati sono fd. Conviene uniformare tutto a `Client*`.
-- [ ] *(Modello dati)* 🟢 Il codice morto (`setFd`, `clearBuffer`, `clearSendBuffer`) è da togliere o da usare. I nomi `topicRes()` e `inviteRes()` sono poco chiari: meglio `isTopicRestricted()` e `isInviteOnly()`.
-- [ ] *(Modello dati)* 🟢 Mancano hostname e realname nel `Client`: oggi l'host `@ircserv` è scritto a mano nelle macro.
+- [OK] *(Canali e comandi di canale)* 🔴 **Inviti e operatori sono salvati per fd.** Se un utente invitato si disconnette senza essere mai entrato, il prossimo client che riceve lo stesso fd eredita l'invito. Conviene usare `Client*` come per `_members` (vedi sezione 5).
+- [OK] *(Canali e comandi di canale)* 🟢 `Channel::setUserLimit` stampa su `cout`. Il modello non dovrebbe fare I/O: meglio che ritorni un `bool`.
+- [OK] *(Modello dati)* 🟢 **Puntatori `const` usati ovunque e poi forzati con `const_cast`.** `Channel` tiene `set<const Client*>`, `Client` tiene `set<const Channel*>`, e così servono `const_cast` in broadcast, nick, join e disconnect. Si risolve salvando `Client*` e `Channel*` non const e rendendo const i getter (`getNickname()`, `getUsername()`, `isInChannel()`).
+- [OK] *(Modello dati)* 🟢 `Channel` usa una rappresentazione mista: i membri sono puntatori, operatori e invitati sono fd. Conviene uniformare tutto a `Client*`.
+- [OK] *(Modello dati)* 🟢 Il codice morto (`setFd`, `clearBuffer`, `clearSendBuffer`) è da togliere o da usare. I nomi `topicRes()` e `inviteRes()` sono poco chiari: meglio `isTopicRestricted()` e `isInviteOnly()`.
+- [OK] *(Modello dati)* 🟠 **Send buffer del bot che cresce all'infinito.** `chanbot` è membro di ogni canale, quindi `broadcast` gli accoda ogni messaggio, ma il bot non è in `_fds` e il suo buffer non viene mai svuotato. Basta che `broadcast`/`sendToClient` saltino i client con `isBot()`.
 
 ### Step 6 — Loop di rete più semplice e sicuro
 

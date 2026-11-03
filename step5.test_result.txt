@@ -1,0 +1,138 @@
+[1m[34m
+                    /\
+                   /  \
+              /\  / /\ \  /\
+             /  \/ /  \ \/  \
+            / /\  /____\  /\ \
+           / /  \  .--.  /  \ \
+          /_/    \( oo )/    \_\
+                  | __ |
+               ___\____/___
+             .'            `.
+            /   BLACK WOLF   \
+            \__  FT_IRC TEST _/
+               `-._______.-'
+[0m
+[1m[36mA terminal tester for 42 ft_irc servers.[0m
+[35m----------------------------------------------------------[0m
+[1mft_irc tester[0m
+[2mbinary[0m   ../ircserv
+[2mserver[0m   127.0.0.1:6667
+[2mpassword[0m mypass
+[2mmode[0m     launch ./ircserv
+[35m----------------------------------------------------------[0m
+[32mServer started (pid 39174)[0m
+
+[1m[35mRunning normal suite[0m
+
+[1m[36m[ Authentication ][0m
+  [32m[PASS][0m Wrong password -> 464 or connection closed
+  [32m[PASS][0m Missing PASS -> 464 or connection closed
+  [32m[PASS][0m Correct PASS / NICK / USER -> 001 welcome
+
+[1m[36m[ NICK command ][0m
+  [31m[FAIL][0m Registration with valid nick
+         [33m:ircserv 432 * nicktester :Erroneous nickname[0m
+  [31m[FAIL][0m NICK change broadcast
+         [33m:ircserv 432 * nicktester2 :Erroneous nickname[0m
+  [32m[PASS][0m Duplicate nick -> 433 ERR_NICKNAMEINUSE
+  [32m[PASS][0m Invalid nick chars -> 432 ERR_ERRONEUSNICKNAME
+
+[1m[36m[ JOIN command ][0m
+  [32m[PASS][0m JOIN channel -> receive JOIN confirmation
+  [31m[FAIL][0m JOIN -> 353 RPL_NAMREPLY
+  [31m[FAIL][0m JOIN -> 366 RPL_ENDOFNAMES
+  [32m[PASS][0m Second user JOIN is broadcast to channel members
+  [32m[PASS][0m JOIN without # -> 403 ERR_NOSUCHCHANNEL
+
+[1m[36m[ PRIVMSG / NOTICE ][0m
+  [32m[PASS][0m PRIVMSG to channel delivered to other member
+  [32m[PASS][0m PRIVMSG sender does not receive own message
+  [32m[PASS][0m PRIVMSG to user delivered privately
+  [32m[PASS][0m NOTICE to user delivered
+  [32m[PASS][0m PRIVMSG to unknown user -> 401 ERR_NOSUCHNICK
+  [32m[PASS][0m PRIVMSG to non-existent channel -> 4xx error
+
+[1m[36m[ PART command ][0m
+  [31m[FAIL][0m PART broadcast to remaining members
+         [33m:partbob!partbob@ircserv JOIN #partchan[0m
+         [33m:ircserv 331 partbob #partchan :No topic set.[0m
+         [33m:ircserv 353 partbob = #partchan :chanbot partbob @partalice[0m
+         [33m:ircserv 366 partbob #partchan :End of /NAMES list.[0m
+  [31m[FAIL][0m PART when not in channel -> 442 ERR_NOTONCHANNEL
+         [33m:ircserv 331 partalice #partchan :No topic set.[0m
+         [33m:ircserv 353 partalice = #partchan :chanbot @partalice[0m
+         [33m:ircserv 366 partalice #partchan :End of /NAMES list.[0m
+         [33m:partbob!partbob@ircserv JOIN #partchan[0m
+         [33m:ircserv 421 partalice PART :Unknown command[0m
+         [33m:ircserv 421 partalice PART :Unknown command[0m
+
+[1m[36m[ TOPIC command ][0m
+  [31m[FAIL][0m TOPIC set by operator -> broadcast to channel
+         [33m:topicbob!topicbob@ircserv JOIN #topicchan[0m
+         [33m:ircserv 331 topicbob #topicchan :No topic set.[0m
+         [33m:ircserv 353 topicbob = #topicchan :chanbot @topicbob[0m
+         [33m:ircserv 366 topicbob #topicchan :End of /NAMES list.[0m
+  [31m[FAIL][0m TOPIC query -> 332 RPL_TOPIC
+         [33m:ircserv 331 topicbob #topicchan :No topic set.[0m
+  [31m[FAIL][0m +t mode: non-op TOPIC change -> 482 ERR_CHANOPRIVSNEEDED
+         [33m:topicbob TOPIC #topicchan :hacked topic[0m
+
+[1m[36m[ KICK command ][0m
+  [32m[PASS][0m KICK by operator -> target receives KICK
+  [31m[FAIL][0m KICK by operator -> broadcast to channel
+         [33m:ircserv 451  :You have not registered[0m
+         [33m:ircserv 421  JOIN :Unknown command[0m
+  [31m[FAIL][0m KICK by non-operator -> 482 ERR_CHANOPRIVSNEEDED
+         [33m:ircserv 451  :You have not registered[0m
+         [33m:ircserv 421  KICK :Unknown command[0m
+  [32m[PASS][0m KICK on non-existent channel -> 403 ERR_NOSUCHCHANNEL
+
+[1m[36m[ INVITE command ][0m
+  [32m[PASS][0m INVITE -> target receives INVITE message
+  [32m[PASS][0m INVITE -> inviter receives 341 RPL_INVITING
+  [31m[FAIL][0m +i mode: uninvited JOIN -> 473 ERR_INVITEONLYCHAN
+         [33m:ircserv 451  :You have not registered[0m
+         [33m:ircserv 421  JOIN :Unknown command[0m
+  [31m[FAIL][0m +i mode: invited user can JOIN
+         [33m:ircserv 451  :You have not registered[0m
+         [33m:ircserv 421  JOIN :Unknown command[0m
+
+[1m[36m[ MODE command ][0m
+  [32m[PASS][0m MODE +o grants operator to user
+  [32m[PASS][0m MODE -o removes operator from user
+  [32m[PASS][0m +k mode: JOIN without key -> 475 ERR_BADCHANNELKEY
+  [32m[PASS][0m +k mode: JOIN with correct key succeeds
+  [32m[PASS][0m -k mode: JOIN without key succeeds after key removed
+  [32m[PASS][0m +l mode: JOIN beyond limit -> 471 ERR_CHANNELISFULL
+  [32m[PASS][0m -l mode: JOIN succeeds after limit removed
+  [31m[FAIL][0m MODE by non-operator -> 482 ERR_CHANOPRIVSNEEDED
+         [33m:ircserv 451  :You have not registered[0m
+         [33m:ircserv 421  JOIN :Unknown command[0m
+         [33m:ircserv 451  :You have not registered[0m
+         [33m:ircserv 421  MODE :Unknown command[0m
+  [32m[PASS][0m Unknown MODE flag -> 472 ERR_UNKNOWNMODE
+
+[1m[36m[ QUIT command ][0m
+  [32m[PASS][0m QUIT broadcast to channel members
+
+[1m[36m[ PING / PONG ][0m
+  [32m[PASS][0m PING -> server replies with PONG
+
+[1m[36m[ General error codes ][0m
+  [32m[PASS][0m Unknown command -> 421 ERR_UNKNOWNCOMMAND
+  [32m[PASS][0m JOIN with no params -> 461 ERR_NEEDMOREPARAMS
+  [32m[PASS][0m KICK with no params -> 461 ERR_NEEDMOREPARAMS
+
+[1m[36m[ Operator privileges ][0m
+  [32m[PASS][0m Channel creator has op; non-op KICK -> 482
+  [32m[PASS][0m Newly granted operator can KICK
+
+[1m[36m[ Multiple channels ][0m
+  [32m[PASS][0m Message in #mulchan1 received by member
+  [32m[PASS][0m Message in #mulchan2 not received by non-member
+
+[35m----------------------------------------------------------[0m
+  Results: [32m35 passed[0m / [31m14 failed[0m / [33m0 skipped[0m / 49 total
+  [31m[1m14 test(s) failed.[0m
+[35m----------------------------------------------------------[0m
