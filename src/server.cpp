@@ -494,7 +494,10 @@ void Server::sendToClient(Client &client, const std::string &message)
 	// The bot has no socket: nothing would ever flush its send buffer
 	if (client.isBot())
 		return;
-	client.appendSendBuffer(message);
+	std::string normalized = message;
+	while (!normalized.empty() && (normalized[normalized.size() - 1] == '\n' || normalized[normalized.size() - 1] == '\r'))
+		normalized.erase(normalized.size() - 1, 1);
+	client.appendSendBuffer(normalized + "\r\n");
 }
 
 void Server::flushClient(int fd)

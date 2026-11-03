@@ -41,6 +41,5 @@ void Topic::execute(Client *client, std::vector<std::string> params){
 	}
 
 	chan->setTopic(params[1]);
-	std::string message = ":" + client->getNickname() + " TOPIC " + params[0] + " :" + chan->getTopic() + "\r\n";
-	_server->broadcast(*chan, message);
+	_server->broadcast(*chan, RPL_TOPICCHANGE(client->getNickname(), client->getUsername(), params[0], chan->getTopic()) + "\r\n");
 }

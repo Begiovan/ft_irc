@@ -88,25 +88,25 @@ Senza test, "non cambiare la logica" è impossibile da verificare.
 **Problema:** `"\r\n"` aggiunto a mano ovunque (già dimenticato in INVITE), sorgente
 incoerente (`"*"` vs nick), `"ircserv"` e `"@ircserv"` scritti nelle macro.
 
-- [ ] `Server::sendToClient` (o un nuovo `reply()`) aggiunge **lui** `"\r\n"`.
+- [x] `Server::sendToClient` (o un nuovo `reply()`) aggiunge **lui** `"\r\n"`.
       Le macro in `irc_response.hpp` non lo contengono e i comandi non lo scrivono più.
-- [ ] `Client::nickOrStar()` → nick, oppure `"*"` se ancora vuoto.
+- [x] `Client::nickOrStar()` → nick, oppure `"*"` se ancora vuoto.
       Usarlo come `source` in **tutte** le risposte numeriche.
-- [ ] `Client::prefix()` → `nick!user@host`, dove `host` è la costante `SERVER_NAME` (resta fisso a `ircserv` come oggi: **nessun campo hostname nel `Client`**). Le macro "Command Responses"
+- [x] `Client::prefix()` → `nick!user@host`, dove `host` è la costante `SERVER_NAME` (resta fisso a `ircserv` come oggi: **nessun campo hostname nel `Client`**). Le macro "Command Responses"
       prendono un solo parametro `prefix` invece di `(source, user)`.
-- [ ] `#define SERVER_NAME "ircserv"` in un solo punto.
+- [x] `#define SERVER_NAME "ircserv"` in un solo punto.
 
 **Voci della todo list risolte da questo step:**
 
-- [ ] *(Registrazione)* 🟠 `ERR_NICKNAMEINUSE` usa `getNickname()`, che prima della registrazione è vuoto, e la riga esce malformata. Va usato `*`.
-- [ ] *(Canali e comandi di canale)* 🔴 **JOIN su un canale in cui sei già** (`join.cpp:40`): il messaggio d'errore resta vuoto e al client arriva solo `"\r\n"`.
-- [ ] *(Canali e comandi di canale)* 🔴 **INVITE, `ERR_USERONCHANNEL` senza `"\r\n"`** (`invite.cpp:38`): il messaggio si attacca al successivo.
-- [ ] *(Canali e comandi di canale)* 🟠 Il broadcast di TOPIC non ha il prefisso `nick!user@host`, a differenza degli altri messaggi. Conviene creare una macro `RPL_TOPICCHANGE`.
-- [ ] *(Risposte IRC)* 🟢 **`"\r\n"` aggiunto a mano in ogni chiamata**, ed è già stato dimenticato una volta (INVITE). Conviene che lo aggiunga `sendToClient`, oppure un helper `reply()`.
-- [ ] *(Risposte IRC)* 🟢 Il nick sorgente nelle risposte non è coerente: a volte `"*"`, a volte `getNickname()` (vedi PRIVMSG e PASS). Serve un helper `nickOrStar(client)`.
-- [ ] *(Risposte IRC)* 🟢 Il nome del server `ircserv` è scritto dentro ogni macro. Si può raccogliere in una costante, oppure passare dalle macro a funzioni inline.
+- [x] *(Registrazione)* 🟠 `ERR_NICKNAMEINUSE` usa `getNickname()`, che prima della registrazione è vuoto, e la riga esce malformata. Va usato `*`.
+- [x] *(Canali e comandi di canale)* 🔴 **JOIN su un canale in cui sei già** (`join.cpp:40`): il messaggio d'errore resta vuoto e al client arriva solo `"\r\n"`.
+- [x] *(Canali e comandi di canale)* 🔴 **INVITE, `ERR_USERONCHANNEL` senza `"\r\n"`** (`invite.cpp:38`): il messaggio si attacca al successivo.
+- [x] *(Canali e comandi di canale)* 🟠 Il broadcast di TOPIC non ha il prefisso `nick!user@host`, a differenza degli altri messaggi. Conviene creare una macro `RPL_TOPICCHANGE`.
+- [x] *(Risposte IRC)* 🟢 **`"\r\n"` aggiunto a mano in ogni chiamata**, ed è già stato dimenticato una volta (INVITE). Conviene che lo aggiunga `sendToClient`, oppure un helper `reply()`.
+- [x] *(Risposte IRC)* 🟢 Il nick sorgente nelle risposte non è coerente: a volte `"*"`, a volte `getNickname()` (vedi PRIVMSG e PASS). Serve un helper `nickOrStar(client)`.
+- [x] *(Risposte IRC)* 🟢 Il nome del server `ircserv` è scritto dentro ogni macro. Si può raccogliere in una costante, oppure passare dalle macro a funzioni inline.
 - [ ] *(Risposte IRC)* 🟠 PONG dovrebbe essere `:ircserv PONG ircserv :token`.
-- [ ] *(Risposte IRC)* 🟢 `RPL_MODE` con argomento vuoto lascia uno spazio in coda alla riga.
+- [ ] *(Risposte IRC)* 🟢 `RPL_MODE` con argomento vuoto lascia uno spazio in coda alla riga.s
 
 ### Step 2 — Helper di validazione in `ACommand`
 

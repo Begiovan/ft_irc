@@ -28,7 +28,7 @@ void Nick::execute(Client *client, std::vector<std::string> params)
     if (_server->findClient(params[0]))
     {
         _server->sendToClient(*client,
-            ERR_NICKNAMEINUSE(client->getNickname(), params[0]) + "\r\n");
+            ERR_NICKNAMEINUSE(client->nickOrStar(), params[0]) + "\r\n");
         return;
     }
 

@@ -35,7 +35,7 @@ void Invite::execute(Client *client, std::vector<std::string> params){
 	}
 	if (chan->isMember(target))
 	{
-		_server->sendToClient(*client, ERR_USERONCHANNEL(client->getNickname(), target->getNickname(), params[1]));
+		_server->sendToClient(*client, ERR_USERONCHANNEL(client->getNickname(), target->getNickname(), params[1]) + "\r\n");
 		return;
 	}
 	chan->inviteUser(*target);

@@ -1,3 +1,18 @@
+# 03/11
+
+## Refactor workflow
+
+- Started Step 1 of the refactor under review-by-steps mode
+- The project now follows a strict checkpoint flow: one step at a time, with explicit approval before advancing to the next one
+- This keeps the refactor safe and makes each change verifiable against the previous baseline
+
+## Step 1 — output path and server identity
+
+- Centralized CRLF handling in `Server::sendToClient` so every reply is terminated exactly once
+- Added a single server identity constant via `SERVER_NAME`
+- Added `Client::nickOrStar()` and `Client::prefix()` to keep source and prefix formatting consistent
+- Kept IRC reply macros as pure payload builders without trailing line termination
+
 # 19/10
 
 ## Channels

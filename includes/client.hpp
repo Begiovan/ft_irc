@@ -1,5 +1,7 @@
 #pragma once
 
+#include "irc_response.hpp"
+
 #include <string>
 #include <set>
 #include <iostream>
@@ -37,7 +39,8 @@ class Client {
 
 		const std::string	&getNickname() const;
 		void				setNickname(std::string nickname);
-
+		std::string		nickOrStar() const;
+		std::string		prefix() const;
 		void					addChannel(Channel *chan) ;
 		void					removeChannel(Channel *chan) ;
 		const std::set<Channel*>	&getChannels() const;

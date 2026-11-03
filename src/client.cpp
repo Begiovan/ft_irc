@@ -23,7 +23,13 @@ void Client::setUsername(std::string username){
 const std::string &Client::getNickname() const{
 	return _nickname;
 }
+std::string Client::nickOrStar() const {
+	return _nickname.empty() ? "*" : _nickname;
+}
 
+std::string Client::prefix() const {
+	return _nickname.empty() ? "*" : _nickname + "!" + _username + "@" SERVER_NAME;
+}
 void Client::setNickname(std::string nickname){
 	_nickname = nickname;
 }
