@@ -1,5 +1,7 @@
 #include "parser.hpp"
 
+#include <cctype>
+
 Command parseCommand(const std::string &line){
 
     Command cmd;
@@ -40,6 +42,9 @@ Command parseCommand(const std::string &line){
             }
         }
     }
+
+    for (size_t i = 0; i < cmd.command.length(); ++i)
+        cmd.command[i] = static_cast<char>(std::toupper(static_cast<unsigned char>(cmd.command[i])));
     
     return cmd;
 }

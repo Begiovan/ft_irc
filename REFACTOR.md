@@ -154,10 +154,10 @@ e i messaggi d'errore diventano coerenti per costruzione.
 **Problema:** due catene di `if` quasi identiche, `isAuth &&` ridondante,
 `new`/`delete` a ogni riga, doppio errore per i non registrati.
 
-- [ ] `std::map<std::string, ACommand*> _commands` creata **una volta** nel costruttore
+- [x] `std::map<std::string, ACommand*> _commands` creata **una volta** nel costruttore
       di `Server` e liberata nel distruttore.
-- [ ] Ogni `ACommand` sa se richiede la registrazione (`requiresRegistration()`).
-- [ ] Nuovo dispatch in un solo punto:
+- [x] Ogni `ACommand` sa se richiede la registrazione (`requiresRegistration()`).
+- [x] Nuovo dispatch in un solo punto:
 
 ```text
 riga vuota                  -> ignora
@@ -166,7 +166,7 @@ richiede reg. e non reg.    -> 451 ERR_NOTREGISTERED
 altrimenti                  -> cmd->execute(...)
 ```
 
-- [ ] Il nome del comando va convertito in maiuscolo nel parser.
+- [x] Il nome del comando va convertito in maiuscolo nel parser.
 
 **Voci della todo list risolte da questo step:**
 
