@@ -14,7 +14,8 @@ void User::execute(Client *client, std::vector<std::string> params){
         _server->sendToClient(*client, ERR_ALREADYREGISTERED("*") + "\r\n");
         return;
     }
-    else if (client->getRegistrationStatus() & Client::PASS_OK)
+
+    if (client->getRegistrationStatus() & Client::PASS_OK)
     {
         client->setUsername(params[0]);
         client->setRegistrationStatus(Client::USER_OK);

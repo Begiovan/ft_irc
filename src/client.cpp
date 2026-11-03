@@ -59,9 +59,8 @@ void Client::setRegistrationStatus(RegistrationFlag flag){
 }
 
 bool Client::isRegistered() const {
-	    return (_registrationStatus
-        & (PASS_OK | NICK_OK | USER_OK))
-        == (PASS_OK | NICK_OK | USER_OK);
+	    return ( _registrationStatus & (PASS_OK | NICK_OK | USER_OK) )
+			== ( PASS_OK | NICK_OK | USER_OK );
 }
 
 bool Client::isInChannel(Channel *channel) const{
