@@ -17,4 +17,5 @@ valout*
 !.vscode/extensions.json
 !.vscode/*.code-snippets
 
-FT_IRC_TESTER/
+#FT_IRC_TESTER/
+*test_result.txt
