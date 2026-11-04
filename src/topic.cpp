@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Topic::Topic(Server &server) : ACommand(server){}
+Topic::Topic(Server &server) : ACommand(server, "TOPIC", 1){}
 Topic::~Topic(){}
 
 // syntax: TOPIC channel -> shows the current topic
@@ -8,22 +8,12 @@ Topic::~Topic(){}
 // topic channel : -> clears the topic by setting it to an empty string
 
 void Topic::execute(Client *client, std::vector<std::string> params){
-	if (params.size() < 1){
-		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "TOPIC") + "\r\n");
+	if (!client || !hasEnoughParams_OrReply(*client, params))
 		return;
-	}
 
-	Channel *chan = _server->findChannel(params[0]);
-	if (!chan)
-	{
-		_server->sendToClient(*client, ERR_NOSUCHCHANNEL(client->getNickname(), params[0]) + "\r\n");
+	Channel *chan = resolveChannel_OrReply(*client, params[0]);
+	if (!chan || !findMember_OrReply(*client, *chan))
 		return;
-	}
-	if (!chan->isMember(client))
-	{
-		_server->sendToClient(*client, ERR_NOTONCHANNEL(client->getNickname(), params[0]) + "\r\n");
-		return;
-	}
 
 	if (params.size() == 1)
 	{

@@ -419,7 +419,7 @@ void Server::run()
 	}
 }
 
-bool Server::findClient(std::string value)
+bool Server::findClientByNick(std::string value)
 {
 	std::string target = toLowerString(value);
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -430,7 +430,7 @@ bool Server::findClient(std::string value)
 	return false;
 }
 
-Client *Server::returnClient(std::string value)
+Client *Server::getClientByNick(std::string value)
 {
 	std::string target = toLowerString(value);
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)

@@ -48,8 +48,8 @@ class Server {
 	
 	void	disconnectClient(int fd, const string &reason = "Connection closed");
 	void	run();
-	bool	findClient(string value);
-	Client	*returnClient(string value);
+	bool	findClientByNick(string value);
+	Client	*getClientByNick(string value);
 	Channel *findChannel(const string &name);
 	Channel *createChannel(const string &name);
 	void	removeEmptyChan(Channel *channel);

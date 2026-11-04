@@ -1,16 +1,12 @@
 #include "ACommand.hpp"
 
-Nick::Nick(Server &server) : ACommand(server, ANY){}
+Nick::Nick(Server &server) : ACommand(server, "NICK", 1, ANY){}
 Nick::~Nick(){}
 
 void Nick::execute(Client *client, std::vector<std::string> params)
 {
-    if (params.size() < 1)
-    {
-        _server->sendToClient(*client,
-            ERR_NONICKNAMEGIVEN("*") + "\r\n");
+    if (!client || !hasEnoughParams_OrReply(*client, params))
         return;
-    }
 
     if (!(client->getRegistrationStatus() & Client::PASS_OK))
     {
@@ -25,7 +21,7 @@ void Nick::execute(Client *client, std::vector<std::string> params)
         return;
     }
 
-    if (_server->findClient(params[0]))
+    if (_server->findClientByNick(params[0]))
     {
         _server->sendToClient(*client,
             ERR_NICKNAMEINUSE(client->nickOrStar(), params[0]) + "\r\n");

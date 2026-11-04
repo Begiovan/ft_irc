@@ -18,21 +18,30 @@ class ACommand {
 protected:
 
     Server					*_server;
+	const std::string		_name;
+    const unsigned int      _requiredParams;
     const AuthRequirement   _authRequirement;
+
+	bool	hasEnoughParams_OrReply(Client &c, const std::vector<std::string> &params);
+	Channel	*resolveChannel_OrReply(Client &c, const std::string &chName);
+	bool	findMember_OrReply(Client &c, Channel &ch);
+	bool	findOperator_OrReply(Client &c, Channel &ch);
+	Client	*resolveNick_OrReply(Client &c, const std::string &nick);
 
 public:
 
 
-    explicit ACommand(Server &server, AuthRequirement authRequirement = REGISTERED) : _server(&server), _authRequirement(authRequirement) {}
+    explicit ACommand(Server &server, std::string name, unsigned int requiredParams, AuthRequirement authRequirement = REGISTERED) :
+		_server(&server), _name(name), _requiredParams(requiredParams), _authRequirement(authRequirement) {}
+
     virtual ~ACommand() {}
 
-    AuthRequirement authRequirement()
-    {
-        return _authRequirement;
-    }
+    AuthRequirement	authRequirement();
 
     virtual void execute(Client *client, std::vector<std::string> args) = 0;
 };
+
+/******** COMMANDS ***********/
 
 class Ping : public ACommand {
     public:

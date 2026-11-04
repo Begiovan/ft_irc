@@ -1,13 +1,11 @@
 #include "ACommand.hpp"
 
-User::User(Server &server) : ACommand(server, UNREGISTERED){}
+User::User(Server &server) : ACommand(server, "USER", 1, UNREGISTERED){}
 User::~User(){}
 
 void User::execute(Client *client, std::vector<std::string> params){
-    if (params.size() < 1){
-        _server->sendToClient(*client, ERR_NEEDMOREPARAMS("*", "USER") + "\r\n");
+    if (!client || !hasEnoughParams_OrReply(*client, params))
         return;
-    }
 
     if (client->getRegistrationStatus() & Client::USER_OK)
     {

@@ -11,6 +11,7 @@ NAME = ircserv
 
 SRCS = src/main.cpp \
 		src/utils.cpp \
+		src/ACommand.cpp \
 		src/server.cpp \
 		src/channel.cpp \
 		src/client.cpp \

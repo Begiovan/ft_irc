@@ -1,15 +1,13 @@
 #include "ACommand.hpp"
 
-Join::Join(Server &server) : ACommand(server){}
+Join::Join(Server &server) : ACommand(server, "JOIN", 1){}
 Join::~Join(){}
 
 // syntax: JOIN channel key (optional)
 
 void Join::execute(Client *client, std::vector<std::string> params){
-    if (params.size() < 1){
-		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "JOIN")+ "\r\n");
+    if (!client || !hasEnoughParams_OrReply(*client, params))
 		return;
-	}
 	Channel *chan = _server->findChannel(params[0]);
 	bool newChannel = false;
 

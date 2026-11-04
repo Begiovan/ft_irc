@@ -1,42 +1,21 @@
 #include "ACommand.hpp"
 
-Kick::Kick(Server &server) : ACommand(server){}
+Kick::Kick(Server &server) : ACommand(server, "KICK", 2){}
 Kick::~Kick(){}
 
 // syntax: KICK channel target: message (optional)
 
 void Kick::execute(Client *client, std::vector<std::string> params){
-	
-	if (params.size() < 2 )
-	{
-		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "KICK")+ "\r\n");
+	if (!client || !hasEnoughParams_OrReply(*client, params))
 		return;
-	}
-	Channel *chan = _server->findChannel(params[0]);
-	if (!chan)
-	{
-		_server->sendToClient(*client, ERR_NOSUCHCHANNEL(client->getNickname(), params[0])+ "\r\n");
+	Channel *chan = resolveChannel_OrReply(*client, params[0]);
+	if (!chan || !findMember_OrReply(*client, *chan) || !findOperator_OrReply(*client, *chan))
 		return;
-	}
-	if (!(chan->isMember(client)))
+	Client *target = resolveNick_OrReply(*client, params[1]);
+	if (!target || !chan->isMember(target))
 	{
-		_server->sendToClient(*client, ERR_NOTONCHANNEL(client->getNickname(), params[0])+ "\r\n");
-		return;
-	}
-	if (!(chan->isOperator(*client)))
-	{
-		_server->sendToClient(*client, ERR_CHANOPRIVSNEEDED(client->getNickname(), params[0])+ "\r\n");
-		return;
-	}
-	Client *target = _server->returnClient(params[1]);
-		if (target == NULL)
-	{
-		_server->sendToClient(*client, ERR_NOSUCHNICK(client->getNickname(), params[1])+ "\r\n");
-		return;
-	}
-	if (!(chan->isMember(target)))
-	{
-		_server->sendToClient(*client, ERR_USERNOTINCHANNEL(client->getNickname(), target->getNickname(), params[0])+ "\r\n");
+		if (target)
+			_server->sendToClient(*client, ERR_USERNOTINCHANNEL(client->getNickname(), target->getNickname(), params[0]) + "\r\n");
 		return;
 	}
 	std::string reason = "No Reason Given.";

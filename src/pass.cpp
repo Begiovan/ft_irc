@@ -1,13 +1,11 @@
 #include "ACommand.hpp"
 
-Pass::Pass(Server &server) : ACommand(server, UNREGISTERED){}
+Pass::Pass(Server &server) : ACommand(server, "PASS", 1, UNREGISTERED){}
 Pass::~Pass(){}
 
 void Pass::execute(Client *client, std::vector<std::string> params){
-    if (params.size() < 1){
-        _server->sendToClient(*client, ERR_NEEDMOREPARAMS("*", "PASS") + "\r\n");
+    if (!client || !hasEnoughParams_OrReply(*client, params))
         return;
-    }
 
     if (_server->getPassword() == params[0])
     {

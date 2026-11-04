@@ -49,7 +49,7 @@ In più ci sono tre "operazioni di dominio" riscritte in più file:
 | notificare "chi condivide un canale con me" | nick.cpp (con dedup), quit.cpp (senza dedup) |
 | inviare topic + lista NAMES         | join.cpp, topic.cpp                            |
 | "se ora è registrato manda WELCOME" | pass.cpp, nick.cpp, user.cpp                   |
-| cercare un client per nick         | findClient + returnClient                      |
+| cercare un client per nick         | findClientByNick + getClientByNick                      |
 
 Il refactor consiste nel dare un **nome e una casa** a ciascuno di questi pezzi.
 
@@ -147,7 +147,7 @@ e i messaggi d'errore diventano coerenti per costruzione.
 **Voci della todo list risolte da questo step:**
 
 - [ ] *(Registrazione)* 🟠 `USER` controlla un solo parametro, ma il protocollo ne richiede 4: con meno parametri va risposto `461 ERR_NEEDMOREPARAMS`. Il realname (4° parametro) non va salvato: non lo usa nessun comando richiesto dal subject.
-- [ ] *(Modello dati)* 🟢 Molti metodi ricevono `std::string` per valore (`setNickname`, `appendBuffer`, `findClient`…) e `execute` riceve un `vector` per valore. Meglio passare `const &`. *(completato nello Step 5)*
+- [ ] *(Modello dati)* 🟢 Molti metodi ricevono `std::string` per valore (`setNickname`, `appendBuffer`, `findClientByNick`…) e `execute` riceve un `vector` per valore. Meglio passare `const &`. *(completato nello Step 5)*
 
 ### Step 3 — Registro dei comandi al posto di `dispatch`
 
@@ -191,7 +191,7 @@ altrimenti                  -> cmd->execute(...)
       → usati da JOIN e TOPIC.
 - [ ] `void tryCompleteRegistration(Client&)` → manda RPL_WELCOME se la registrazione
       si è appena completata. Usato da PASS, NICK, USER.
-- [ ] `Client *getClientByNick(const std::string&)` al posto di `findClient` + `returnClient`
+- [ ] `Client *getClientByNick(const std::string&)` al posto di `findClientByNick` + `getClientByNick`
       (confronto case-insensitive).
 
 **Voci della todo list risolte da questo step:**
@@ -201,7 +201,7 @@ altrimenti                  -> cmd->execute(...)
 - [ ] *(Registrazione)* 🟢 Il blocco "se ora è registrato manda `RPL_WELCOME`" è ripetuto in pass, nick e user. Si può estrarre in `Server::tryCompleteRegistration(Client*)`.
 - [ ] *(Canali e comandi di canale)* 🟠 QUIT manda il messaggio una volta per ogni canale: chi condivide due canali con te lo riceve due volte. NICK invece raccoglie i destinatari in un set, ed è il pattern giusto da riusare.
 - [ ] *(Canali e comandi di canale)* 🟢 KICK chiama `removeOperator` e `removeInvite` prima di `removeMember`, che fa già entrambe le cose.
-- [ ] *(Modello dati)* 🟢 `findClient` e `returnClient` sono duplicati: ne basta uno solo, `Client* getClientByNick(const std::string&)`. In più si può valutare una mappa nick → Client.
+- [ ] *(Modello dati)* 🟢 `findClientByNick` e `getClientByNick` sono duplicati: ne basta uno solo, `Client* getClientByNick(const std::string&)`. In più si può valutare una mappa nick → Client.
 
 ### Step 5 — Modello dati coerente (togliere i `const_cast`)
 

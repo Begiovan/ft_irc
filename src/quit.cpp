@@ -1,6 +1,6 @@
 #include "ACommand.hpp"
 
-Quit::Quit(Server &server) : ACommand(server){}
+Quit::Quit(Server &server) : ACommand(server, "QUIT", 0){}
 Quit::~Quit(){}
 
 void Quit::execute(Client *client, std::vector<std::string> params){

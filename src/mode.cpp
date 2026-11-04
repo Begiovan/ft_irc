@@ -2,7 +2,7 @@
 #include <sstream>
 #include <cstdlib>
 
-Mode::Mode(Server &server) : ACommand(server){}
+Mode::Mode(Server &server) : ACommand(server, "MODE", 1){}
 Mode::~Mode(){}
 
 // syntax: MODE channel -> shows the active modes on the channel
@@ -33,34 +33,20 @@ static std::string getModes(Channel &channel){
 }
 
 void Mode::execute(Client *client, std::vector<std::string> params){
-	if (params.empty())
-	{
-		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
+	if (!client || !hasEnoughParams_OrReply(*client, params))
 		return;
-	}
 
-	Channel *chan = _server->findChannel(params[0]);
-	if (!chan)
-	{
-		_server->sendToClient(*client, ERR_NOSUCHCHANNEL(client->getNickname(), params[0]) + "\r\n");
+	Channel *chan = resolveChannel_OrReply(*client, params[0]);
+	if (!chan || !findMember_OrReply(*client, *chan))
 		return;
-	}
-	if (!chan->isMember(client))
-	{
-		_server->sendToClient(*client, ERR_NOTONCHANNEL(client->getNickname(), params[0]) + "\r\n");
-		return;
-	}
 	if (params.size() == 1)
 	{
 		std::string modes = getModes(*chan);
 		_server->sendToClient(*client, RPL_MODE(client->getNickname(), client->getUsername(), params[0], modes, "") + "\r\n");
 		return;
 	}
-	if (!chan->isOperator(*client))
-	{
-		_server->sendToClient(*client, ERR_CHANOPRIVSNEEDED(client->getNickname(), params[0]) + "\r\n");
+	if (!findOperator_OrReply(*client, *chan))
 		return;
-	}
 
 	bool		changed = false;
 	bool		enable = true;
@@ -93,12 +79,9 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 					return;
 				}
 				{
-					Client *target = _server->returnClient(params[numArgs]);
+					Client *target = resolveNick_OrReply(*client, params[numArgs]);
 					if (!target)
-					{
-						_server->sendToClient(*client, ERR_NOSUCHNICK(client->getNickname(), params[numArgs]) + "\r\n");
 						return;
-					}
 					if (!chan->isMember(target))
 					{
 						_server->sendToClient(*client, ERR_USERNOTINCHANNEL(client->getNickname(), target->getNickname(), params[0]) + "\r\n");
