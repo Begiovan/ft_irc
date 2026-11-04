@@ -112,41 +112,41 @@ std::string Server::buildChannelListMessage() const
 	return list;
 }
 
-void Server::botOnMessage(Client *from, const std::string &target, const std::string &message)
+void Server::botOnMessage(Client &from, const std::string &target, const std::string &message)
 {
 	time_t now = time(NULL);
     struct tm *t = gmtime(&now);
 	char buf[80];
 	strftime(buf, sizeof(buf), "%a %d %b %Y %I:%M:%S %p", t);
 
-	if (!from || !_bot)
+	if (!_bot)
 		return;
 	if (message.empty() || message[0] != '!')
 		return;
 
 	if (message == "!channels")
 	{
-		sendToClient(*from,
+		sendToClient(from,
 			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, buildChannelListMessage()) + "\r\n");
 		return;
 	}
 	if (message == "!help")
 	{
-		sendToClient(*from,
+		sendToClient(from,
 			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, "Aviable commands for this bot: !channel, !date, !help\n" +
 				"Server command: /kick, /invite, /topic, /mode") + "\r\n");
 		return;
 	}
 	if (message == "!date")
 	{
-		sendToClient(*from,
+		sendToClient(from,
 			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, std::string(buf) + " UTC") + "\r\n");
 		return;
 	}
 
-	sendToClient(*from,
+	sendToClient(from,
 		RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target,
-			"Sorry @" + from->getNickname() + ", i don't speak your language." + "Aviable commands for this bot: !channel, !date, !help") + "\r\n");
+			"Sorry @" + from.getNickname() + ", i don't speak your language." + "Aviable commands for this bot: !channel, !date, !help") + "\r\n");
 }
 
 /*
@@ -323,7 +323,7 @@ int Server::receiveClient(int fd)
 			continue;
 		}
 		
-		commandHandler->execute(client, cmd.params);
+		commandHandler->execute(*client, cmd.params);
 
 		if (_clients.find(fd) == _clients.end())
 		{
@@ -359,7 +359,7 @@ void Server::disconnectClient(int fd, const std::string &reason)
 								reason) + "\r\n",
 					  client);
 			chan->removeMember(*client);
-			removeEmptyChan(chan);
+			removeEmptyChan(*chan);
 		}
 		delete (client);
 		_clients.erase(it);
@@ -419,7 +419,7 @@ void Server::run()
 	}
 }
 
-bool Server::findClientByNick(std::string value)
+bool Server::findClientByNick(const std::string &value)
 {
 	std::string target = toLowerString(value);
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -430,7 +430,7 @@ bool Server::findClientByNick(std::string value)
 	return false;
 }
 
-Client *Server::getClientByNick(std::string value)
+Client *Server::getClientByNick(const std::string &value)
 {
 	std::string target = toLowerString(value);
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -467,22 +467,20 @@ Channel *Server::createChannel(const std::string &name)
 	return channel;
 }
 
-void	Server::removeEmptyChan(Channel *channel){
-	if (!channel)
-		return;
-	if (channelHasRealUsers(channel))
+void	Server::removeEmptyChan(Channel &channel){
+	if (channelHasRealUsers(&channel))
 		return;
 
-	if (_bot && channel->isMember(_bot))
+	if (_bot && channel.isMember(*_bot))
 	{
-		channel->removeMember(*_bot);
-		_bot->removeChannel(channel);
+		channel.removeMember(*_bot);
+		_bot->removeChannel(&channel);
 	}
 
 	for (std::map<std::string, Channel *>::iterator it = _channels.begin(); it != _channels.end(); it++){
-		if( it->second == channel)
+		if( it->second == &channel)
 		{
-			delete channel;
+			delete &channel;
 			_channels.erase(it);
 			return;
 		}

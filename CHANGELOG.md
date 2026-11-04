@@ -12,6 +12,13 @@
 - Reworked command execution paths to replace repetitive validation blocks with the new `_OrReply()` helpers
 - Added `src/ACommand.cpp` to the project build so the shared helper implementations are linked into the binary
 
+## API normalization pass
+
+- Normalized command handlers and object APIs to reference-based parameters where the target is guaranteed to exist
+- Kept pointer usage only for nullable lookups and optional values, while replacing repeated pointer dereference patterns with direct reference access
+- Updated channel and client membership checks to use consistent reference semantics without changing the underlying ownership model
+- Verified the project builds cleanly after the refactor and normalization pass
+
 # 03/11
 
 ## Refactor workflow

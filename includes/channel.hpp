@@ -27,15 +27,15 @@ public:
 
 	// Membership
 
-	void addMember(Client& client);
-	void removeMember(Client& client);
+	void addMember(Client &client);
+	void removeMember(Client &client);
 
-	void inviteUser(Client& client);
-	void removeInvite(Client& client);
+	void inviteUser(Client &client);
+	void removeInvite(Client &client);
 
 	// OPERATOR
-	void addOperator(Client& client);
-	void removeOperator(Client& client);
+	void addOperator(Client &client);
+	void removeOperator(Client &client);
 	
 	// check user
 
@@ -48,11 +48,10 @@ public:
 	};
 	
 	bool		empty() const;
-	// TODO Can we pass a reference to client, and then de-reference it in the body? It would be more coherent in the code
-	bool		isMember(Client *client) const;
-	bool		isOperator(Client& client) const;
-	JoinResult	canJoin(Client& other, const std::string& key) const;
-	bool		canChangeTopic(Client& client) const;
+	bool		isMember(const Client &client) const;
+	bool		isOperator(Client &client) const;
+	JoinResult	canJoin(Client &other, const std::string& key) const;
+	bool		canChangeTopic(Client &client) const;
 
 	// Getters
 
@@ -74,7 +73,7 @@ public:
 	// INVITE
 
 	void	setInviteOnly(bool enabled);
-	bool	isInvited(Client& client) const;
+	bool	isInvited(Client &client) const;
 	bool	isInviteOnly() const;
 
 	// KEY

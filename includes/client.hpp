@@ -41,10 +41,10 @@ class Client {
 		void				setNickname(std::string nickname);
 		std::string		nickOrStar() const;
 		std::string		prefix() const;
-		void					addChannel(Channel *chan) ;
-		void					removeChannel(Channel *chan) ;
+		void			addChannel(Channel *chan) ;
+		void			removeChannel(Channel *chan) ;
 		const std::set<Channel*>	&getChannels() const;
-		bool					isInChannel(Channel *channel) const;
+		bool			isInChannel(const Channel *channel) const;
 		bool					isBot() const;
 		void					setBot(bool isBot);
 

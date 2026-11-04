@@ -3,42 +3,42 @@
 Nick::Nick(Server &server) : ACommand(server, "NICK", 1, ANY){}
 Nick::~Nick(){}
 
-void Nick::execute(Client *client, std::vector<std::string> params)
+void Nick::execute(Client &client, const std::vector<std::string> &params)
 {
-    if (!client || !hasEnoughParams_OrReply(*client, params))
+    if (!hasEnoughParams_OrReply(client, params))
         return;
 
-    if (!(client->getRegistrationStatus() & Client::PASS_OK))
+    if (!(client.getRegistrationStatus() & Client::PASS_OK))
     {
-        _server->sendToClient(*client, ERR_PASSWDMISMATCH("*") + "\r\n");
+        _server->sendToClient(client, ERR_PASSWDMISMATCH("*") + "\r\n");
         return;
     }
 
     if (!isValidNickname(params[0]))
     {
-        _server->sendToClient(*client,
+        _server->sendToClient(client,
             ERR_ERRONEUSNICKNAME("*", params[0]) + "\r\n");
         return;
     }
 
     if (_server->findClientByNick(params[0]))
     {
-        _server->sendToClient(*client,
-            ERR_NICKNAMEINUSE(client->nickOrStar(), params[0]) + "\r\n");
+        _server->sendToClient(client,
+            ERR_NICKNAMEINUSE(client.nickOrStar(), params[0]) + "\r\n");
         return;
     }
 
-    std::string oldNick = client->getNickname();
-    bool wasRegistered = client->isRegistered();
+    std::string oldNick = client.getNickname();
+    bool wasRegistered = client.isRegistered();
 
-    client->setNickname(params[0]);
-    client->setRegistrationStatus(Client::NICK_OK);
+    client.setNickname(params[0]);
+    client.setRegistrationStatus(Client::NICK_OK);
 
     if (wasRegistered)
     {
         std::set<Client *> notifyClients;
 
-        const std::set<Channel *> &channels = client->getChannels();
+        const std::set<Channel *> &channels = client.getChannels();
 
         for (std::set<Channel *>::const_iterator it = channels.begin();
              it != channels.end(); ++it)
@@ -52,7 +52,7 @@ void Nick::execute(Client *client, std::vector<std::string> params)
             }
         }
 
-        notifyClients.insert(client);
+        notifyClients.insert(&client);
 
         for (std::set<Client *>::const_iterator it = notifyClients.begin();
              it != notifyClients.end(); ++it)
@@ -60,16 +60,16 @@ void Nick::execute(Client *client, std::vector<std::string> params)
             _server->sendToClient(
                 **it,
                 RPL_NICK(oldNick,
-                         client->getUsername(),
-                         client->getNickname()) + "\r\n"
+                         client.getUsername(),
+                         client.getNickname()) + "\r\n"
             );
         }
     }
-    else if (client->isRegistered())
+    else if (client.isRegistered())
     {
         _server->sendToClient(
-            *client,
-            RPL_WELCOME(client->getNickname()) + "\r\n"
+            client,
+            RPL_WELCOME(client.getNickname()) + "\r\n"
         );
     }
 }

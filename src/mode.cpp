@@ -32,20 +32,20 @@ static std::string getModes(Channel &channel){
 	return "+" + mode + (args.empty() ? "" : " " + args);
 }
 
-void Mode::execute(Client *client, std::vector<std::string> params){
-	if (!client || !hasEnoughParams_OrReply(*client, params))
+void Mode::execute(Client &client, const std::vector<std::string> &params){
+	if (!hasEnoughParams_OrReply(client, params))
 		return;
 
-	Channel *chan = resolveChannel_OrReply(*client, params[0]);
-	if (!chan || !findMember_OrReply(*client, *chan))
+	Channel *chan = resolveChannel_OrReply(client, params[0]);
+	if (!chan || !findMember_OrReply(client, *chan))
 		return;
 	if (params.size() == 1)
 	{
 		std::string modes = getModes(*chan);
-		_server->sendToClient(*client, RPL_MODE(client->getNickname(), client->getUsername(), params[0], modes, "") + "\r\n");
+		_server->sendToClient(client, RPL_MODE(client.getNickname(), client.getUsername(), params[0], modes, "") + "\r\n");
 		return;
 	}
-	if (!findOperator_OrReply(*client, *chan))
+	if (!findOperator_OrReply(client, *chan))
 		return;
 
 	bool		changed = false;
@@ -75,23 +75,23 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 			case 'o':
 				if (params.size() <= numArgs)
 				{
-					_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
+					_server->sendToClient(client, ERR_NEEDMOREPARAMS(client.getNickname(), "MODE") + "\r\n");
 					return;
 				}
 				{
-					Client *target = resolveNick_OrReply(*client, params[numArgs]);
+					Client *target = resolveNick_OrReply(client, params[numArgs]);
 					if (!target)
 						return;
-					if (!chan->isMember(target))
+					if (!chan->isMember(*target))
 					{
-						_server->sendToClient(*client, ERR_USERNOTINCHANNEL(client->getNickname(), target->getNickname(), params[0]) + "\r\n");
+						_server->sendToClient(client, ERR_USERNOTINCHANNEL(client.getNickname(), target->getNickname(), params[0]) + "\r\n");
 						return;
 					}
 					if (enable)
 						chan->addOperator(*target);
 					else
 						chan->removeOperator(*target);
-					_server->broadcast(*chan, RPL_MODE(client->getNickname(), client->getUsername(), params[0], params[1], target->getNickname()) + "\r\n");
+					_server->broadcast(*chan, RPL_MODE(client.getNickname(), client.getUsername(), params[0], params[1], target->getNickname()) + "\r\n");
 				}
 				numArgs++;
 				break;
@@ -100,7 +100,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 				{
 					if (params.size() <= numArgs)
 					{
-						_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
+						_server->sendToClient(client, ERR_NEEDMOREPARAMS(client.getNickname(), "MODE") + "\r\n");
 						return;
 					}
 					chan->setKey(params[numArgs]);
@@ -115,18 +115,18 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 				{
 					if (params.size() <= numArgs)
 					{
-						_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
+						_server->sendToClient(client, ERR_NEEDMOREPARAMS(client.getNickname(), "MODE") + "\r\n");
 						return;
 					}
 					if (!isPositiveInteger(params[numArgs]))
 					{
-						_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
+						_server->sendToClient(client, ERR_NEEDMOREPARAMS(client.getNickname(), "MODE") + "\r\n");
 						return;
 					}
 					int limit = atoi(params[numArgs].c_str());
 					if(!chan->setUserLimit(limit))
 					{
-						_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "MODE") + "\r\n");
+						_server->sendToClient(client, ERR_NEEDMOREPARAMS(client.getNickname(), "MODE") + "\r\n");
 						return;
 					}
 					numArgs++;
@@ -136,10 +136,10 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 				changed = true;
 				break;
 			default:
-				_server->sendToClient(*client, ERR_UNKNOWNMODE(client->getNickname(), mode[i], params[0]) + "\r\n");
+				_server->sendToClient(client, ERR_UNKNOWNMODE(client.getNickname(), mode[i], params[0]) + "\r\n");
 				return;
 		}
 	}
 	if (changed)
-		_server->broadcast(*chan, RPL_MODE(client->getNickname(), client->getUsername(), params[0], params[1], "") + "\r\n");
+		_server->broadcast(*chan, RPL_MODE(client.getNickname(), client.getUsername(), params[0], params[1], "") + "\r\n");
 }

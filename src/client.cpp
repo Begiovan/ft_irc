@@ -69,8 +69,8 @@ bool Client::isRegistered() const {
 			== ( PASS_OK | NICK_OK | USER_OK );
 }
 
-bool Client::isInChannel(Channel *channel) const{
-	return (_channels.find(channel) != _channels.end());
+bool Client::isInChannel(const Channel *channel) const{
+	return (_channels.find(const_cast<Channel *>(channel)) != _channels.end());
 }
 
 bool Client::isBot() const{

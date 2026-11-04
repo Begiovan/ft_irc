@@ -28,7 +28,7 @@ Channel*	ACommand::resolveChannel_OrReply(Client &c, const std::string &chName)
 
 bool	ACommand::findMember_OrReply(Client &c, Channel &ch)
 {
-	if (!ch.isMember(&c))
+	if (!ch.isMember(c))
 	{
 		_server->sendToClient(c, ERR_NOTONCHANNEL(c.getNickname(), ch.getName()));
 		return false;

@@ -4,29 +4,29 @@ Channel::Channel(const std::string& name) : _name(name), _topic(""), _key(""), _
 
 Channel::~Channel() {}
 
-void Channel::addMember(Client& client) {
+void Channel::addMember(Client &client) {
     _members.insert(&client);
 }
 
-void Channel::removeMember(Client& client) {
+void Channel::removeMember(Client &client) {
     _members.erase(&client);
     _operators.erase(&client);
     _invited.erase(&client);
 }
 
-void Channel::inviteUser(Client& client) {
+void Channel::inviteUser(Client &client) {
     _invited.insert(&client);
 }
 
-void Channel::removeInvite(Client& client) {
+void Channel::removeInvite(Client &client) {
     _invited.erase(&client);
 }
 
-void Channel::addOperator(Client& client) {
+void Channel::addOperator(Client &client) {
     _operators.insert(&client);
 }
 
-void Channel::removeOperator(Client& client) {
+void Channel::removeOperator(Client &client) {
     _operators.erase(&client);
 }
 
@@ -34,16 +34,16 @@ bool Channel::empty() const {
     return _members.empty();
 }
 
-bool Channel::isMember(Client *client) const {
-    return _members.find(client) != _members.end();
+bool Channel::isMember(const Client &client) const {
+    return _members.find(const_cast<Client *>(&client)) != _members.end();
 }
 
-bool Channel::isOperator(Client& client) const {
+bool Channel::isOperator(Client &client) const {
     return _operators.find(&client) != _operators.end();
 }
 
-Channel::JoinResult Channel::canJoin(Client& other, const std::string& key) const {
-    if (isMember(&other))
+Channel::JoinResult Channel::canJoin(Client &other, const std::string& key) const {
+    if (isMember(other))
         return JOIN_ERR_ALREADY_IN;
     if (_inviteOnly && _invited.find(&other) == _invited.end())
         return JOIN_ERR_INVITE_ONLY;
@@ -54,12 +54,12 @@ Channel::JoinResult Channel::canJoin(Client& other, const std::string& key) cons
     return JOIN_OK;
 }
 
-bool Channel::canChangeTopic(Client& client) const {
+bool Channel::canChangeTopic(Client &client) const {
 
 	if (_topicRestricted)
 		return isOperator(client);
 	else
-		return isMember(&client);
+		return isMember(client);
 }
 
 // Getters
@@ -88,7 +88,7 @@ bool Channel::isInviteOnly() const {
     return _inviteOnly;
 }
 
-bool Channel::isInvited(Client& client) const {
+bool Channel::isInvited(Client &client) const {
     return _invited.find(&client) != _invited.end();
 }
 

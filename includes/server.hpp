@@ -48,13 +48,13 @@ class Server {
 	
 	void	disconnectClient(int fd, const string &reason = "Connection closed");
 	void	run();
-	bool	findClientByNick(string value);
-	Client	*getClientByNick(string value);
+	bool	findClientByNick(const string &value);
+	Client	*getClientByNick(const string &value);
 	Channel *findChannel(const string &name);
 	Channel *createChannel(const string &name);
-	void	removeEmptyChan(Channel *channel);
+	void	removeEmptyChan(Channel &channel);
 	Client	*getBot() const;
-	void	botOnMessage(Client *from, const string &target, const string &message);
+	void	botOnMessage(Client &from, const string &target, const string &message);
 
 	// MESSAGGI
 	void	sendToClient(Client &client, const string &message); // TO DO

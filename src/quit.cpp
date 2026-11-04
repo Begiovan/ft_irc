@@ -3,12 +3,12 @@
 Quit::Quit(Server &server) : ACommand(server, "QUIT", 0){}
 Quit::~Quit(){}
 
-void Quit::execute(Client *client, std::vector<std::string> params){
+void Quit::execute(Client &client, const std::vector<std::string> &params){
     std::string message;
     if (params.size() >= 1)
         message = params[0];
     else
         message = "Client Quit";
 
-    _server->disconnectClient(client->getFd(), message);
+    _server->disconnectClient(client.getFd(), message);
 }

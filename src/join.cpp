@@ -5,15 +5,15 @@ Join::~Join(){}
 
 // syntax: JOIN channel key (optional)
 
-void Join::execute(Client *client, std::vector<std::string> params){
-    if (!client || !hasEnoughParams_OrReply(*client, params))
+void Join::execute(Client &client, const std::vector<std::string> &params){
+    if (!hasEnoughParams_OrReply(client, params))
 		return;
 	Channel *chan = _server->findChannel(params[0]);
 	bool newChannel = false;
 
 	if(!chan){
 		if (params[0][0] != '#' && params[0][0] != '&'){
-			_server->sendToClient(*client, ERR_NOSUCHCHANNEL(client->getNickname(), params[0]) + "\r\n");
+			_server->sendToClient(client, ERR_NOSUCHCHANNEL(client.getNickname(), params[0]) + "\r\n");
 			return;
 		}
 		chan = _server->createChannel(params[0]);
@@ -23,46 +23,46 @@ void Join::execute(Client *client, std::vector<std::string> params){
 	{
 		Channel::JoinResult res;
 		if (params.size() == 1)
-			res = chan->canJoin(*client, "");
+			res = chan->canJoin(client, "");
 		else
-			res = chan->canJoin(*client, params[1]);
+			res = chan->canJoin(client, params[1]);
 		if (res != Channel::JOIN_OK){
 			std::string err;
 			switch (res)
 			{
 			case Channel::JOIN_ERR_INVITE_ONLY:
-				err = ERR_INVITEONLYCHAN(client->getNickname(), params[0]);
+				err = ERR_INVITEONLYCHAN(client.getNickname(), params[0]);
 				break;
 			case Channel::JOIN_ERR_BAD_KEY:
-				err = ERR_BADCHANNELKEY(client->getNickname(), params[0]);
+				err = ERR_BADCHANNELKEY(client.getNickname(), params[0]);
 				break;
 			case Channel::JOIN_ERR_CHANNEL_FULL:
-				err = ERR_CHANNELISFULL(client->getNickname(), params[0]);
+				err = ERR_CHANNELISFULL(client.getNickname(), params[0]);
 				break;
 			case Channel::JOIN_ERR_ALREADY_IN:
-				err = ERR_USERONCHANNEL(client->getNickname(), client->getNickname(), params[0]);
+				err = ERR_USERONCHANNEL(client.getNickname(), client.getNickname(), params[0]);
 				break;
 			default:
-				err = ERR_UNKNOWNCOMMAND(client->getNickname(), "JOIN");
+				err = ERR_UNKNOWNCOMMAND(client.getNickname(), "JOIN");
 				break;
 			}
-			_server->sendToClient(*client, err + "\r\n");
+			_server->sendToClient(client, err + "\r\n");
 			return;
 		}
 	}
 
-	chan->addMember(*client);
+	chan->addMember(client);
 	if (newChannel)
-		chan->addOperator(*client);
-	if (chan->isInvited(*client)) {
-        chan->removeInvite(*client);
+		chan->addOperator(client);
+	if (chan->isInvited(client)) {
+        chan->removeInvite(client);
     }
-	_server->broadcast(*chan, RPL_JOIN(client->getNickname(), client->getUsername(), params[0]) + "\r\n");
-	client->addChannel(chan);
+	_server->broadcast(*chan, RPL_JOIN(client.getNickname(), client.getUsername(), params[0]) + "\r\n");
+	client.addChannel(chan);
     if (chan->getTopic().empty())
-        _server->sendToClient(*client, RPL_NOTOPIC(client->getNickname(), params[0]) + "\r\n");
+        _server->sendToClient(client, RPL_NOTOPIC(client.getNickname(), params[0]) + "\r\n");
     else
-        _server->sendToClient(*client, RPL_TOPIC(client->getNickname(), params[0], chan->getTopic()) + "\r\n");
+        _server->sendToClient(client, RPL_TOPIC(client.getNickname(), params[0], chan->getTopic()) + "\r\n");
 
     std::string users;
     const std::set<Client *> &members = chan->getMembers();
@@ -74,6 +74,6 @@ void Join::execute(Client *client, std::vector<std::string> params){
             users += '@';
         users += (*it)->getNickname();
     }
-    _server->sendToClient(*client, RPL_NAMREPLY(client->getNickname(), params[0], users) + "\r\n");
-    _server->sendToClient(*client, RPL_ENDOFNAMES(client->getNickname(), params[0]) + "\r\n");
+    _server->sendToClient(client, RPL_NAMREPLY(client.getNickname(), params[0], users) + "\r\n");
+    _server->sendToClient(client, RPL_ENDOFNAMES(client.getNickname(), params[0]) + "\r\n");
 }
