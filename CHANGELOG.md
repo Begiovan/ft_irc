@@ -1,3 +1,17 @@
+# 04/11
+
+## Refactor validation helpers
+
+- Added `ACommand` validation utilities to centralize common checks and reply generation:
+  - `hasEnoughParams_OrReply()`
+  - `resolveChannel_OrReply()`
+  - `findMember_OrReply()`
+  - `findOperator_OrReply()`
+  - `resolveNick_OrReply()`
+- Updated command constructors to pass the command name, required parameter count and auth requirement to `ACommand`
+- Reworked command execution paths to replace repetitive validation blocks with the new `_OrReply()` helpers
+- Added `src/ACommand.cpp` to the project build so the shared helper implementations are linked into the binary
+
 # 03/11
 
 ## Refactor workflow
