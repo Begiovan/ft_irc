@@ -28,7 +28,7 @@ void Kick::execute(Client *client, std::vector<std::string> params){
 		_server->sendToClient(*client, ERR_CHANOPRIVSNEEDED(client->getNickname(), params[0])+ "\r\n");
 		return;
 	}
-	Client *target = _server->returnClient(params[1]);
+	Client *target = _server->getClientByNick(params[1]);
 		if (target == NULL)
 	{
 		_server->sendToClient(*client, ERR_NOSUCHNICK(client->getNickname(), params[1])+ "\r\n");
@@ -40,12 +40,8 @@ void Kick::execute(Client *client, std::vector<std::string> params){
 		return;
 	}
 	std::string reason = "No Reason Given.";
-	if (params.size() == 3)
+	if (params.size() >= 3)
 		reason = params[2];
-	_server->broadcast(*chan, RPL_KICK(client->getNickname(), client->getUsername(), params[0], params[1], reason)  + "\r\n");
-	chan->removeOperator(*target);
-	chan->removeInvite(*target);
-	chan->removeMember(*target);
-	target->removeChannel(chan);
-	_server->removeEmptyChan(chan);
+	_server->broadcast(*chan, RPL_KICK(client->getNickname(), client->getUsername(), params[0], params[1], reason) + "\r\n");
+	_server->partChannel(*target, *chan);
 }

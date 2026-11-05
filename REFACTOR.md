@@ -181,17 +181,17 @@ altrimenti                  -> cmd->execute(...)
 **Problema:** stesse sequenze riscritte in più comandi, con piccole differenze
 (che sono proprio i bug).
 
-- [ ] `void joinChannel(Client&, Channel&)` → addMember + addChannel + rimozione invito.
-- [ ] `void partChannel(Client&, Channel&)` → removeMember + removeChannel + `removeEmptyChan`.
+- [x] `void joinChannel(Client&, Channel&)` → addMember + addChannel + rimozione invito.
+- [x] `void partChannel(Client&, Channel&)` → removeMember + removeChannel + `removeEmptyChan`.
       Usato da KICK, QUIT, disconnect (e PART se lo aggiungete).
-- [ ] `void broadcastToNeighbours(Client&, const std::string&, bool includeSelf)`
+- [x] `void broadcastToNeighbours(Client&, const std::string&, bool includeSelf)`
       → raccoglie i membri di tutti i canali in un `set` (il pattern che c'è già in NICK)
       e invia una volta sola. Usato da NICK e QUIT.
-- [ ] `void sendTopic(Client&, Channel&)` e `void sendNames(Client&, Channel&)`
+- [x] `void sendTopic(Client&, Channel&)` e `void sendNames(Client&, Channel&)`
       → usati da JOIN e TOPIC.
-- [ ] `void tryCompleteRegistration(Client&)` → manda RPL_WELCOME se la registrazione
+- [x] `void tryCompleteRegistration(Client&)` → manda RPL_WELCOME se la registrazione
       si è appena completata. Usato da PASS, NICK, USER.
-- [ ] `Client *getClientByNick(const std::string&)` al posto di `findClient` + `returnClient`
+- [x] `Client *getClientByNick(const std::string&)` al posto di `findClient` + `returnClient`
       (confronto case-insensitive).
 
 **Voci della todo list risolte da questo step:**

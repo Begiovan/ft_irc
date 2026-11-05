@@ -42,7 +42,7 @@ void Join::execute(Client *client, std::vector<std::string> params){
 				err = ERR_CHANNELISFULL(client->getNickname(), params[0]);
 				break;
 			case Channel::JOIN_ERR_ALREADY_IN:
-				break;
+				return;
 			default:
 				err = ERR_UNKNOWNCOMMAND(client->getNickname(), "JOIN");
 				break;
@@ -52,29 +52,10 @@ void Join::execute(Client *client, std::vector<std::string> params){
 		}
 	}
 
-	chan->addMember(*client);
+	_server->joinChannel(*client, *chan);
 	if (newChannel)
 		chan->addOperator(*client);
-	if (chan->isInvited(*client)) {
-        chan->removeInvite(*client);
-    }
 	_server->broadcast(*chan, RPL_JOIN(client->getNickname(), client->getUsername(), params[0]) + "\r\n");
-	client->addChannel(chan);
-    if (chan->getTopic().empty())
-        _server->sendToClient(*client, RPL_NOTOPIC(client->getNickname(), params[0]) + "\r\n");
-    else
-        _server->sendToClient(*client, RPL_TOPIC(client->getNickname(), params[0], chan->getTopic()) + "\r\n");
-
-    std::string users;
-    const std::set<Client *> &members = chan->getMembers();
-    for (std::set<Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
-    {
-        if (!users.empty())
-            users += ' ';
-        if (chan->isOperator(**it))
-            users += '@';
-        users += (*it)->getNickname();
-    }
-    _server->sendToClient(*client, RPL_NAMREPLY(client->getNickname(), params[0], users) + "\r\n");
-    _server->sendToClient(*client, RPL_ENDOFNAMES(client->getNickname(), params[0]) + "\r\n");
+	_server->sendTopic(*client, *chan);
+	_server->sendNames(*client, *chan);
 }

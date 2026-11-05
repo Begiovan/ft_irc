@@ -25,10 +25,11 @@ void Nick::execute(Client *client, std::vector<std::string> params)
         return;
     }
 
-    if (_server->findClient(params[0]))
+    Client *other = _server->getClientByNick(params[0]);
+    if (other && other != client)
     {
-        _server->sendToClient(*client,
-            ERR_NICKNAMEINUSE(client->getNickname(), params[0]) + "\r\n");
+        std::string who = client->getNickname().empty() ? "*" : client->getNickname();
+        _server->sendToClient(*client, ERR_NICKNAMEINUSE(who, params[0]) + "\r\n");
         return;
     }
 
@@ -39,41 +40,8 @@ void Nick::execute(Client *client, std::vector<std::string> params)
     client->setRegistrationStatus(Client::NICK_OK);
 
     if (wasRegistered)
-    {
-        std::set<Client *> notifyClients;
-
-        const std::set<Channel *> &channels = client->getChannels();
-
-        for (std::set<Channel *>::const_iterator it = channels.begin();
-             it != channels.end(); ++it)
-        {
-            const std::set<Client *> &members = (*it)->getMembers();
-
-            for (std::set<Client *>::const_iterator member = members.begin();
-                 member != members.end(); ++member)
-            {
-                notifyClients.insert(*member);
-            }
-        }
-
-        notifyClients.insert(client);
-
-        for (std::set<Client *>::const_iterator it = notifyClients.begin();
-             it != notifyClients.end(); ++it)
-        {
-            _server->sendToClient(
-                **it,
-                RPL_NICK(oldNick,
-                         client->getUsername(),
-                         client->getNickname()) + "\r\n"
-            );
-        }
-    }
-    else if (client->isRegistered())
-    {
-        _server->sendToClient(
-            *client,
-            RPL_WELCOME(client->getNickname()) + "\r\n"
-        );
-    }
+        _server->broadcastToNeighbours(*client,
+            RPL_NICK(oldNick, client->getUsername(), client->getNickname()) + "\r\n", true);
+    else
+        _server->tryCompleteRegistration(*client);
 }

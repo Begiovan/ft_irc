@@ -348,20 +348,16 @@ void Server::disconnectClient(int fd, const std::string &reason)
 	std::map<int, Client *>::iterator it = _clients.find(fd);
 	if (it != _clients.end())
 	{
-		Client						*client = it->second;
-		std::set<Channel*>	channelsCopy = client->getChannels();
-		for (std::set<Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
-		{
-			Channel *chan = *chIt;
-			broadcast(*chan,
-					RPL_QUIT(client->getNickname(),
-								client->getUsername(),
-								reason) + "\r\n",
-					  client);
-			chan->removeMember(*client);
-			removeEmptyChan(chan);
-		}
-		delete (client);
+		Client *client = it->second;
+
+		broadcastToNeighbours(*client,
+			RPL_QUIT(client->getNickname(), client->getUsername(), reason) + "\r\n", false);
+
+		std::set<Channel *> channelsCopy = client->getChannels();
+		for (std::set<Channel *>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
+			partChannel(*client, **chIt);
+
+		delete client;
 		_clients.erase(it);
 	}
 	std::cout << "client [" << i << "] disconnected" << std::endl;
@@ -419,7 +415,7 @@ void Server::run()
 	}
 }
 
-bool Server::findClient(std::string value)
+/* bool Server::findClient(std::string value)
 {
 	std::string target = toLowerString(value);
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
@@ -439,7 +435,7 @@ Client *Server::returnClient(std::string value)
 			return it->second;
 	}
 	return NULL;
-}
+} */
 
 Channel *Server::findChannel(const std::string &name)
 {
@@ -460,10 +456,7 @@ Channel *Server::createChannel(const std::string &name)
 
 	_channels.insert(std::make_pair(name, channel));
 	if (_bot)
-	{
-		channel->addMember(*_bot);
-		_bot->addChannel(channel);
-	}
+		joinChannel(*_bot, *channel);
 	return channel;
 }
 
@@ -479,14 +472,8 @@ void	Server::removeEmptyChan(Channel *channel){
 		_bot->removeChannel(channel);
 	}
 
-	for (std::map<std::string, Channel *>::iterator it = _channels.begin(); it != _channels.end(); it++){
-		if( it->second == channel)
-		{
-			delete channel;
-			_channels.erase(it);
-			return;
-		}
-	}
+	_channels.erase(channel->getName());
+	delete channel;
 }
 
 void Server::sendToClient(Client &client, const std::string &message)
@@ -524,4 +511,81 @@ void Server::broadcast(const Channel &channel, const std::string &message, const
 			continue;
 		sendToClient(**it, message);
 	}
+}
+
+
+//aggiunte 06/11/26 begiovan
+
+Client *Server::getClientByNick(const std::string &nick)
+{
+	if (nick.empty())	// evita di matchare client non ancora con nick
+		return NULL;
+	std::string target = toLowerString(nick);
+	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
+		if (toLowerString(it->second->getNickname()) == target)
+			return it->second;
+	return NULL;
+}
+
+void Server::joinChannel(Client &client, Channel &chan)
+{
+	chan.addMember(client);
+	chan.removeInvite(client);	// innocuo se non era invitato
+	client.addChannel(&chan);
+}
+
+void Server::partChannel(Client &client, Channel &chan)
+{
+	chan.removeMember(client);	// toglie già da _operators e _invited
+	client.removeChannel(&chan);
+	removeEmptyChan(&chan);		// ATTENZIONE: chan può essere cancellato qui
+}
+
+void Server::broadcastToNeighbours(Client &client, const std::string &message, bool includeSelf)
+{
+	std::set<Client *> targets;
+	const std::set<Channel *> &chans = client.getChannels();
+
+	for (std::set<Channel *>::const_iterator it = chans.begin(); it != chans.end(); ++it)
+	{
+		const std::set<Client *> &members = (*it)->getMembers();
+		targets.insert(members.begin(), members.end());
+	}
+	if (includeSelf)
+		targets.insert(&client);
+	else
+		targets.erase(&client);
+
+	for (std::set<Client *>::iterator it = targets.begin(); it != targets.end(); ++it)
+		sendToClient(**it, message);
+}
+
+void Server::sendTopic(Client &client, Channel &chan)
+{
+	if (chan.getTopic().empty())
+		sendToClient(client, RPL_NOTOPIC(client.getNickname(), chan.getName()) + "\r\n");
+	else
+		sendToClient(client, RPL_TOPIC(client.getNickname(), chan.getName(), chan.getTopic()) + "\r\n");
+}
+
+void Server::sendNames(Client &client, Channel &chan)
+{
+	std::string users;
+	const std::set<Client *> &members = chan.getMembers();
+	for (std::set<Client *>::const_iterator it = members.begin(); it != members.end(); ++it)
+	{
+		if (!users.empty())
+			users += ' ';
+		if (chan.isOperator(**it))
+			users += '@';
+		users += (*it)->getNickname();
+	}
+	sendToClient(client, RPL_NAMREPLY(client.getNickname(), chan.getName(), users) + "\r\n");
+	sendToClient(client, RPL_ENDOFNAMES(client.getNickname(), chan.getName()) + "\r\n");
+}
+
+void Server::tryCompleteRegistration(Client &client)
+{
+	if (client.isRegistered())
+		sendToClient(client, RPL_WELCOME(client.getNickname()) + "\r\n");
 }

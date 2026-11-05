@@ -11,7 +11,7 @@ void Invite::execute(Client *client, std::vector<std::string> params){
 		_server->sendToClient(*client, ERR_NEEDMOREPARAMS(client->getNickname(), "INVITE")+ "\r\n");
 		return;
 	}
-	Client *target = _server->returnClient(params[0]);
+	Client *target = _server->getClientByNick(params[0]);
 	if (target == NULL)
 	{
 		_server->sendToClient(*client, ERR_NOSUCHNICK(client->getNickname(), params[0])+ "\r\n");

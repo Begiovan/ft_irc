@@ -20,7 +20,7 @@ void Notice::execute(Client *client, std::vector<std::string> params){
     }
     else
     {
-        Client *target = _server->returnClient(params[0]);
+        Client *target = _server->getClientByNick(params[0]);
         if (!target)
             return;
         _server->sendToClient(*target, RPL_NOTICE(client->getNickname(), client->getUsername(), params[0], params[1]) + "\r\n");

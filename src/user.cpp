@@ -19,9 +19,7 @@ void User::execute(Client *client, std::vector<std::string> params){
     {
         client->setUsername(params[0]);
         client->setRegistrationStatus(Client::USER_OK);
-
-        if (client->isRegistered())
-            _server->sendToClient(*client, RPL_WELCOME(client->getNickname()) + "\r\n");
+        _server->tryCompleteRegistration(*client);
     }
     else
     {

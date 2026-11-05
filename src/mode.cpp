@@ -93,7 +93,7 @@ void Mode::execute(Client *client, std::vector<std::string> params){
 					return;
 				}
 				{
-					Client *target = _server->returnClient(params[numArgs]);
+					Client *target = _server->getClientByNick(params[numArgs]);
 					if (!target)
 					{
 						_server->sendToClient(*client, ERR_NOSUCHNICK(client->getNickname(), params[numArgs]) + "\r\n");

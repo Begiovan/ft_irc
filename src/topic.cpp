@@ -27,10 +27,7 @@ void Topic::execute(Client *client, std::vector<std::string> params){
 
 	if (params.size() == 1)
 	{
-		if (chan->getTopic().empty())
-			_server->sendToClient(*client, RPL_NOTOPIC(client->getNickname(), params[0]) + "\r\n");
-		else
-			_server->sendToClient(*client, RPL_TOPIC(client->getNickname(), params[0], chan->getTopic()) + "\r\n");
+		_server->sendTopic(*client, *chan);
 		return;
 	}
 

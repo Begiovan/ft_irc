@@ -29,7 +29,7 @@ void Privmsg::execute(Client *client, std::vector<std::string> params){
     }
     else
     {
-        Client *target= _server->returnClient(params[0]);
+        Client *target= _server->getClientByNick(params[0]);
 
         if(!target)
         {

@@ -48,8 +48,8 @@ class Server {
 	
 	void	disconnectClient(int fd, const string &reason = "Connection closed");
 	void	run();
-	bool	findClient(string value);
-	Client	*returnClient(string value);
+	/* bool	findClient(string value);
+	Client	*returnClient(string value); */
 	Channel *findChannel(const string &name);
 	Channel *createChannel(const string &name);
 	void	removeEmptyChan(Channel *channel);
@@ -63,5 +63,14 @@ class Server {
 
 	// COMANDI
 	ACommand	*dispatch(string command);
+
+	//aggiunte 06/11/26 begiovan
+	Client	*getClientByNick(const string &nick);
+	void	joinChannel(Client &client, Channel &chan);
+	void	partChannel(Client &client, Channel &chan);
+	void	broadcastToNeighbours(Client &client, const string &message, bool includeSelf);
+	void	sendTopic(Client &client, Channel &chan);
+	void	sendNames(Client &client, Channel &chan);
+	void	tryCompleteRegistration(Client &client);
 
 };
