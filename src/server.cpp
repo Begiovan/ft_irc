@@ -358,8 +358,7 @@ void Server::disconnectClient(int fd, const std::string &reason)
 								client->getUsername(),
 								reason) + "\r\n",
 					  client);
-			chan->removeMember(*client);
-			removeEmptyChan(*chan);
+			partChannel(*client, *chan);
 		}
 		delete (client);
 		_clients.erase(it);
@@ -419,23 +418,11 @@ void Server::run()
 	}
 }
 
-bool Server::findClientByNick(const std::string &value)
-{
-	std::string target = toLowerString(value);
-	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		if (toLowerString(it->second->getNickname()) == target)
-			return true;
-	}
-	return false;
-}
-
 Client *Server::getClientByNick(const std::string &value)
 {
-	std::string target = toLowerString(value);
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
 	{
-		if (toLowerString(it->second->getNickname()) == target)
+		if (it->second->getNickname() == value)
 			return it->second;
 	}
 	return NULL;
@@ -525,4 +512,59 @@ void Server::broadcast(const Channel &channel, const std::string &message, const
 			continue;
 		sendToClient(**it, message);
 	}
+}
+
+
+//modifiche 06/11/26
+
+void Server::joinChannel(Client& client, Channel& chan)
+{
+	chan.addMember(client);
+	client.addChannel(&chan);
+	if(chan.isInvited(client))
+		chan.removeInvite(client);
+
+}
+
+void Server::partChannel(Client& client, Channel& chan)
+{
+	chan.removeMember(client);
+	client.removeChannel(&chan);
+	removeEmptyChan(chan);
+}
+
+void Server::broadcastToNeighbours(Client& client, const std::string& message, bool includeSelf)
+{
+    std::set<Client *> notifyClients;
+    const std::set<Channel *> &channels = client.getChannels();
+
+    for (std::set<Channel *>::const_iterator it = channels.begin();
+         it != channels.end(); ++it)
+    {
+        const std::set<Client *> &members = (*it)->getMembers();
+        for (std::set<Client *>::const_iterator member = members.begin();
+             member != members.end(); ++member)
+        {
+            notifyClients.insert(*member);
+        }
+    }
+
+    if (includeSelf)
+        notifyClients.insert(&client);
+    else
+        notifyClients.erase(&client);
+
+    for (std::set<Client *>::const_iterator it = notifyClients.begin();
+         it != notifyClients.end(); ++it)
+    {
+        sendToClient(**it, message);
+    }
+}
+
+void Server::sendTopic(Client& client, Channel& chan)
+{
+		if (chan.getTopic().empty())
+			sendToClient(client, RPL_NOTOPIC(client.getNickname(), chan.getName()) + "\r\n");
+		else
+			sendToClient(client, RPL_TOPIC(client.getNickname(), chan.getName(), chan.getTopic()) + "\r\n");
 }

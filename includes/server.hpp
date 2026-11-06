@@ -48,7 +48,6 @@ class Server {
 	
 	void	disconnectClient(int fd, const string &reason = "Connection closed");
 	void	run();
-	bool	findClientByNick(const string &value);
 	Client	*getClientByNick(const string &value);
 	Channel *findChannel(const string &name);
 	Channel *createChannel(const string &name);
@@ -64,4 +63,11 @@ class Server {
 	// COMANDI
 	ACommand	*dispatch(string command);
 
+
+	//modifiche 06/11/26
+
+	void joinChannel(Client& client, Channel& chan);
+	void partChannel(Client& client, Channel& chan);
+	void broadcastToNeighbours(Client& client, const std::string& message, bool includeSelf);
+	void sendTopic(Client& client, Channel& chan);
 };

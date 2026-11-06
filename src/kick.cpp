@@ -22,9 +22,6 @@ void Kick::execute(Client &client, const std::vector<std::string> &params){
 	if (params.size() == 3)
 		reason = params[2];
 	_server->broadcast(*chan, RPL_KICK(client.getNickname(), client.getUsername(), params[0], params[1], reason)  + "\r\n");
-	chan->removeOperator(*target);
-	chan->removeInvite(*target);
-	chan->removeMember(*target);
-	target->removeChannel(chan);
-	_server->removeEmptyChan(*chan);
+
+	_server->partChannel(*target, *chan);
 }

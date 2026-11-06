@@ -21,7 +21,7 @@ void Nick::execute(Client &client, const std::vector<std::string> &params)
         return;
     }
 
-    if (_server->findClientByNick(params[0]))
+    if (_server->getClientByNick(params[0]) != NULL)
     {
         _server->sendToClient(client,
             ERR_NICKNAMEINUSE(client.nickOrStar(), params[0]) + "\r\n");
@@ -36,34 +36,8 @@ void Nick::execute(Client &client, const std::vector<std::string> &params)
 
     if (wasRegistered)
     {
-        std::set<Client *> notifyClients;
-
-        const std::set<Channel *> &channels = client.getChannels();
-
-        for (std::set<Channel *>::const_iterator it = channels.begin();
-             it != channels.end(); ++it)
-        {
-            const std::set<Client *> &members = (*it)->getMembers();
-
-            for (std::set<Client *>::const_iterator member = members.begin();
-                 member != members.end(); ++member)
-            {
-                notifyClients.insert(*member);
-            }
-        }
-
-        notifyClients.insert(&client);
-
-        for (std::set<Client *>::const_iterator it = notifyClients.begin();
-             it != notifyClients.end(); ++it)
-        {
-            _server->sendToClient(
-                **it,
-                RPL_NICK(oldNick,
-                         client.getUsername(),
-                         client.getNickname()) + "\r\n"
-            );
-        }
+        const std::string message = RPL_NICK(oldNick,client.getUsername(), client.getNickname()) + "\r\n";
+        _server->broadcastToNeighbours(client, message, false);
     }
     else if (client.isRegistered())
     {
