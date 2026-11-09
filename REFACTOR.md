@@ -227,7 +227,7 @@ altrimenti                  -> cmd->execute(...)
 **Problema:** `run()` modifica `_fds` mentre lo scorre, `i--` con controlli successivi
 sull'indice sbagliato, `QUIT` chiude il fd mentre il comando è ancora in esecuzione.
 
-- [ ] Pattern **"mark & sweep"**: `Client::markForDisconnect()` invece di chiudere subito;
+- [x] Pattern **"mark & sweep"**: `Client::markForDisconnect()` invece di chiudere subito;
       a fine giro di `poll` si chiudono tutti i client marcati (dopo aver provato a
       svuotare il send buffer). Niente più `i--` né controlli "il client esiste ancora?".
 - [ ] `Client::popLine(std::string &out)` → estrae una riga completa dal buffer

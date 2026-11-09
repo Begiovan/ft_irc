@@ -346,34 +346,40 @@ void Server::markForDisconnect(int fd, const string &reason)
 
 void Server::disconnectClient(int fd, const std::string &reason)
 {
-	// Close client's fd and erase it from sockets vector
 	close(fd);
-	size_t	i = 0;
-	while (i < _sockets.size() && fd != _sockets[i].fd)
-			i++;
-	if (i < _sockets.size())
-		_sockets.erase(_sockets.begin() + i);
+
+	// Erase client from sockets vec
+	for (size_t i = 0; i < _sockets.size(); i++)
+	{
+		if (_sockets[i].fd == fd)
+		{
+			_sockets.erase(_sockets.begin() + i);
+			break;
+		}
+	}
 
 	// Erase client from clients map and channels
 	std::map<int, Client *>::iterator it = _clients.find(fd);
-	if (it != _clients.end())
+
+	if (it == _clients.end())
+		return;
+
+	Client				*client = it->second;
+	_clients.erase(it);
+
+	std::set<Channel*>	chans = client->getChannels();
+	for (std::set<Channel*>::iterator chan = chans.begin(); chan != chans.end(); ++chan)
 	{
-		Client				*client = it->second;
-		std::set<Channel*>	channelsCopy = client->getChannels();
-		for (std::set<Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
-		{
-			Channel *chan = *chIt;
-			broadcast(*chan,
+		broadcast(*(*chan),
 					RPL_QUIT(client->getNickname(),
-								client->getUsername(),
-								reason) + "\r\n",
-					  client);
-			partChannel(*client, *chan);
-		}
-		delete (client);
-		_clients.erase(it);
+						client->getUsername(),
+						reason) + "\r\n",
+					client);
+		partChannel(*client, *(*chan));
 	}
-	std::cout << "client [" << i << "] disconnected" << std::endl;
+	delete (client);
+
+	std::cout << "client [" << fd << "] disconnected" << std::endl;
 }
 
 /*
