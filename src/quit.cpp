@@ -10,5 +10,5 @@ void Quit::execute(Client &client, const std::vector<std::string> &params){
     else
         message = "Client Quit";
 
-    _server->disconnectClient(client.getFd(), message);
+    _server->markForDisconnect(client.getFd(), message);
 }

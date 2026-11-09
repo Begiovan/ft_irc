@@ -19,16 +19,19 @@ class Server {
 
 	private:
 
-	int								_serverSocket;
+	pollfd							_serverSocket;
 	int								_port;
 	string							_password;
-	std::vector<pollfd>				_fds; // _sockets; -> Name proposal
+	std::vector<pollfd>				_sockets;
+	std::map<int, const string>		_markedForDisconnect;
+
 	std::map <int, Client*>			_clients;
 	std::map <string, Channel*>		_channels;
 	std::map <string, ACommand*> 	_commands;
 	
 	Client							*_bot;
 
+	void	disconnectClient(int fd, const string &reason = "Connection closed");
 	pollfd	makePollFd(int fd); // Can be static
 	void	acceptClient();
 	int		receiveClient(int fd);
@@ -46,8 +49,8 @@ class Server {
 	
 	const string &getPassword() const;
 	
-	void	disconnectClient(int fd, const string &reason = "Connection closed");
 	void	run();
+	void	markForDisconnect(int fd, const string &reason = "Connection closed");
 	Client	*getClientByNick(const string &value);
 	Channel *findChannel(const string &name);
 	Channel *createChannel(const string &name);

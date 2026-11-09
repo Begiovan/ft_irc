@@ -7,6 +7,7 @@ extern volatile __sig_atomic_t g_stopRequested;
  */
 Server::Server(int port, const std::string &password) : _port(port), _password(password)
 {
+	_serverSocket = makePollFd(-1);
 	std::cout << "server created" << std::endl
 			  << "port used: " << _port << std::endl;
 
@@ -26,7 +27,7 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 	Server::setupSocket(_port);
 	_bot = NULL;
 	createBot();
-	_fds.push_back(makePollFd(_serverSocket));
+	_sockets.push_back(_serverSocket);
 }
 
 Server::~Server()
@@ -47,9 +48,9 @@ Server::~Server()
 	}
 	_clients.clear();
 
-	if (_serverSocket >= 0)
-		close(_serverSocket);
-	_fds.clear();
+	if (_serverSocket.fd >= 0)
+		close(_serverSocket.fd);
+	_sockets.clear();
 }
 
 const std::string &Server::getPassword() const
@@ -156,8 +157,10 @@ void Server::botOnMessage(Client &from, const std::string &target, const std::st
 void Server::setupSocket(int _port)
 {
 	// Open socket fd
-	this->_serverSocket = socket(AF_INET, SOCK_STREAM, 0);
-	if (this->_serverSocket == -1)
+	_serverSocket.fd = socket(AF_INET, SOCK_STREAM, 0);
+	_serverSocket.events = POLLIN;
+	_serverSocket.revents = 0;
+	if (this->_serverSocket.fd == -1)
 	{
 		std::cout << "socket creation error" << std::endl;
 		perror("socket");
@@ -173,35 +176,35 @@ void Server::setupSocket(int _port)
 
 	int opt = 1;
 	// Avoid 'Address already in use' on restart: ignore leftover TIME_WAIT on the port
-	if (setsockopt(this->_serverSocket, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
+	if (setsockopt(this->_serverSocket.fd, SOL_SOCKET, SO_REUSEADDR, &opt, sizeof(opt)) == -1)
 	{
 		std::cout << "setsockopt error" << std::endl;
 		perror("setsockopt");
-		close(this->_serverSocket);
+		close(this->_serverSocket.fd);
 		throw std::runtime_error("setsockopt failed");
 	}
 
 	// Set the socket's fd as non blocking (??) Can this even makes sense?
-	if (fcntl(this->_serverSocket, F_SETFL, O_NONBLOCK) == -1)
+	if (fcntl(this->_serverSocket.fd, F_SETFL, O_NONBLOCK) == -1)
 	{
 		std::cout << "fcntl error" << std::endl;
 		perror("fcntl");
-		close(this->_serverSocket);
+		close(this->_serverSocket.fd);
 		throw std::runtime_error("fcntl failed");
 	}
 
 	// Assigning a name to the server socket
-	if (bind(this->_serverSocket, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
+	if (bind(this->_serverSocket.fd, (struct sockaddr *)&serverAddress, sizeof(serverAddress)) == -1)
 	{
 		std::cout << "bind error" << std::endl;
-		close(this->_serverSocket);
+		close(this->_serverSocket.fd);
 		throw std::runtime_error("bind failed");
 	}
 
-	if (listen(this->_serverSocket, 5) == -1)
+	if (listen(this->_serverSocket.fd, 5) == -1)
 	{
 		std::cout << "listen error" << std::endl;
-		close(this->_serverSocket);
+		close(this->_serverSocket.fd);
 		throw std::runtime_error("listen failed");
 	}
 }
@@ -222,7 +225,7 @@ void Server::acceptClient()
 	socklen_t	addrLen = sizeof(addr);
 
 	int acc;
-	acc = accept(this->_serverSocket, (sockaddr *)&addr, &addrLen);
+	acc = accept(_serverSocket.fd, (sockaddr *)&addr, &addrLen);
 	if (acc == -1)
 	{
 		std::cout << "accept error" << std::endl;
@@ -244,7 +247,7 @@ void Server::acceptClient()
 	pollfd						newSocket = makePollFd(acc);
 
 	_clients.insert(newClient);
-	_fds.push_back(newSocket);
+	_sockets.push_back(newSocket);
 }
 
 /*
@@ -274,7 +277,7 @@ int Server::receiveClient(int fd)
 	bytes = recv(fd, buffer, sizeof(buffer) - 1, 0);
 	if (bytes <= 0)
 	{
-		Server::disconnectClient(fd);
+		Server::markForDisconnect(fd);
 		return -1;
 	}
 
@@ -335,20 +338,27 @@ int Server::receiveClient(int fd)
 	return disconnected ? -1 : 0;
 }
 
+void Server::markForDisconnect(int fd, const string &reason)
+{
+	std::pair<int, const string> mark = std::make_pair<int, const string>(fd, reason);
+	_markedForDisconnect.insert(mark);
+}
+
 void Server::disconnectClient(int fd, const std::string &reason)
 {
 	// Close client's fd and erase it from sockets vector
 	close(fd);
 	size_t	i = 0;
-	while (i < _fds.size() && fd != _fds[i].fd)
+	while (i < _sockets.size() && fd != _sockets[i].fd)
 			i++;
-	_fds.erase(_fds.begin() + i);
+	if (i < _sockets.size())
+		_sockets.erase(_sockets.begin() + i);
 
 	// Erase client from clients map and channels
 	std::map<int, Client *>::iterator it = _clients.find(fd);
 	if (it != _clients.end())
 	{
-		Client						*client = it->second;
+		Client				*client = it->second;
 		std::set<Channel*>	channelsCopy = client->getChannels();
 		for (std::set<Channel*>::iterator chIt = channelsCopy.begin(); chIt != channelsCopy.end(); ++chIt)
 		{
@@ -375,45 +385,58 @@ void Server::run()
 	while (!g_stopRequested)
 	{
 		// If a client already has data queued, keep the fd monitored for both reads and writes.
-		for (size_t j = 0; j < _fds.size(); j++)
+		for (size_t j = 0; j < _sockets.size(); j++)
 		{
-			if (_fds[j].fd != _serverSocket)
-			{
-				std::map<int, Client *>::iterator it = _clients.find(_fds[j].fd);
-				if (it != _clients.end())
-				{
-					if (it->second->getSendBuffer().empty())
-						_fds[j].events = POLLIN;
-					else
-						_fds[j].events = POLLIN | POLLOUT;
-				}
-			}
+			if (_sockets[j].fd == _serverSocket.fd)
+				continue;
+
+			Client *client = getClientByFd(_sockets[j].fd);
+
+			if (!client)
+				continue;
+
+			bool hasBufferToSend = !client->getSendBuffer().empty();
+
+			if (hasBufferToSend)
+				_sockets[j].events = POLLIN | POLLOUT;
+			else
+				_sockets[j].events = POLLIN;
 		}
-		poll(&_fds[0], _fds.size(), -1);
+
+		// _sockets.push_back(_serverSocket);
+		poll(&_sockets[0], _sockets.size(), -1);
+		// _sockets.pop_back();
+
+		// if (_serverSocket.revents & POLLIN)
+		// 	Server::acceptClient();
+		// if (_serverSocket.revents & POLLOUT)
+		// 	Server::flushClient(_serverSocket.fd);
 
 		// Handle every fd that became ready after the previous poll call.
 		// POLLIN means there is data to read or a new connection to accept,
 		// while POLLOUT means the socket is ready to send queued output.
-		for (size_t i = 0; i < _fds.size(); i++)
+		for (size_t i = 0; i < _sockets.size(); i++)
 		{
-			if (_fds[i].revents & POLLIN)
+			// if (_sockets[i].fd == _serverSocket.fd)
+			// 	continue;
+
+			if (_sockets[i].revents & POLLIN)
 			{
-				if (_fds[i].fd == _serverSocket)
-				{
+				if (_sockets[i].fd == _serverSocket.fd)
 					Server::acceptClient();
-					// TODO change the cout: it prints even in case of error
-					std::cout << "Client connected" << std::endl;
-				}
 				else
-				{
-					if (Server::receiveClient(_fds[i].fd) < 0)
-						i--;
-				}
+					Server::receiveClient(_sockets[i].fd);
+				// if (Server::receiveClient(_sockets[i].fd) < 0)
+				// 	i--;
 			}
-			if (_fds[i].revents & POLLOUT)
+			if (_sockets[i].revents & POLLOUT)
 			{
-				Server::flushClient(_fds[i].fd);
+				Server::flushClient(_sockets[i].fd);
 			}
+		}
+		for (std::map<int, const string>::iterator it = _markedForDisconnect.begin(); it != _markedForDisconnect.end(); it++)
+		{
+			disconnectClient(it->first, it->second);
 		}
 	}
 }
@@ -485,21 +508,24 @@ void Server::sendToClient(Client &client, const std::string &message)
 	client.appendSendBuffer(normalized + "\r\n");
 }
 
+// Flushs the client's buffer after have sent it to fd 
 void Server::flushClient(int fd)
 {
 
 	std::map<int, Client *>::iterator it = _clients.find(fd);
-	if (it != _clients.end())
+	
+	if (it == _clients.end())
+		return;
+
+	ssize_t sent = send(fd, it->second->getSendBuffer().c_str(), it->second->getSendBuffer().size(), 0);
+
+	if (sent > 0)
+		it->second->getSendBuffer().erase(0, sent);
+	else if (sent == -1)
 	{
-		ssize_t sent = send(fd, it->second->getSendBuffer().c_str(), it->second->getSendBuffer().size(), 0);
-		if (sent > 0)
-			it->second->getSendBuffer().erase(0, sent);
-		else if (sent == -1)
-		{
-			if (errno == EAGAIN || errno == EWOULDBLOCK)
-				return;
-			perror("send");
-		}
+		if (errno == EAGAIN || errno == EWOULDBLOCK)
+			return;
+		perror("send");
 	}
 }
 
