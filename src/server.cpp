@@ -25,9 +25,9 @@ Server::Server(int port, const std::string &password) : _port(port), _password(p
 	_commands.insert(std::make_pair("NOTICE", new Notice(*this)));
 
 	Server::setupSocket(_port);
+	_sockets.push_back(_serverSocket);
 	_bot = NULL;
 	createBot();
-	_sockets.push_back(_serverSocket);
 }
 
 Server::~Server()
@@ -403,22 +403,13 @@ void Server::run()
 				_sockets[j].events = POLLIN;
 		}
 
-		// _sockets.push_back(_serverSocket);
 		poll(&_sockets[0], _sockets.size(), -1);
-		// _sockets.pop_back();
-
-		// if (_serverSocket.revents & POLLIN)
-		// 	Server::acceptClient();
-		// if (_serverSocket.revents & POLLOUT)
-		// 	Server::flushClient(_serverSocket.fd);
 
 		// Handle every fd that became ready after the previous poll call.
 		// POLLIN means there is data to read or a new connection to accept,
 		// while POLLOUT means the socket is ready to send queued output.
 		for (size_t i = 0; i < _sockets.size(); i++)
 		{
-			// if (_sockets[i].fd == _serverSocket.fd)
-			// 	continue;
 
 			if (_sockets[i].revents & POLLIN)
 			{
@@ -426,14 +417,11 @@ void Server::run()
 					Server::acceptClient();
 				else
 					Server::receiveClient(_sockets[i].fd);
-				// if (Server::receiveClient(_sockets[i].fd) < 0)
-				// 	i--;
 			}
 			if (_sockets[i].revents & POLLOUT)
-			{
 				Server::flushClient(_sockets[i].fd);
-			}
 		}
+
 		for (std::map<int, const string>::iterator it = _markedForDisconnect.begin(); it != _markedForDisconnect.end(); it++)
 		{
 			disconnectClient(it->first, it->second);
