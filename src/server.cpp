@@ -269,8 +269,8 @@ ACommand* Server::dispatch(string command)
  */
 int Server::receiveClient(int fd)
 {
+	const size_t	kMaxIrcLineLen = 512;
 
-	bool	disconnected = false;
 	char	buffer[1024];
 	ssize_t	bytes;
 
@@ -299,6 +299,13 @@ int Server::receiveClient(int fd)
 		if (pos == std::string::npos)
 			break;
 
+		// RFC line length limit: 512 bytes including CRLF.
+		if (pos + 1 > kMaxIrcLineLen)
+		{
+			Server::markForDisconnect(fd, "Input line too long");
+			return -1;
+		}
+
 		std::string commandLine = client->getBuffer().substr(0, pos);
 		client->getBuffer().erase(0, pos + 1);
 		if (!commandLine.empty() && commandLine[commandLine.size() - 1] == '\r')
@@ -325,17 +332,18 @@ int Server::receiveClient(int fd)
 			sendToClient(*client, ERR_ALREADYREGISTERED(client->getNickname()) + "\r\n");
 			continue;
 		}
-		
-		commandHandler->execute(*client, cmd.params);
 
-		if (_clients.find(fd) == _clients.end())
-		{
-			disconnected = true;
-			break;
-		}
+		commandHandler->execute(*client, cmd.params);
 	}
 
-	return disconnected ? -1 : 0;
+	// If the client keeps sending data without a newline, avoid unbounded growth.
+	if (client->getBuffer().size() > kMaxIrcLineLen)
+	{
+		Server::markForDisconnect(fd, "Input line too long");
+		return -1;
+	}
+
+	return 0;
 }
 
 void Server::markForDisconnect(int fd, const string &reason)
@@ -409,29 +417,42 @@ void Server::run()
 				_sockets[j].events = POLLIN;
 		}
 
-		poll(&_sockets[0], _sockets.size(), -1);
+		int ready = poll(&_sockets[0], _sockets.size(), -1);
+
+		if (ready < 0)
+		{
+			perror("poll error:");
+			continue;
+		}
 
 		// Handle every fd that became ready after the previous poll call.
 		// POLLIN means there is data to read or a new connection to accept,
 		// while POLLOUT means the socket is ready to send queued output.
 		for (size_t i = 0; i < _sockets.size(); i++)
 		{
-
-			if (_sockets[i].revents & POLLIN)
+			pollfd &curr = _sockets[i];
+			
+			if (curr.fd == _serverSocket.fd)
 			{
-				if (_sockets[i].fd == _serverSocket.fd)
+				if (curr.revents & (POLLHUP | POLLERR | POLLNVAL))
+					; //manage error
+				if (curr.revents & POLLIN)
 					Server::acceptClient();
-				else
-					Server::receiveClient(_sockets[i].fd);
 			}
-			if (_sockets[i].revents & POLLOUT)
-				Server::flushClient(_sockets[i].fd);
+			else 
+			{
+				if (curr.revents & (POLLHUP | POLLERR | POLLNVAL))
+					Server::markForDisconnect(curr.fd);
+				if (curr.revents & POLLIN)
+					Server::receiveClient(curr.fd);
+				if (curr.revents & POLLOUT)
+					Server::flushClient(curr.fd);
+			}
 		}
 
 		for (std::map<int, const string>::iterator it = _markedForDisconnect.begin(); it != _markedForDisconnect.end(); it++)
-		{
 			disconnectClient(it->first, it->second);
-		}
+		_markedForDisconnect.clear();
 	}
 }
 
@@ -513,14 +534,14 @@ void Server::flushClient(int fd)
 
 	ssize_t sent = send(fd, it->second->getSendBuffer().c_str(), it->second->getSendBuffer().size(), 0);
 
-	if (sent > 0)
-		it->second->getSendBuffer().erase(0, sent);
-	else if (sent == -1)
+	if (sent <= 0)
 	{
-		if (errno == EAGAIN || errno == EWOULDBLOCK)
-			return;
+		markForDisconnect(fd);
 		perror("send");
+		return;
 	}
+
+	it->second->getSendBuffer().erase(0, sent);
 }
 
 void Server::broadcast(const Channel &channel, const std::string &message, const Client *exclude)

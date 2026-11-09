@@ -242,12 +242,12 @@ sull'indice sbagliato, `QUIT` chiude il fd mentre il comando è ancora in esecuz
 
 **Voci della todo list risolte da questo step:**
 
-- [ ] *(Robustezza del server)* 🔴 **SIGPIPE non gestito.** Se un client chiude la connessione mentre ha dati in coda, `send()` genera SIGPIPE e il server si chiude. Va ignorato con `signal(SIGPIPE, SIG_IGN)` nel `main`, oppure con `SO_NOSIGPIPE` sul socket (su macOS).
-- [ ] *(Robustezza del server)* 🔴 **`run()`, indice sbagliato dopo una disconnessione** (`server.cpp:266-272`). Dopo `i--`, il controllo `POLLOUT` successivo usa `_fds[i]`, cioè il fd precedente. Basta un `continue` dopo `i--`.
-- [ ] *(Robustezza del server)* 🔴 **`POLLHUP`/`POLLERR` non gestiti.** Se `revents` contiene solo `POLLHUP`, il client non viene mai rimosso e `poll` continua a ritornare subito (busy loop).
-- [ ] *(Robustezza del server)* 🟠 Il valore di ritorno di `poll()` non è controllato (`-1`, `EINTR`).
-- [ ] *(Robustezza del server)* 🟠 `flushClient`: se `send` fallisce con un errore diverso da `EAGAIN` fa solo `perror`. Il client andrebbe disconnesso.
-- [ ] *(Robustezza del server)* 🟠 Nessun limite al buffer di input: un client che manda dati senza mai inviare `\n` fa crescere la memoria all'infinito. Il protocollo IRC fissa le righe a 512 byte, quindi conviene troncare o disconnettere.
+- [x] *(Robustezza del server)* 🔴 **SIGPIPE non gestito.** Se un client chiude la connessione mentre ha dati in coda, `send()` genera SIGPIPE e il server si chiude. Va ignorato con `signal(SIGPIPE, SIG_IGN)` nel `main`, oppure con `SO_NOSIGPIPE` sul socket (su macOS).
+- [x] *(Robustezza del server)* 🔴 **`run()`, indice sbagliato dopo una disconnessione** (`server.cpp:266-272`). Dopo `i--`, il controllo `POLLOUT` successivo usa `_fds[i]`, cioè il fd precedente. Basta un `continue` dopo `i--`.
+- [x] *(Robustezza del server)* 🔴 **`POLLHUP`/`POLLERR` non gestiti.** Se `revents` contiene solo `POLLHUP`, il client non viene mai rimosso e `poll` continua a ritornare subito (busy loop).
+- [x] *(Robustezza del server)* 🟠 Il valore di ritorno di `poll()` non è controllato (`-1`, `EINTR`).
+- [x] *(Robustezza del server)* 🟠 `flushClient`: se `send` fallisce con un errore diverso da `EAGAIN` fa solo `perror`. Il client andrebbe disconnesso.
+- [x] *(Robustezza del server)* 🟠 Nessun limite al buffer di input: un client che manda dati senza mai inviare `\n` fa crescere la memoria all'infinito. Il protocollo IRC fissa le righe a 512 byte, quindi conviene troncare o disconnettere.
 - [ ] *(Robustezza del server)* 🟠 `disconnectClient` (chiusura brusca, senza `QUIT`) toglie il client dai canali ma non avvisa gli altri membri con un messaggio `QUIT`.
 - [ ] *(Robustezza del server)* 🟠 `QUIT` chiude subito il fd: tutto quello che è ancora nel send buffer va perso.
 - [ ] *(Robustezza del server)* 🟢 `~Server()` non libera `_clients` e `_channels` e non chiude i socket. Manca anche uno shutdown pulito con SIGINT.

@@ -14,11 +14,17 @@ static void handleSignal(int signum)
 int main(int argc, char **argv)
 {
 	struct sigaction sa;
+	struct sigaction ignore;
 	sa.sa_handler = handleSignal;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+
+	ignore.sa_handler = SIG_IGN;
+	sigemptyset(&ignore.sa_mask);
+	ignore.sa_flags = 0;
+	sigaction(SIGPIPE, &ignore, NULL);
 
 	if(argc == 3)
 	{

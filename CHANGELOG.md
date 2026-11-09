@@ -1,3 +1,27 @@
+# 09/11
+
+## Step 6 stabilization pass
+
+- Refactored server socket state to align with poll-driven flow:
+    - `Server::_serverSocket` changed from `int` to `pollfd`
+    - `Server::_fds` renamed to `Server::_sockets`
+    - Updated all call sites to use `.fd` where raw file descriptors are required
+- Consolidated disconnection flow around mark-and-sweep:
+    - kept `markForDisconnect()` as the single entry point for deferred disconnects
+    - sweep now clears `_markedForDisconnect` after processing
+- Hardened poll loop behavior:
+    - added explicit `poll()` return-value check
+    - added handling branches for `POLLHUP | POLLERR | POLLNVAL` events
+- Updated signal policy in `main`:
+    - `SIGINT`/`SIGTERM` keep graceful shutdown path
+    - `SIGPIPE` is now ignored via dedicated `sigaction(SIGPIPE, SIG_IGN)` setup
+- Enforced IRC input line-size limit in `receiveClient()`:
+    - max 512 bytes for complete lines
+    - disconnect on oversized partial buffered input to prevent unbounded memory growth
+- Updated Step 6 documentation:
+    - created and iteratively aligned `STEP6.md` with real code status and line references
+    - tracked closed items (high priority + problem 4) and remaining refinement points
+
 # 04/11
 
 ## Refactor validation helpers
