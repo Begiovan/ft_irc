@@ -1,8 +1,8 @@
 PYTHON ?= python3
-BINARY ?= ./ircserv
+BINARY ?= ../ircserv
 HOST ?= 127.0.0.1
-PORT ?= 6667
-PASSWORD ?= mypass
+PORT ?= 4242
+PASSWORD ?= password
 MODE ?= menu
 CLIENTS ?= 12
 BOT_NICK ?=
