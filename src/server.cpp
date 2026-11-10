@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-extern volatile sig_atomic_t g_stopRequested;
+extern volatile __sig_atomic_t g_stopRequested;
 
 /*
  * Creates the listening socket and registers the server fd for the poll loop.
