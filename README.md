@@ -1,73 +1,92 @@
-# BRANCH DI REFACTOR
-Fare in questo branch i merge degli altri refactor SOLO A TEST SUPERATI
+*This project was created as part of the 42 curriculum by skayed, begiovan, and rceschel.*
+
+## Description
+This project aims to build a minimal but functional IRC server without federation with other servers.
+
+<!-- TOC -->
+
+## Table of Contents
+- [Instructions](#instructions)
+  - [Build](#build)
+  - [Run](#run)
+  - [Other ways to build and run](#other-ways-to-build-and-run)
+  - [Connect to the server](#connect-to-the-server)
+  - [Features](#features)
+  - [Available commands](#available-commands)
+  - [Channel modes](#channel-modes)
+- [Technical overview](#technical-overview)
+  - [Server architecture](#server-architecture)
+  - [Technical details](#technical-details)
+  - [Known limitations](#known-limitations)
+- [Resources](#resources)
+
+<!-- /TOC -->
 
 
+## Instructions
 
-<div align="center">
+### Build
+Run `make` in the project root to compile the **ircserv** program.
 
-# ft_irc
+### Run
+Run `/path/to/ircserv` `<port>` `<password>`, where `<port>` is the port used to connect to the server and `<password>` is the password required for authentication.
 
-### A lightweight IRC server built from scratch in C++98
+### Other ways to build and run
+Another way to build and run the project is to use `make run` in the project root.
 
-No external IRC libraries. Just raw sockets, `poll()`, and a lot of RFC reading.
+This will build the `ircserv` executable and automatically run it with the default overridable Makefile variables for `<port>` and `<password>`.
 
-[![C++](https://img.shields.io/badge/C%2B%2B-98-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](https://en.wikipedia.org/wiki/C%2B%2B98)
-[![42](https://img.shields.io/badge/42-project-000000?style=for-the-badge&logo=42&logoColor=white)](https://42.fr)
-[![Platform](https://img.shields.io/badge/platform-Linux%20%7C%20macOS-lightgrey?style=for-the-badge)](#)
+To override the default values: `make run PORT=<port> PASS=<password>`
 
-</div>
+You can also run `make valgrind`: it behaves like `make run`, but executes the program with **valgrind** to check for leaks.
 
----
+### Connect to the server
+Once the server is started with `ircserv <port> <password>`, you can connect with any IRC client you prefer.
+During development and testing, our reference client was **kvirc**.
 
-## Indice
+### Features
 
-- [Descrizione](#descrizione)
-- [Funzionalità](#funzionalità)
-- [Architettura](#architettura)
-- [Struttura del progetto](#struttura-del-progetto)
-- [Comandi supportati](#comandi-supportati)
-- [Requisiti](#requisiti)
-- [Compilazione](#compilazione)
-- [Utilizzo](#utilizzo)
-- [Esempio di sessione](#esempio-di-sessione)
-- [Testare il server](#testare-il-server)
-- [Dettagli tecnici](#dettagli-tecnici)
-- [Limitazioni note](#limitazioni-note)
-- [Autori](#autori)
+Below is a list of the available features from a user perspective.
 
----
+* You can authenticate, set a nickname and username, join a channel, and send and receive private messages.
+* All messages sent from one client to a channel are forwarded to every other client that has joined the channel.
+* You can have **operators** and regular users.
+* There are commands specific to **channel operators** (KICK, INVITE, TOPIC, MODE):
+* You can transfer files (depending on the client) via CTCP DCC SEND.
+* A bot is automatically added to every new channel; use `!help` in chat to see the list of available commands.
 
-## Descrizione
+### Available commands
 
-**ft_irc** è un server IRC (Internet Relay Chat) sviluppato interamente in **C++98**, senza l'uso di librerie IRC esterne. Il progetto implementa da zero:
+| Command   | Parameters                                       | Description                                            | Requires auth |
+| --------- | ------------------------------------------------ | ------------------------------------------------------ | :-----------: |
+| `PING`    | `<token>`                                        | Checks that the client-server connection is alive      |               |
+| `QUIT`    | `[message]`                                      | Terminates the client's connection to the server       |               |
+| `PASS`    | `<password>`                                     | Provides the password for server authentication        |               |
+| `NICK`    | `<nickname>`                                     | Sets or changes the user's nickname                    |               |
+| `USER`    | `<username> <hostname> <servername> :<realname>` | Registers the user's username and real name            |               |
+| `PRIVMSG` | `<target> :<text>`                               | Sends a private message to a user or channel           |               |
+| `NOTICE`  | `<target> :<text>`                               | Sends an automated notice (expects no automatic reply) |               |
+| `KICK`    | `<channel> <user> [comment]`                     | Removes a user from a channel                          |               |
+| `JOIN`    | `<channel>[,channel*] [key]*`                    | Joins a channel                                        |               |
+| `TOPIC`   | `<channel> [topic]`                              | Views or sets a channel's topic                        |               |
+| `INVITE`  | `<nickname> <channel>`                           | Invites a user to join a channel                       |               |
+| `MODE`    | `<channel>`                                      | Changes user or channel modes (e.g. +o, +t)            |               |
 
-- gestione di connessioni multiple non bloccanti tramite `poll()`
-- il protocollo IRC (parsing dei messaggi, codici di risposta numerici conformi a RFC 1459/2812)
-- autenticazione client (`PASS` → `NICK` → `USER`)
-- gestione completa di canali, operatori, inviti e modalità
-- comunicazione client-client e client-canale (`PRIVMSG`, `NOTICE`)
+### Channel modes
 
-L'obiettivo è poter usare un client IRC reale (KVIrc, irssi, WeeChat, HexChat...) per connettersi al server, creare canali, invitare utenti, impostare topic e permessi, esattamente come su un server IRC vero.
+| Flag | Effect                                                            |
+| :--: | ----------------------------------------------------------------- |
+| `i`  | Toggle Invite-only channel                                        |
+| `t`  | Toggle the restrictions of the TOPIC command to channel operators |
+| `k`  | Toggle the channel key (password)                                 |
+| `o`  | Give or revoke channel operator privileges to a user             |
+| `l`  | Toggle the user limit for the channel                              |
 
----
+## Technical overview !!! TO REVIEW
 
-## Funzionalità
+### Server architecture
 
-- Connessioni multiple gestite in modo non bloccante con un unico `poll()`
-- Autenticazione con password del server
-- Gestione nickname e username con validazione
-- Creazione e gestione canali (pubblici, con password, a numero limitato, invite-only)
-- Sistema di operatori di canale con privilegi dedicati
-- Messaggistica privata e di canale (`PRIVMSG`, `NOTICE`)
-- Gestione `TOPIC` con restrizioni configurabili
-- `KICK`, `INVITE`, `MODE` completamente funzionanti
-- Disconnessioni gestite correttamente, sia `QUIT` esplicito che disconnessioni impreviste
-
----
-
-## Architettura
-
-Il cuore del server è un event loop singolo basato su `poll()`:
+The core of the server is a single event loop based on `poll(2)`:
 
 ```
 Client TCP
@@ -76,171 +95,47 @@ Client TCP
 Server::acceptClient()
    |
    v
-poll() su tutti i fd
+poll() on every fd
    |
    +-- POLLIN  --> Server::receiveClient()
    |                   |
    |                   v
-   |               parseCommand()  (Command: nome + parametri)
+   |               parseCommand()
    |                   |
    |                   v
    |               Server::dispatch()
    |                   |
    |                   v
-   |               ACommand concreto (Nick, Join, Privmsg, ...)
+   |               ACommand (Nick, Join, Privmsg, ...)
    |                   |
    |                   v
    |               Client::appendSendBuffer()
    |
-   +-- POLLOUT --> Server::flushClient()  --> send() al client
+   +-- POLLOUT --> Server::flushClient()  --> send() to client
 ```
 
-Passaggi principali:
+Main steps:
 
-1. ogni ciclo aggiorna gli eventi da monitorare (`POLLIN` sempre, `POLLOUT` solo se c'è qualcosa da inviare)
-2. per ogni fd pronto in lettura, i byte vengono accumulati in un buffer per client finché non si individua una riga completa (`\n`)
-3. la riga viene parsata in un `Command` (nome comando + parametri)
-4. `Server::dispatch()` istanzia il comando concreto (pattern Command, tramite `ACommand`)
-5. l'output non viene scritto subito con `send()`, ma accodato in un buffer di invio e scaricato quando il socket è pronto in scrittura, evitando blocchi su client lenti
-
----
-
-## Struttura del progetto
-
-```
-ft_irc/
-├── main.cpp              entry point, parsing argv, avvio server
-├── server.cpp/.hpp       event loop, poll(), accept, dispatch dei comandi
-├── client.cpp/.hpp       stato del singolo client (nick, buffer, registrazione)
-├── channel.cpp/.hpp      stato di un canale (membri, operatori, modalità)
-├── parser.cpp/.hpp       parsing delle righe IRC in Command
-├── utils.cpp             validazioni (nickname, interi positivi)
-├── irc_response.hpp      macro per i codici di risposta/errore IRC
-├── ACommand.hpp          interfaccia comando + dichiarazioni comandi concreti
-└── *.cpp                 un file per ciascun comando (nick, join, kick, mode...)
-```
+1. Each loop updates the events to monitor (`POLLIN` is always watched, `POLLOUT` only when something needs to be sent).
+2. For each fd ready for reading, bytes are accumulated in a per-client buffer until a full line (`\n`) is found.
+3. The line is parsed into a `Command` object (command name + parameters).
+4. `Server::dispatch()` instantiates the concrete command (Command pattern via `ACommand`).
+5. Output is not written immediately with `send()`, but queued in a send buffer and flushed when the socket is ready for writing, avoiding blocking on slow clients.
 
 ---
 
-## Comandi supportati
+### Technical details
 
-| Comando | Descrizione | Richiede auth |
-|---|---|---|
-| `PASS <password>` | Autentica il client con la password del server | No |
-| `NICK <nickname>` | Imposta/cambia il nickname | No |
-| `USER <username>` | Imposta lo username, completa la registrazione | No |
-| `JOIN <channel> [key]` | Entra in un canale (lo crea se non esiste) | Sì |
-| `PRIVMSG <target> <msg>` | Messaggio privato o di canale | Sì |
-| `NOTICE <target> <msg>` | Notifica privata o di canale | Sì |
-| `TOPIC <channel> [:topic]` | Visualizza o imposta il topic | Sì |
-| `KICK <channel> <nick> [reason]` | Espelle un utente dal canale (solo operator) | Sì |
-| `INVITE <nick> <channel>` | Invita un utente in un canale (solo operator) | Sì |
-| `MODE <channel> [+/-modes] [args]` | Gestisce modalità canale (`i`, `t`, `k`, `l`, `o`) | Sì |
-| `PING <token>` | Keep-alive, risponde con `PONG` | Sì |
-| `QUIT [:message]` | Disconnette il client dal server | Sì |
+- **Non-blocking I/O**: all sockets (server and clients) are configured with `fcntl(fd, F_SETFL, O_NONBLOCK)`.
+- **A single `poll()`** monitors both the listening socket and all connected clients: no threads, no child processes.
+- **Message buffering**: both inbound and outbound buffering are used to handle TCP correctly when data does not arrive as a complete line in a single `recv()`.
+- **Command pattern**: each IRC command is a class derived from `ACommand`, instantiated dynamically in `Server::dispatch()` based on the received command name.
+- **Disconnection handling**: both explicit `QUIT` and unexpected disconnects (socket closure, client crash) correctly notify other channel members with a `QUIT` message while keeping channel state consistent.
 
-### Modalità canale (MODE)
+### Known limitations
 
-| Flag | Effetto |
-|---|---|
-| `i` | canale invite-only |
-| `t` | topic modificabile solo dagli operatori |
-| `k` | canale protetto da password |
-| `l` | limite massimo di utenti |
-| `o` | assegna/rimuove lo status di operatore |
+- Does not implement TLS/SSL (plain-text connections)
+- Does not implement all optional IRC commands (e.g. `WHOIS`, `LIST`, dedicated `PART`: a member leaves a channel only via `KICK` or `QUIT`)
+- Designed for a single process / single server, without server federation (`SERVER` / `CONNECT`)
 
----
-
-## Requisiti
-
-- Compilatore C++ con supporto C++98 (`g++`, `clang++`)
-- Sistema POSIX (Linux o macOS): usa `socket()`, `poll()`, `fcntl()`
-- `make`
-
----
-
-## Compilazione
-
-```bash
-git clone <url-del-tuo-repo>
-cd ft_irc
-make
-```
-
-Se non hai ancora un `Makefile`, i sorgenti si compilano manualmente con:
-
-```bash
-c++ -Wall -Wextra -Werror -std=c++98 *.cpp -o ircserv
-```
-
----
-
-## Utilizzo
-
-```bash
-./ircserv <port> <password>
-```
-
-- `port` deve essere un intero valido maggiore di 1024
-- `password` è la password richiesta ai client per autenticarsi (`PASS`)
-
-Esempio:
-
-```bash
-./ircserv 6667 supersecret
-```
-
----
-
-## Esempio di sessione
-
-Connessione manuale via `nc` (utile per debug, un client IRC vero gestisce tutto in automatico):
-
-```bash
-nc localhost 6667
-PASS supersecret
-NICK gigi
-USER gigi 0 * :Gigi Bianchi
-JOIN #general
-PRIVMSG #general :ciao a tutti!
-```
-
----
-
-## Testare il server
-
-Il server può essere testato con:
-
-- `nc` (netcat): utile per inviare comandi grezzi e debug
-- client IRC reali: [KVIrc](https://kvirc.net/), [irssi](https://irssi.org/), [WeeChat](https://weechat.org/), [HexChat](https://hexchat.github.io/)
-
-Esempio di connessione con irssi:
-
-```bash
-irssi -c localhost -p 6667 -w supersecret
-```
-
----
-
-## Dettagli tecnici
-
-- **I/O non bloccante**: tutti i socket (server e client) sono impostati con `fcntl(fd, F_SETFL, O_NONBLOCK)`.
-- **Un solo `poll()`** monitora sia il socket di ascolto che tutti i client connessi: nessun thread, nessun processo figlio.
-- **Buffering dei messaggi**: sia in ricezione che in invio, per gestire correttamente TCP che non garantisce l'arrivo dei dati "a riga intera" in un'unica `recv()`.
-- **Pattern Command**: ogni comando IRC è una classe che eredita da `ACommand`, istanziata dinamicamente in `Server::dispatch()` in base al nome del comando ricevuto.
-- **Gestione disconnessioni**: sia `QUIT` esplicito che disconnessioni impreviste (chiusura brusca del socket, crash del client) notificano correttamente gli altri membri dei canali con un messaggio `QUIT`, mantenendo lo stato dei canali sempre coerente.
-
----
-
-## Limitazioni note
-
-- Non implementa TLS/SSL (connessioni in chiaro)
-- Non implementa tutti i comandi opzionali del protocollo IRC (es. `WHOIS`, `LIST`, `PART` dedicato: un membro esce dal canale solo tramite `KICK`/`QUIT`)
-- Pensato per un singolo processo/singolo server, senza federazione tra server (`SERVER`/`CONNECT`)
-
----
-
-## Autori
-
-- **Begiovan** — [GitHub](https://github.com/Begiovan)
-- **SusannaKay** — [GitHub](https://github.com/SusannaKay)
+# Resources
