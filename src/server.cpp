@@ -432,7 +432,11 @@ void Server::run()
 			if (curr.fd == _serverSocket.fd)
 			{
 				if (curr.revents & (POLLHUP | POLLERR | POLLNVAL))
-					; //manage error
+				{
+					std::cerr << "Error on listening socket, shutting down" << std::endl;
+					g_stopRequested = 1;
+					break;
+				}
 				if (curr.revents & POLLIN)
 					Server::acceptClient();
 			}
