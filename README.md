@@ -1,7 +1,25 @@
 *This project was created as part of the 42 curriculum by skayed, begiovan, and rceschel.*
 
+
+
+<div align="center">
+
+# ft_irc
+	
 ## Description
-This project aims to build a minimal but functional IRC server without federation with other servers.
+	
+### A lightweight IRC server built from scratch in C++98
+
+No external IRC libraries. Just raw sockets, `poll()`, and a lot of RFC reading.
+
+[![C++](https://img.shields.io/badge/C%2B%2B-98-00599C?style=for-the-badge&logo=cplusplus&logoColor=white)](https://en.wikipedia.org/wiki/C%2B%2B98)
+[![42](https://img.shields.io/badge/42-project-000000?style=for-the-badge&logo=42&logoColor=white)](https://42.fr)
+[![Platform](https://img.shields.io/badge/platform-Linux%20-lightgrey?style=for-the-badge)](#)
+
+</div>
+
+---
+
 
 <!-- TOC -->
 
@@ -42,7 +60,7 @@ You can also run `make valgrind`: it behaves like `make run`, but executes the p
 
 ### Connect to the server
 Once the server is started with `ircserv <port> <password>`, you can connect with any IRC client you prefer.
-During development and testing, our reference client was **kvirc**.
+During development and testing, our reference client has been **kvirc**.
 
 ### Features
 
