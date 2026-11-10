@@ -556,9 +556,6 @@ void Server::broadcast(const Channel &channel, const std::string &message, const
 	}
 }
 
-
-//modifiche 06/11/26
-
 void Server::joinChannel(Client& client, Channel& chan)
 {
 	chan.addMember(client);
