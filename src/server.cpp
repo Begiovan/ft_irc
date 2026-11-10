@@ -131,7 +131,7 @@ void Server::botOnMessage(Client &from, const std::string &target, const std::st
 	if (message == "!help")
 	{
 		sendToClient(from,
-			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, "Aviable commands for this bot: !channels, !date, !help\n" +
+			RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target, "Available commands for this bot: !channels, !date, !help\n" +
 				"Server command: /kick, /invite, /topic, /mode") + "\r\n");
 		return;
 	}
@@ -144,7 +144,7 @@ void Server::botOnMessage(Client &from, const std::string &target, const std::st
 
 	sendToClient(from,
 		RPL_PRIVMSG(_bot->getNickname(), _bot->getUsername(), target,
-			"Sorry @" + from.getNickname() + ", i don't speak your language." + "Aviable commands for this bot: !channel, !date, !help") + "\r\n");
+			"Sorry @" + from.getNickname() + ", i don't speak your language." + "Available commands for this bot: !channel, !date, !help") + "\r\n");
 }
 
 /*

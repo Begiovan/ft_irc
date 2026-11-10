@@ -6,7 +6,6 @@ ircserv
 # Local secrets/config
 .env
 compile_commands.json
-valout*
 
 # VSCODE
 .vscode/*
@@ -15,6 +14,3 @@ valout*
 !.vscode/launch.json
 !.vscode/extensions.json
 !.vscode/*.code-snippets
-
-#FT_IRC_TESTER/
-*test_result.txt
