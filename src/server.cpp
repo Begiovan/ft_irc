@@ -41,15 +41,12 @@ Server::~Server()
 	_channels.clear();
 
 	for (std::map<int, Client *>::iterator it = _clients.begin(); it != _clients.end(); ++it)
-	{
-		if (it->first >= 0)
-			close(it->first);
 		delete it->second;
-	}
 	_clients.clear();
 
-	if (_serverSocket.fd >= 0)
-		close(_serverSocket.fd);
+	for (std::vector<pollfd>::iterator it = _sockets.begin(); it != _sockets.end(); ++it)
+		if (it->fd >= 0)
+			close(it->fd);
 	_sockets.clear();
 }
 
@@ -286,7 +283,7 @@ int Server::receiveClient(int fd)
 
 	if (!client)
 	{
-		std::cout << "client non trovato o errato" << std::endl;
+		std::cout << "Client not found, with fd: " << fd << std::endl;
 		return 0;
 	}
 

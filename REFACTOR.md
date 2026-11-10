@@ -248,10 +248,10 @@ sull'indice sbagliato, `QUIT` chiude il fd mentre il comando è ancora in esecuz
 - [x] *(Robustezza del server)* 🟠 Il valore di ritorno di `poll()` non è controllato (`-1`, `EINTR`).
 - [x] *(Robustezza del server)* 🟠 `flushClient`: se `send` fallisce con un errore diverso da `EAGAIN` fa solo `perror`. Il client andrebbe disconnesso.
 - [x] *(Robustezza del server)* 🟠 Nessun limite al buffer di input: un client che manda dati senza mai inviare `\n` fa crescere la memoria all'infinito. Il protocollo IRC fissa le righe a 512 byte, quindi conviene troncare o disconnettere.
-- [ ] *(Robustezza del server)* 🟠 `disconnectClient` (chiusura brusca, senza `QUIT`) toglie il client dai canali ma non avvisa gli altri membri con un messaggio `QUIT`.
-- [ ] *(Robustezza del server)* 🟠 `QUIT` chiude subito il fd: tutto quello che è ancora nel send buffer va perso.
-- [ ] *(Robustezza del server)* 🟢 `~Server()` non libera `_clients` e `_channels` e non chiude i socket. Manca anche uno shutdown pulito con SIGINT.
-- [ ] *(Parser e dispatch dei comandi)* 🟢 `receiveClient` cerca il client due volte (`it` e `clientIt`). Conviene estrarre `processLine(Client*, line)`.
+- [x] *(Robustezza del server)* 🟠 `disconnectClient` (chiusura brusca, senza `QUIT`) toglie il client dai canali ma non avvisa gli altri membri con un messaggio `QUIT`.
+- [x] *(Robustezza del server)* 🟠 `QUIT` chiude subito il fd: tutto quello che è ancora nel send buffer va perso.
+- [x] *(Robustezza del server)* 🟢 `~Server()` non libera `_clients` e `_channels` e non chiude i socket. Manca anche uno shutdown pulito con SIGINT.
+- [x] *(Parser e dispatch dei comandi)* 🟢 `receiveClient` cerca il client due volte (`it` e `clientIt`). Conviene estrarre `processLine(Client*, line)`.
 
 ### Step 7 — Header e build
 

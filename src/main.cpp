@@ -7,24 +7,25 @@ volatile __sig_atomic_t g_stopRequested = 0;
 
 static void handleSignal(int signum)
 {
-	(void)signum;
-	g_stopRequested = 1;
+	if (signum != SIGPIPE)
+		g_stopRequested = 1;
 }
 
 int main(int argc, char **argv)
 {
 	struct sigaction sa;
-	struct sigaction ignore;
 	sa.sa_handler = handleSignal;
 	sigemptyset(&sa.sa_mask);
 	sa.sa_flags = 0;
 	sigaction(SIGINT, &sa, NULL);
 	sigaction(SIGTERM, &sa, NULL);
+	sigaction(SIGPIPE, &sa, NULL);	
 
-	ignore.sa_handler = SIG_IGN;
-	sigemptyset(&ignore.sa_mask);
-	ignore.sa_flags = 0;
-	sigaction(SIGPIPE, &ignore, NULL);
+	// struct sigaction ignore;
+	// ignore.sa_handler = SIG_IGN;
+	// sigemptyset(&ignore.sa_mask);
+	// ignore.sa_flags = 0;
+	// sigaction(SIGPIPE, &ignore, NULL);
 
 	if(argc == 3)
 	{
