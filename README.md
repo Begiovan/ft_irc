@@ -205,9 +205,30 @@ Main steps:
 
 # Resources
 
-- [RFC2812 stadnard](https://www.rfc-editor.org/info/rfc2812)
+- [RFC2812 standard](https://www.rfc-editor.org/info/rfc2812)
 - [42Peer guide about ft_irc](https://irc.ircgod.com/)
+- [CTCP DCC deep explaination](https://www.irchelp.org/protocol/ctcpspec.html)
+- [Program Tester (not completely working)](https://github.com/TAHA-RAOUF/FT_IRC_TESTER.git)
 
-# Ai Usage
+# AI Usage
 
-Claude and Copilot were used to deepen our understanding of the core principles of the project, the kernel part and of course they helped draft and correct ( as well as translate ) this amazing README.
+AI tools (**Claude** and **GitHub Copilot**) were used as support tools during
+this project for:
+
+- **Clarifying complex concepts**: our understanding of the project's core
+  principles came from the RFCs, the documentation and our own study; AI was
+  used only to go deeper on the most complex topics.
+- **Debugging**: demystifying the program flow to locate the point of failure,
+  and occasionally suggesting targeted fixes.
+- **Refactoring**: simplifying the code and avoiding repetitive tasks,
+  proposing a refactoring plan and identifying possible weak points in the code.
+- **RFC compliance**: review rounds to verify adherence to the protocol and to
+  fix deviations from the standard.
+- **Code cleanup**: removing unnecessary comments, removing unused functions and similar repetitive tasks.
+- **Documentation**: proofreading and correcting this README.
+
+We did **not** delegate to AI:
+
+- The overall design and architecture of the server.
+- Testing and debugging, done manually with our reference client (KVIrc) and
+  with automated tests.
