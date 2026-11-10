@@ -1,6 +1,6 @@
 #include "server.hpp"
 
-extern volatile __sig_atomic_t g_stopRequested;
+extern volatile sig_atomic_t g_stopRequested;
 
 /*
  * Creates the listening socket and registers the server fd for the poll loop.
@@ -345,7 +345,7 @@ int Server::receiveClient(int fd)
 
 void Server::markForDisconnect(int fd, const string &reason)
 {
-	std::pair<int, const string> mark = std::make_pair<int, const string>(fd, reason);
+	std::pair<int, const string> mark = std::make_pair(fd, reason);
 	_markedForDisconnect.insert(mark);
 }
 

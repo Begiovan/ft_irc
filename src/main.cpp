@@ -3,7 +3,7 @@
 #include <cstdlib>
 #include <csignal>
 
-volatile __sig_atomic_t g_stopRequested = 0;
+volatile sig_atomic_t g_stopRequested = 0;
 
 static void handleSignal(int signum)
 {
